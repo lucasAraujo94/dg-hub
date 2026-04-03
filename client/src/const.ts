@@ -1,4 +1,4 @@
-export { COOKIE_NAME, ONE_YEAR_MS } from "../../shared/const";
+export { COOKIE_NAME, ONE_YEAR_MS, AXIOS_TIMEOUT_MS, UNAUTHED_ERR_MSG, NOT_ADMIN_ERR_MSG } from "@/shared/const";
 
 const normalizePath = (value: string) => {
   const trimmed = value.trim();
