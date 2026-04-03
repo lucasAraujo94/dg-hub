@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  openId       String    @unique @db.VarChar(64)
+  name         String?   @db.Text
+  nickname     String?   @db.VarChar(100) @map("nome_no_hago")
+  email        String?   @db.VarChar(320)
+  loginMethod  String?   @db.VarChar(64)
+  passwordHash String?   @db.VarChar(255)
+  role         String    @default("user") @db.VarChar(10)
+  avatarUrl    String?   @db.VarChar(2048)
+  saldoPremio  Decimal   @default(0) @db.Decimal(10, 2)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastSignedIn DateTime  @default(now())
+
+  inscricoes               Inscricao[]
+  partidasJogador1         Partida[] @relation("Jogador1")
+  partidasJogador2         Partida[] @relation("Jogador2")
+  partidasComoVencedor     Partida[] @relation("Vencedor")
+  rankings                 Ranking[]
+  estatisticas             Estatistica?
+  usuarioEmblemas          UsuarioEmblema[]
+  chatMensagens            ChatMensagem[]
+  notificacoes             Notificacao[]
+  solicitacoesSaque        SolicitacaoSaque[]
+  pollVotes                PollVote[]
+
+  @@map("users")
+}
+
+model Campeonato {
+  id             Int          @id @default(autoincrement())
+  nome           String       @db.VarChar(255)
+  descricao      String?      @db.Text
+  dataInicio     DateTime
+  dataFim        DateTime?
+  status         String       @default("futuro") @db.VarChar(20)
+  premioValor    Decimal      @default(0) @db.Decimal(10, 2)
+  criadoEm       DateTime     @default(now())
+  atualizadoEm   DateTime     @updatedAt
+
+  inscricoes     Inscricao[]
+  partidas       Partida[]
+  chaveamento    Chaveamento?
+
+  @@map("campeonatos")
+}
+
+model Inscricao {
+  id            Int       @id @default(autoincrement())
+  usuarioId     Int
+  campeonatoId  Int
+  dataInscricao DateTime  @default(now())
+
+  usuario    User       @relation(fields: [usuarioId], references: [id])
+  campeonato Campeonato @relation(fields: [campeonatoId], references: [id])
+
+  @@map("inscricoes")
+}
+
+model Partida {
+  id               Int            @id @default(autoincrement())
+  campeonatoId     Int
+  jogador1Id       Int
+  jogador2Id       Int?
+  resultadoJogador1 Int?
+  resultadoJogador2 Int?
+  vencedorId       Int?
+  fase             String         @db.VarChar(50)
+  dataPartida      DateTime?
+  status           String         @default("agendada") @db.VarChar(20)
+  criadoEm         DateTime       @default(now())
+
+  campeonato Campeonato @relation(fields: [campeonatoId], references: [id])
+  jogador1   User       @relation("Jogador1", fields: [jogador1Id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  jogador2   User?      @relation("Jogador2", fields: [jogador2Id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  vencedor   User?      @relation("Vencedor", fields: [vencedorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("partidas")
+}
+
+model Chaveamento {
+  id             Int       @id @default(autoincrement())
+  campeonatoId   Int       @unique
+  estruturaJson  String    @db.NVarChar(max)
+  criadoEm       DateTime  @default(now())
+  atualizadoEm   DateTime  @updatedAt
+
+  campeonato Campeonato @relation(fields: [campeonatoId], references: [id])
+
+  @@map("chaveamentos")
+}
+
+model Ranking {
+  id              Int         @id @default(autoincrement())
+  usuarioId       Int
+  tipoRanking     String      @db.VarChar(20)
+  pontuacao       Int         @default(0)
+  posicao         Int?
+  dataAtualizacao DateTime    @default(now()) @updatedAt
+
+  usuario User @relation(fields: [usuarioId], references: [id])
+
+  @@unique([usuarioId, tipoRanking])
+  @@map("rankings")
+}
+
+model Estatistica {
+  id                    Int      @id @default(autoincrement())
+  usuarioId             Int      @unique
+  partidasJogadas       Int      @default(0)
+  vitorias              Int      @default(0)
+  derrotas              Int      @default(0)
+  aproveitamento        Decimal  @default(0) @db.Decimal(5, 2)
+  sequenciaAtual        Int      @default(0)
+  maiorSequencia        Int      @default(0)
+  campeonatoDisputados  Int      @default(0)
+  campeonatoVencidos    Int      @default(0)
+  atualizadoEm          DateTime @default(now()) @updatedAt
+
+  usuario User @relation(fields: [usuarioId], references: [id])
+
+  @@map("estatisticas")
+}
+
+model Emblema {
+  id         Int       @id @default(autoincrement())
+  nome       String    @db.VarChar(255)
+  descricao  String?   @db.Text
+  iconeUrl   String?   @db.VarChar(512)
+  tipo       String    @db.VarChar(50)
+  criadoEm   DateTime  @default(now())
+
+  conquistas UsuarioEmblema[]
+
+  @@map("emblemas")
+}
+
+model UsuarioEmblema {
+  id            Int       @id @default(autoincrement())
+  usuarioId     Int
+  emblemaId     Int
+  dataConquista DateTime  @default(now())
+
+  usuario User   @relation(fields: [usuarioId], references: [id])
+  emblema Emblema @relation(fields: [emblemaId], references: [id])
+
+  @@map("usuarioEmblemas")
+}
+
+model ChatMensagem {
+  id        Int       @id @default(autoincrement())
+  usuarioId Int?
+  tipoChat  String    @default("geral") @db.VarChar(20)
+  mensagem  String    @db.Text
+  dataEnvio DateTime  @default(now())
+
+  usuario User? @relation(fields: [usuarioId], references: [id])
+
+  @@map("chatMensagens")
+}
+
+model Notificacao {
+  id        Int       @id @default(autoincrement())
+  usuarioId Int
+  mensagem  String    @db.Text
+  tipo      String    @db.VarChar(50)
+  lida      Int       @default(0)
+  dataEnvio DateTime  @default(now())
+
+  usuario User @relation(fields: [usuarioId], references: [id])
+
+  @@map("notificacoes")
+}
+
+model SolicitacaoSaque {
+  id              Int         @id @default(autoincrement())
+  usuarioId       Int
+  valor           Decimal     @db.Decimal(10, 2)
+  status          String      @default("solicitado") @db.VarChar(20)
+  walletProvider  String      @db.VarChar(80)
+  walletAddress   String      @db.VarChar(255)
+  dataSolicitacao DateTime    @default(now())
+  dataPagamento   DateTime?
+
+  usuario User @relation(fields: [usuarioId], references: [id])
+
+  @@map("solicitacoesSaque")
+}
+
+model PollVote {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  escolha   String   @db.VarChar(50)
+  pollId    Int?
+  createdAt DateTime @default(now())
+
+  usuario User @relation(fields: [usuarioId], references: [id])
+  poll    Poll? @relation(fields: [pollId], references: [id])
+
+  @@unique([usuarioId, pollId])
+  @@map("pollVotes")
+}
+
+model Poll {
+  id        Int        @id @default(autoincrement())
+  question  String?    @db.Text
+  closesAt  DateTime?  
+  createdAt DateTime   @default(now())
+  optionsJson String?  @db.NVarChar(max)
+
+  votes PollVote[]
+
+  @@map("polls")
+}

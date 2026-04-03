@@ -1,0 +1,230 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  /* Paleta neon gamer mais viva e clara (charcoal iluminado) */
+  --radius: 0.75rem;
+  --primary: oklch(0.74 0.3 330);      /* magenta neon intenso */
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.82 0.24 180);   /* teal/cyber green mais vivo */
+  --secondary-foreground: oklch(0.99 0 0);
+  --accent: oklch(0.79 0.26 250);      /* roxo-azul forte */
+  --accent-foreground: oklch(0.99 0 0);
+  --destructive: oklch(0.7 0.26 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --background: oklch(0.24 0.03 250);  /* bem mais claro que o anterior */
+  --foreground: oklch(0.98 0.01 260);
+  --card: oklch(0.28 0.03 250);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--card-foreground);
+  --muted: oklch(0.4 0.04 250);
+  --muted-foreground: oklch(0.82 0.05 260);
+  --border: oklch(0.34 0.03 250);
+  --input: oklch(0.3 0.03 250);
+  --ring: var(--primary);
+
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.82 0.24 190);
+  --chart-3: oklch(0.8 0.26 240);
+  --chart-4: oklch(0.74 0.28 300);
+  --chart-5: oklch(0.66 0.26 25);
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--secondary-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark {
+  /* Versão dark ainda clara comparado ao anterior */
+  --primary: oklch(0.74 0.3 330);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.82 0.24 180);
+  --secondary-foreground: oklch(0.99 0 0);
+  --accent: oklch(0.79 0.26 250);
+  --accent-foreground: oklch(0.99 0 0);
+  --background: oklch(0.2 0.03 250);
+  --foreground: oklch(0.97 0.01 260);
+  --card: oklch(0.24 0.03 250);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--card-foreground);
+  --muted: oklch(0.36 0.04 250);
+  --muted-foreground: oklch(0.8 0.05 260);
+  --border: oklch(0.3 0.03 250);
+  --input: oklch(0.26 0.03 250);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: oklch(0.82 0.24 190);
+  --chart-3: oklch(0.8 0.26 240);
+  --chart-4: oklch(0.74 0.28 300);
+  --chart-5: oklch(0.66 0.26 25);
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--secondary-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  /**
+   * Custom container utility that centers content and adds responsive padding.
+   *
+   * This overrides Tailwind's default container behavior to:
+   * - Auto-center content (mx-auto)
+   * - Add responsive horizontal padding
+   * - Set max-width for large screens
+   *
+   * Usage: <div className="container">...</div>
+   *
+   * For custom widths, use max-w-* utilities directly:
+   * <div className="max-w-6xl mx-auto px-4">...</div>
+   */
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem; /* 16px - mobile padding */
+    padding-right: 1rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem; /* 32px - desktop padding */
+      padding-right: 2rem;
+      max-width: 1280px; /* Standard content width */
+    }
+  }
+
+  /* Elegant and Perfect Style Components */
+  .gradient-text {
+    @apply text-transparent font-bold bg-clip-text;
+    background-image: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+  }
+
+  .glow-effect {
+    @apply shadow-[0_0_30px_rgba(168,85,247,0.6)];
+  }
+
+  .card-elegant {
+    @apply bg-card border border-border rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 backdrop-blur-sm;
+  }
+
+  .btn-primary {
+    @apply text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 active:scale-95;
+    background-image: linear-gradient(110deg, var(--primary), var(--accent));
+    box-shadow: 0 0 18px color-mix(in srgb, var(--primary) 50%, transparent);
+  }
+
+  .btn-secondary {
+    @apply text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 active:scale-95;
+    background-image: linear-gradient(110deg, var(--secondary), var(--accent));
+    box-shadow: 0 0 18px color-mix(in srgb, var(--secondary) 45%, transparent);
+  }
+
+  .neon-border {
+    @apply border-2;
+    border-color: color-mix(in srgb, var(--primary) 65%, var(--accent) 35%);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 45%, transparent);
+  }
+
+  .stat-card {
+    @apply rounded-xl p-4 transition-all duration-300 border;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--primary) 18%, transparent),
+      color-mix(in srgb, var(--secondary) 18%, transparent)
+    );
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--secondary) 30%);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+
+  .badge-elegant {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--primary) 22%, transparent),
+      color-mix(in srgb, var(--secondary) 22%, transparent)
+    );
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--secondary) 35%);
+  }
+}
