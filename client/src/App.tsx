@@ -5,7 +5,7 @@ import { Router as WouterRouter, Route, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import Home from "@/pages/Home";
 
 // Import Google Fonts
 if (typeof document !== "undefined") {
@@ -16,13 +16,13 @@ if (typeof document !== "undefined") {
   document.head.appendChild(link);
 }
 
-import Campeonatos from "./pages/Campeonatos";
+import Campeonatos from "@/pages/Campeonatos";
 import Ranking from "./pages/Ranking";
 import Perfil from "./pages/Perfil";
-import Chat from "./pages/Chat";
-import Admin from "./pages/Admin";
-import Cadastro from "./pages/Cadastro";
-import Login from "./pages/Login";
+import Chat from "@/pages/Chat";
+import Admin from "@/pages/Admin";
+import Cadastro from "@/pages/Cadastro";
+import Login from "@/pages/Login";
 
 function Router() {
   return (
