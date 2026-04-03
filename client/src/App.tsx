@@ -17,8 +17,8 @@ if (typeof document !== "undefined") {
 }
 
 import Campeonatos from "@/pages/Campeonatos";
-import Ranking from "./pages/Ranking";
-import Perfil from "./pages/Perfil";
+import Ranking from "@/pages/Ranking";
+import Perfil from "@/pages/Perfil";
 import Chat from "@/pages/Chat";
 import Admin from "@/pages/Admin";
 import Cadastro from "@/pages/Cadastro";
