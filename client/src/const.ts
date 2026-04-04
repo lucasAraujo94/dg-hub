@@ -12,9 +12,15 @@ const getRedirectUri = () => {
   const explicitRedirect = import.meta.env.VITE_GOOGLE_REDIRECT_URL;
   if (explicitRedirect) return explicitRedirect;
 
+  // Origem do backend. Em produção (Render), força o host principal caso nada seja fornecido.
   const apiOrigin =
     import.meta.env.VITE_BACKEND_ORIGIN ||
-    (typeof window !== "undefined" ? window.location.origin : "");
+    (typeof window !== "undefined" ? window.location.origin : "") ||
+    // Dev fallback for local testing; prod fallback for Render
+    (import.meta.env.MODE !== "production"
+      ? "http://localhost:3001"
+      : "https://dg-hub.onrender.com");
+
   const redirectPath = normalizePath(
     import.meta.env.VITE_GOOGLE_REDIRECT_PATH || "/auth/google/callback"
   );

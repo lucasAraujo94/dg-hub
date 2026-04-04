@@ -22,7 +22,7 @@ import HomeBg from "../assets/dg-games-bg.png";
 import { toast } from "sonner";
 
 export default function Home() {
-  const { user, loading, logout } = useAuth({
+  const { user, loading, error, logout } = useAuth({
     redirectOnUnauthenticated: true,
     redirectPath: "#/login",
   });
@@ -90,6 +90,31 @@ export default function Home() {
     { tipo: "geral", limite: 3 },
     { refetchOnWindowFocus: false }
   );
+
+  // Temporary render/debug logs to track why the Home might not render in prod
+  const dataSnapshot = {
+    polls: pollResultsQuery.data,
+    campeonatos: campeonatosQuery.data,
+    ranking: rankingTopQuery.data,
+  };
+  const isLoadingSnapshot = {
+    user: loading,
+    polls: pollResultsQuery.isLoading,
+    campeonatos: campeonatosQuery.isLoading,
+    ranking: rankingTopQuery.isLoading,
+  };
+  const errorSnapshot = {
+    auth: error ?? null,
+    polls: pollResultsQuery.error ?? null,
+    campeonatos: campeonatosQuery.error ?? null,
+    ranking: rankingTopQuery.error ?? null,
+  };
+
+  console.log("HOME RENDER");
+  console.log("data:", dataSnapshot);
+  console.log("user:", user);
+  console.log("isLoading:", isLoadingSnapshot);
+  console.log("error:", errorSnapshot);
 
   const activeChampionship = useMemo(() => {
     const list =
