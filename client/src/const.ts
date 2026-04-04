@@ -29,10 +29,14 @@ export const hasGoogleClientId = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 export const hasOAuthProvider =
   hasGoogleClientId || Boolean(import.meta.env.VITE_OAUTH_PORTAL_URL);
 
-export const getLoginUrl = () => {
+export const getLoginUrl = (source: string = "unspecified") => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
   const appId = import.meta.env.VITE_APP_ID || "dev";
   const redirectUri = getRedirectUri();
+  if (!redirectUri) {
+    console.error("[OAuth] redirect_uri empty, aborting authorize", { source });
+    return "";
+  }
   const statePayload = {
     redirectUri,
     returnTo: (typeof window !== "undefined" ? window.location.pathname : "/") || "/",
@@ -49,7 +53,7 @@ export const getLoginUrl = () => {
     googleAuth.searchParams.set("scope", "openid email profile");
     googleAuth.searchParams.set("state", state);
     googleAuth.searchParams.set("prompt", "select_account");
-    console.log("oauth_authorize_redirect_uri:", redirectUri);
+    console.log("oauth_authorize_redirect_uri:", redirectUri, "source:", source);
     return googleAuth.toString();
   }
 
