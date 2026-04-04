@@ -1,7 +1,5 @@
-import { prisma } from "./_core/prisma";
+import { Prisma, prisma } from "./_core/prisma";
 import { ENV } from "./_core/env";
-import prismaPkg from "@prisma/client";
-const { Prisma } = prismaPkg;
 
 type NullableString = string | null | undefined;
 
