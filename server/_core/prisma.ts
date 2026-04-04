@@ -1,7 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import prismaPkg from "@prisma/client";
 
-// Single prisma instance for the server
+const { PrismaClient } = prismaPkg;
+
+export const Prisma = prismaPkg.Prisma;
 export const prisma = new PrismaClient();
-
-export type Prisma = any;
-export type User = any;
