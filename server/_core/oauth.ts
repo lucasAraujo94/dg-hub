@@ -1,4 +1,5 @@
-﻿import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import axios from "axios";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
@@ -44,6 +45,16 @@ function getQueryParam(req: Request, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function describeAxiosError(error: unknown) {
+  if (!axios.isAxiosError(error)) return null;
+  return {
+    status: error.response?.status,
+    data: error.response?.data,
+    url: error.config?.url,
+    method: error.config?.method,
+  };
+}
+
 async function handleOAuthCallback(req: Request, res: Response) {
   const code = getQueryParam(req, "code");
   const state = getQueryParam(req, "state");
@@ -75,7 +86,7 @@ async function handleOAuthCallback(req: Request, res: Response) {
       console.error("[OAuth] Failed to persist user during callback", {
         error: dbError instanceof Error ? dbError.message : String(dbError),
         dbTarget: describeDbTarget(),
-        hint: "Se for erro de conexão/firewall, libere os IPs de saída do Render no Azure SQL",
+        hint: "Se for erro de conexao/firewall, libere os IPs de saida do Render no Azure SQL",
       });
       throw dbError;
     }
@@ -90,14 +101,20 @@ async function handleOAuthCallback(req: Request, res: Response) {
 
     res.redirect(302, decodedState.returnTo || "/");
   } catch (error) {
-    console.error("[OAuth] Callback failed", error);
+    const axiosDetail = describeAxiosError(error);
+    if (axiosDetail) {
+      console.error("[OAuth] Callback failed (axios)", axiosDetail);
+    } else {
+      console.error("[OAuth] Callback failed", error);
+    }
     const message =
       error instanceof Error ? error.message : typeof error === "string" ? error : "unknown error";
-    // Return sanitized detail even em produção para facilitar diagnóstico de redirect_uri_mismatch
+    // Return sanitized detail even em producao para facilitar diagnostico de redirect_uri_mismatch
     res.status(500).json({
       error: "OAuth callback failed",
       detail: message,
-      hint: "verifique GOOGLE_CLIENT_ID/SECRET, redirect_uri autorizado, variáveis VITE_* e conectividade com o banco",
+      hint: "verifique GOOGLE_CLIENT_ID/SECRET, redirect_uri autorizado, variaveis VITE_* e conectividade com o banco",
+      upstream: axiosDetail ?? undefined,
     });
   }
 }
