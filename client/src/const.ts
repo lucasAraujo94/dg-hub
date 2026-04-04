@@ -12,33 +12,19 @@ const normalizePath = (value: string) => {
   return `/${trimmed.replace(/^\/+/, "").replace(/\/+$/, "")}`;
 };
 
-// Redirect deve apontar para o backend (não GitHub Pages)
-const getRedirectUri = () => {
-  // Permite definir a URL completa diretamente
-  const explicitRedirect = import.meta.env.VITE_GOOGLE_REDIRECT_URL;
-  if (explicitRedirect) return explicitRedirect;
+// Redirect fixo para evitar divergência entre authorize e token exchange
+const GOOGLE_REDIRECT_URI =
+  import.meta.env.VITE_GOOGLE_REDIRECT_URL ||
+  (() => {
+    const origin = import.meta.env.VITE_BACKEND_ORIGIN;
+    const path = normalizePath(import.meta.env.VITE_GOOGLE_REDIRECT_PATH || "/auth/google/callback");
+    if (origin) return `${origin}${path}`;
+    return "https://app.dggames.online/auth/google/callback";
+  })();
 
-  const envOrigin = import.meta.env.VITE_BACKEND_ORIGIN;
-  const browserOrigin = typeof window !== "undefined" ? window.location.origin : "";
-  const isEnvLocal =
-    envOrigin?.includes("localhost") ||
-    envOrigin?.includes("127.0.0.1") ||
-    envOrigin?.startsWith("http://0.0.0.0");
+const getRedirectUri = () => GOOGLE_REDIRECT_URI;
 
-  // Em produção, evite usar um origin local por engano; prefira o origin real da página
-  const apiOrigin =
-    (!isEnvLocal && envOrigin) ||
-    browserOrigin ||
-    envOrigin ||
-    "";
-
-  const redirectPath = normalizePath(
-    import.meta.env.VITE_GOOGLE_REDIRECT_PATH || "/auth/google/callback"
-  );
-  return `${apiOrigin}${redirectPath}`;
-};
-
-// Generate login URL at runtime so redirect URI reflects the current origin/backend.
+// Generate login URL at runtime so redirect URI is consistent
 export const hasGoogleClientId = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 export const hasOAuthProvider =
   hasGoogleClientId || Boolean(import.meta.env.VITE_OAUTH_PORTAL_URL);
@@ -63,6 +49,7 @@ export const getLoginUrl = () => {
     googleAuth.searchParams.set("scope", "openid email profile");
     googleAuth.searchParams.set("state", state);
     googleAuth.searchParams.set("prompt", "select_account");
+    console.log("oauth_authorize_redirect_uri:", redirectUri);
     return googleAuth.toString();
   }
 

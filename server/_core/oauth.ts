@@ -10,6 +10,8 @@ type OAuthState = {
   returnTo?: string;
 };
 
+let oauthCallbackHits = 0;
+
 function describeDbTarget() {
   const url = process.env.DATABASE_URL;
   if (!url) return "DATABASE_URL not set";
@@ -58,6 +60,12 @@ function describeAxiosError(error: unknown) {
 async function handleOAuthCallback(req: Request, res: Response) {
   const code = getQueryParam(req, "code");
   const state = getQueryParam(req, "state");
+  oauthCallbackHits += 1;
+  console.log("[OAuth] Callback received", {
+    hasCode: Boolean(code),
+    hasState: Boolean(state),
+    hits: oauthCallbackHits,
+  });
 
   if (!code || !state) {
     res.status(400).json({ error: "code and state are required" });
