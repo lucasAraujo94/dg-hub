@@ -103,9 +103,23 @@ class OAuthService {
     code: string,
     state: string
   ): Promise<ExchangeTokenResponse | GoogleTokenResponse> {
+    const resolveRedirectUri = () => {
+      const explicit =
+        process.env.VITE_GOOGLE_REDIRECT_URL ||
+        process.env.GOOGLE_REDIRECT_URL;
+      if (explicit) return explicit;
+      const origin = process.env.VITE_BACKEND_ORIGIN;
+      const path =
+        process.env.VITE_GOOGLE_REDIRECT_PATH ||
+        "/auth/google/callback";
+      if (origin) return `${origin}${path}`;
+      return "https://app.dggames.online/auth/google/callback";
+    };
+
     // Prefer Google if client/secret configured
     if (ENV.googleClientId && ENV.googleClientSecret) {
-      const { redirectUri } = this.decodeState(state);
+      const redirectUri = resolveRedirectUri();
+      console.log("redirect_uri:", redirectUri);
       const body = new URLSearchParams({
         code,
         client_id: ENV.googleClientId,
@@ -138,7 +152,7 @@ class OAuthService {
         clientId: ENV.appId,
         grantType: "authorization_code",
         code,
-        redirectUri: this.decodeState(state).redirectUri,
+        redirectUri: resolveRedirectUri(),
       };
 
       const { data } = await this.client.post<ExchangeTokenResponse>(
@@ -149,7 +163,7 @@ class OAuthService {
     }
 
     // Google OAuth fallback
-    const redirectUri = this.decodeState(state).redirectUri;
+    const redirectUri = resolveRedirectUri();
     if (!ENV.googleClientId || !ENV.googleClientSecret) {
       throw new Error("Google OAuth not configured");
     }
