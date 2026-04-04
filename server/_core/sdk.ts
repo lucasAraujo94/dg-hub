@@ -316,6 +316,11 @@ class SDKServer {
 
   private getSessionSecret() {
     const secret = ENV.cookieSecret;
+    if (!secret || secret.length === 0) {
+      throw new Error(
+        "Session secret (JWT_SECRET) is not set. Define JWT_SECRET env var to sign/verify session cookies."
+      );
+    }
     return new TextEncoder().encode(secret);
   }
 
@@ -328,24 +333,26 @@ class SDKServer {
     openId: string,
     options: { expiresInMs?: number; name?: string } = {}
   ): Promise<string> {
+    // Fail fast if secret is missing to avoid "Zero-length key" downstream
+    const secretKey = this.getSessionSecret();
     return this.signSession(
       {
         openId,
         appId: ENV.appId,
         name: options.name || "",
       },
-      options
+      { ...options, secretKey }
     );
   }
 
   async signSession(
     payload: SessionPayload,
-    options: { expiresInMs?: number } = {}
+    options: { expiresInMs?: number; secretKey?: Uint8Array } = {}
   ): Promise<string> {
     const issuedAt = Date.now();
     const expiresInMs = options.expiresInMs ?? ONE_YEAR_MS;
     const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
-    const secretKey = this.getSessionSecret();
+    const secretKey = options.secretKey ?? this.getSessionSecret();
 
     return new SignJWT({
       openId: payload.openId,
