@@ -13,13 +13,17 @@ const getRedirectUri = () => {
   if (explicitRedirect) return explicitRedirect;
 
   // Origem do backend. Em produção (Render), força o host principal caso nada seja fornecido.
-  // Prefer explicit backend origin; fall back to known defaults; only then use window.origin (que em dev pode ser 5173)
+  // Prefer explicit backend origin. In dev, allow overriding the port; otherwise fall back to the current origin (prod).
+  const devOrigin =
+    typeof window !== "undefined" && window.location.hostname === "localhost"
+      ? `http://localhost:${import.meta.env.VITE_BACKEND_PORT ?? 3001}`
+      : null;
+
   const apiOrigin =
     import.meta.env.VITE_BACKEND_ORIGIN ||
-    (import.meta.env.MODE !== "production"
-      ? "http://localhost:3001"
-      : "https://dg-hub.onrender.com") ||
-    (typeof window !== "undefined" ? window.location.origin : "");
+    devOrigin ||
+    (typeof window !== "undefined" ? window.location.origin : "") ||
+    "https://dg-hub.onrender.com";
 
   const redirectPath = normalizePath(
     import.meta.env.VITE_GOOGLE_REDIRECT_PATH || "/auth/google/callback"
