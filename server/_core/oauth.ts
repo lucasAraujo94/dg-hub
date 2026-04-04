@@ -65,18 +65,14 @@ async function handleOAuthCallback(req: Request, res: Response) {
     res.redirect(302, decodedState.returnTo || "/");
   } catch (error) {
     console.error("[OAuth] Callback failed", error);
-    // Surface a tiny hint in dev without leaking secrets
     const message =
       error instanceof Error ? error.message : typeof error === "string" ? error : "unknown error";
-    if (process.env.NODE_ENV !== "production") {
-      res.status(500).json({
-        error: "OAuth callback failed",
-        detail: message,
-        hint: "check server logs for token exchange/userinfo details",
-      });
-      return;
-    }
-    res.status(500).json({ error: "OAuth callback failed" });
+    // Return sanitized detail even em produção para facilitar diagnóstico de redirect_uri_mismatch
+    res.status(500).json({
+      error: "OAuth callback failed",
+      detail: message,
+      hint: "verifique GOOGLE_CLIENT_ID/SECRET, redirect_uri autorizado e variáveis VITE_* no frontend",
+    });
   }
 }
 

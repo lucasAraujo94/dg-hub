@@ -18,9 +18,20 @@ const getRedirectUri = () => {
   const explicitRedirect = import.meta.env.VITE_GOOGLE_REDIRECT_URL;
   if (explicitRedirect) return explicitRedirect;
 
+  const envOrigin = import.meta.env.VITE_BACKEND_ORIGIN;
+  const browserOrigin = typeof window !== "undefined" ? window.location.origin : "";
+  const isEnvLocal =
+    envOrigin?.includes("localhost") ||
+    envOrigin?.includes("127.0.0.1") ||
+    envOrigin?.startsWith("http://0.0.0.0");
+
+  // Em produção, evite usar um origin local por engano; prefira o origin real da página
   const apiOrigin =
-    import.meta.env.VITE_BACKEND_ORIGIN ||
-    (typeof window !== "undefined" ? window.location.origin : "");
+    (!isEnvLocal && envOrigin) ||
+    browserOrigin ||
+    envOrigin ||
+    "";
+
   const redirectPath = normalizePath(
     import.meta.env.VITE_GOOGLE_REDIRECT_PATH || "/auth/google/callback"
   );
