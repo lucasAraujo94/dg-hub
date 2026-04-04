@@ -122,10 +122,12 @@ class OAuthService {
         );
         return data;
       } catch (error) {
-        console.error(
-          "[OAuth] Google token exchange failed",
-          util.inspect(formatAxiosError(error), { depth: null })
-        );
+        console.error("[OAuth] Google token exchange failed", {
+          detail: util.inspect(formatAxiosError(error), { depth: null }),
+          redirectUri,
+          clientId: ENV.googleClientId?.slice(0, 6) + "***",
+          hasSecret: Boolean(ENV.googleClientSecret),
+        });
         throw error;
       }
     }
