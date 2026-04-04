@@ -16,7 +16,7 @@ const getRedirectUri = () => {
   // Prefer explicit backend origin. In dev, allow overriding the port; otherwise fall back to the current origin (prod).
   const devOrigin =
     typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? `http://localhost:${import.meta.env.VITE_BACKEND_PORT ?? 3001}`
+      ? `http://localhost:${import.meta.env.VITE_BACKEND_PORT ?? 3002}`
       : null;
 
   const apiOrigin =
