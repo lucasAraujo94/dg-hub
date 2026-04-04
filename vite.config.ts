@@ -145,8 +145,11 @@ const plugins = [
   vitePluginManusDebugCollector(),
 ];
 
+// Base path for assets. Keep "/" for Render/standalone deploys; override with VITE_BASE if needed.
+const BASE_URL = process.env.VITE_BASE ?? "/";
+
 export default defineConfig({
-  base: "/dg-games/",
+  base: BASE_URL,
   plugins,
   resolve: {
     alias: {
