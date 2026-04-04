@@ -146,7 +146,7 @@ const plugins = [
 ];
 
 export default defineConfig({
-  base: "/dg-games/",
+base: "/",
   plugins,
   resolve: {
     alias: {
