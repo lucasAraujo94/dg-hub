@@ -1,4 +1,4 @@
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, UNAUTHED_ERR_MSG } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
@@ -42,6 +42,18 @@ export function useAuth(options?: UseAuthOptions) {
     retry: false,
     refetchOnWindowFocus: false,
     initialData: cachedUser ?? undefined,
+    onError: error => {
+      // Se a sessão expirou, limpa cache local para evitar "login fantasma"
+      const isUnauthorized =
+        error instanceof TRPCClientError && error.message === UNAUTHED_ERR_MSG;
+      if (isUnauthorized && typeof window !== "undefined") {
+        try {
+          localStorage.removeItem("manus-runtime-user-info");
+        } catch {
+          /* ignore */
+        }
+      }
+    },
   });
 
   const logoutMutation = trpc.auth.logout.useMutation({
@@ -67,14 +79,26 @@ export function useAuth(options?: UseAuthOptions) {
     }
   }, [logoutMutation, utils]);
 
+  const isUnauthorized =
+    meQuery.error instanceof TRPCClientError &&
+    meQuery.error.message === UNAUTHED_ERR_MSG;
+
+  const userSafe = isUnauthorized ? null : meQuery.data ?? null;
+
   const state = useMemo(
     () => ({
-      user: meQuery.data ?? null,
+      user: userSafe,
       loading: meQuery.isLoading || logoutMutation.isPending,
       error: meQuery.error ?? logoutMutation.error ?? null,
-      isAuthenticated: Boolean(meQuery.data),
+      isAuthenticated: Boolean(userSafe),
     }),
-    [meQuery.data, meQuery.error, meQuery.isLoading, logoutMutation.error, logoutMutation.isPending]
+    [
+      userSafe,
+      meQuery.error,
+      meQuery.isLoading,
+      logoutMutation.error,
+      logoutMutation.isPending,
+    ]
   );
 
   useEffect(() => {
