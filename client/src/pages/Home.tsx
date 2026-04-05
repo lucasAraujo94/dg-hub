@@ -341,47 +341,6 @@ export default function Home() {
           {!activeSection && (
             <div className="h-full flex items-start justify-center px-4">
               <div className="w-full max-w-5xl space-y-4">
-                <div className="rounded-3xl border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-xl p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.28em] text-emerald-200/80 mb-1">Campeonato</p>
-                      {campeonatosQuery.isLoading ? (
-                        <p className="text-sm text-muted-foreground">Carregando campeonatos...</p>
-                      ) : activeChampionship?.id ? (
-                        <>
-                          <h2 className="text-2xl font-bold text-white mb-1">{activeChampionship.nome}</h2>
-                          <p className="text-sm text-emerald-100/80">
-                            {activeChampionship.fase} • Início: {activeChampionship.inicio}
-                          </p>
-                          <p className="text-sm text-emerald-100/80">Prêmio: R$ {Number(activeChampionship.premio).toFixed(2)}</p>
-                        </>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado ainda.</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setActiveSection("campeonatos");
-                          setMenuOpen(false);
-                        }}
-                        disabled={campeonatosQuery.isLoading}
-                      >
-                        {campeonatosQuery.isLoading ? "Carregando..." : "Ver campeonatos"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="btn-primary"
-                        onClick={() => registrarInscricao(activeChampionship?.id)}
-                        disabled={campeonatosQuery.isLoading || !activeChampionship?.id}
-                      >
-                        Inscreva-se
-                      </Button>
-                    </div>
-                  </div>
-                </div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-white">Campeonatos</h3>
@@ -402,9 +361,7 @@ export default function Home() {
                     <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado.</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {campeonatosQuery.data
-                        ?.filter(c => !activeChampionship?.id || c.id !== activeChampionship.id)
-                        .map(c => {
+                      {campeonatosQuery.data?.map(c => {
                         const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
                         const status = (c as any).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
                         const faseLabel =
