@@ -1,4 +1,4 @@
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+Ôªøimport { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
@@ -40,6 +40,8 @@ import {
   resultadosEnquete,
   criarEnquete,
   excluirEnquete,
+  updateCampeonato,
+  deleteCampeonato,
 } from "./db";
 import { sdk } from "./_core/sdk";
 import bcrypt from "bcryptjs";
@@ -252,7 +254,7 @@ export const appRouter = router({
 
         const allowedMime = ["image/png", "image/jpeg", "image/webp"];
         if (!allowedMime.includes(input.mimeType.toLowerCase())) {
-          throw new Error("Apenas imagens PNG, JPEG ou WEBP s„o permitidas");
+          throw new Error("Apenas imagens PNG, JPEG ou WEBP s√£o permitidas");
         }
         const approxBytes = Math.floor((input.dataBase64.length * 3) / 4); // tamanho estimado
         const MAX_BYTES = 5 * 1024 * 1024; // 5MB
@@ -337,6 +339,42 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => createCampeonato(input)),
+    update: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          nome: z.string().optional(),
+          descricao: z.string().optional(),
+          dataInicio: z.date().optional(),
+          premioValor: z.number().optional(),
+          status: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => updateCampeonato(input)),
+    cancel: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => updateCampeonato({ id: input.id, status: "cancelado" })),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => deleteCampeonato(input.id)),
+    update: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          nome: z.string().optional(),
+          descricao: z.string().optional(),
+          dataInicio: z.date().optional(),
+          premioValor: z.number().optional(),
+          status: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => updateCampeonato(input)),
+    cancel: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => updateCampeonato({ id: input.id, status: "cancelado" })),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => deleteCampeonato(input.id)),
 
     inscrever: protectedProcedure
       .input(z.object({ campeonatoId: z.number() }))
@@ -455,7 +493,7 @@ export const appRouter = router({
         if (input.attachment) {
           const allowedMime = ["image/png", "image/jpeg", "image/webp", "image/gif"];
           if (!allowedMime.includes(input.attachment.mimeType.toLowerCase())) {
-            throw new Error("Apenas imagens (png, jpg, webp, gif) s„o permitidas no chat");
+            throw new Error("Apenas imagens (png, jpg, webp, gif) s√£o permitidas no chat");
           }
           const approxBytes = Math.floor((input.attachment.dataBase64.length * 3) / 4);
           const MAX_BYTES = 5 * 1024 * 1024; // 5MB
@@ -547,6 +585,7 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
+
 
 
 

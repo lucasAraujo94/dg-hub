@@ -52,6 +52,27 @@ export default function Campeonatos() {
       toast.error(error.message || "Falha ao inscrever");
     },
   });
+  const updateCampMutation = trpc.campeonatos.update.useMutation({
+    onSuccess: () => {
+      toast.success("Campeonato atualizado");
+      utils.campeonatos.list.invalidate();
+    },
+    onError: err => toast.error(err.message || "Falha ao atualizar campeonato"),
+  });
+  const cancelCampMutation = trpc.campeonatos.cancel.useMutation({
+    onSuccess: () => {
+      toast.success("Campeonato cancelado");
+      utils.campeonatos.list.invalidate();
+    },
+    onError: err => toast.error(err.message || "Falha ao cancelar campeonato"),
+  });
+  const deleteCampMutation = trpc.campeonatos.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Campeonato excluido");
+      utils.campeonatos.list.invalidate();
+    },
+    onError: err => toast.error(err.message || "Falha ao excluir campeonato"),
+  });
 
   useEffect(() => {
     if (selectedCampId || !campeonatosQuery.data?.length) return;
@@ -103,6 +124,8 @@ export default function Campeonatos() {
         return "bg-green-500/20 text-green-400 border-green-500/30";
       case "futuro":
         return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      case "cancelado":
+        return "bg-red-500/20 text-red-400 border-red-500/30";
       case "finalizado":
         return "bg-gray-500/20 text-gray-400 border-gray-500/30";
       default:
@@ -116,6 +139,8 @@ export default function Campeonatos() {
         return "Ativo";
       case "futuro":
         return "Futuro";
+      case "cancelado":
+        return "Cancelado";
       case "finalizado":
         return "Finalizado";
       default:
@@ -470,12 +495,58 @@ export default function Campeonatos() {
                           <Button
                             onClick={() => registrarInscricao(camp.id)}
                             disabled={inscricaoMutation.isPending}
-                          >
-                            {inscricaoMutation.isPending ? "Inscrevendo..." : "Confirmar"}
-                          </Button>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                        >
+                          {inscricaoMutation.isPending ? "Inscrevendo..." : "Confirmar"}
+                        </Button>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
+                  {isAdmin ? (
+                    <div className="flex flex-col gap-2 w-full">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const input = window.prompt("Nova data de inicio (yyyy-mm-dd hh:mm)", camp.inicio);
+                          if (!input) return;
+                          const parsed = new Date(input);
+                          if (Number.isNaN(parsed.getTime())) {
+                            toast.error("Data invalida");
+                            return;
+                          }
+                          updateCampMutation.mutate({ id: camp.id, dataInicio: parsed });
+                        }}
+                        disabled={updateCampMutation.isPending}
+                      >
+                        {updateCampMutation.isPending ? "Salvando..." : "Editar data de inicio"}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          if (window.confirm("Cancelar campeonato?")) {
+                            cancelCampMutation.mutate({ id: camp.id });
+                          }
+                        }}
+                        disabled={cancelCampMutation.isPending}
+                      >
+                        {cancelCampMutation.isPending ? "Cancelando..." : "Cancelar campeonato"}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          if (window.confirm("Excluir campeonato definitivamente?")) {
+                            deleteCampMutation.mutate({ id: camp.id });
+                          }
+                        }}
+                        disabled={deleteCampMutation.isPending}
+                      >
+                        {deleteCampMutation.isPending ? "Excluindo..." : "Excluir campeonato"}
+                      </Button>
+                    </div>
+                  ) : null}
                   </div>
                 </div>
               ))}

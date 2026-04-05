@@ -302,6 +302,30 @@ export async function createCampeonato(data: {
   });
 }
 
+export async function updateCampeonato(data: {
+  id: number;
+  nome?: string;
+  descricao?: string | null;
+  dataInicio?: Date;
+  premioValor?: number;
+  status?: string;
+}) {
+  return prisma.campeonato.update({
+    where: { id: data.id },
+    data: {
+      nome: data.nome ?? undefined,
+      descricao: data.descricao ?? undefined,
+      dataInicio: data.dataInicio ?? undefined,
+      premioValor: data.premioValor ?? undefined,
+      status: data.status ?? undefined,
+    },
+  });
+}
+
+export async function deleteCampeonato(id: number) {
+  return prisma.campeonato.delete({ where: { id } });
+}
+
 // Inscrições
 export async function inscreverCampeonato(usuarioId: number, campeonatoId: number) {
   return prisma.inscricao.create({ data: { usuarioId, campeonatoId } });
