@@ -13,6 +13,15 @@ type OAuthState = {
 let oauthCallbackHits = 0;
 const processedCodes = new Map<string, number>(); // code -> timestamp
 
+const CLEAN_REDIRECT = "/";
+const sanitizeReturnTo = (value?: string) => {
+  if (!value) return CLEAN_REDIRECT;
+  // Remove query/fragment to avoid reentrar no callback
+  const trimmed = value.split("?")[0]?.split("#")[0] ?? CLEAN_REDIRECT;
+  if (!trimmed || trimmed === "/auth/google/callback") return CLEAN_REDIRECT;
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed.replace(/^\/+/, "")}`;
+};
+
 function describeDbTarget() {
   const url = process.env.DATABASE_URL;
   if (!url) return "DATABASE_URL not set";
@@ -63,6 +72,7 @@ async function handleOAuthCallback(req: Request, res: Response) {
   const state = getQueryParam(req, "state");
   oauthCallbackHits += 1;
   console.log("[OAuth] Callback received", {
+    url: req.originalUrl,
     hasCode: Boolean(code),
     hasState: Boolean(state),
     hits: oauthCallbackHits,
@@ -80,7 +90,8 @@ async function handleOAuthCallback(req: Request, res: Response) {
       console.warn("[OAuth] Duplicate callback code detected, treating as already processed", {
         codeMask: `${code.slice(0, 4)}***`,
       });
-      return res.redirect(302, decodeState(state).returnTo || "/");
+      const safeTarget = sanitizeReturnTo(state ? decodeState(state).returnTo : CLEAN_REDIRECT);
+      return res.redirect(302, safeTarget);
     }
     processedCodes.set(code, now);
   }
@@ -125,7 +136,8 @@ async function handleOAuthCallback(req: Request, res: Response) {
     const cookieOptions = getSessionCookieOptions(req);
     res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-    res.redirect(302, decodedState.returnTo || "/");
+    const target = sanitizeReturnTo(decodedState.returnTo);
+    res.redirect(302, target);
   } catch (error) {
     const axiosDetail = describeAxiosError(error);
     if (axiosDetail) {
