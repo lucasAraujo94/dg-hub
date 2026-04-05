@@ -112,7 +112,7 @@ export function useAuth(options?: UseAuthOptions) {
     try {
       const payload = { ...meQuery.data };
       if (isHugeDataUrl((payload as any).avatarUrl)) {
-        // Não salvar data URL gigante no objeto principal; guardar só em dg-avatar-url
+        // Não salvar data URL gigante no objeto principal
         localStorage.setItem("dg-avatar-url", String((payload as any).avatarUrl));
         delete (payload as any).avatarUrl;
         delete (payload as any).avatar;

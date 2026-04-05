@@ -388,8 +388,10 @@ export const appRouter = router({
           throw new Error("Inscricoes encerradas para este campeonato");
         }
         if (camp.dataInicio) {
-          const cutoff = new Date(camp.dataInicio).getTime() - 24 * 60 * 60 * 1000; // 1 dia antes
-          if (Date.now() >= cutoff) {
+          const start = new Date(camp.dataInicio);
+          const startMs = start.getTime();
+          const cutoff = startMs - 24 * 60 * 60 * 1000; // 1 dia antes
+          if (!Number.isNaN(startMs) && Date.now() >= cutoff) {
             throw new Error("Inscricoes permitidas somente ate 1 dia antes do inicio");
           }
         }

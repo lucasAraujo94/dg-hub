@@ -100,7 +100,10 @@ export default function Perfil() {
               localStorage.setItem("manus-runtime-user-info", JSON.stringify({ ...cached, avatarUrl: data.url, avatar: data.url }));
             }
           }
-          localStorage.setItem("dg-avatar-url", data.url);
+          // Evita estourar quota com data URL gigante
+          if (!data.url.startsWith("data:") || data.url.length < 4000) {
+            localStorage.setItem("dg-avatar-url", data.url);
+          }
         } catch {
           /* ignore quota errors */
         }
