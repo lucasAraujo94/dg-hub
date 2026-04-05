@@ -6,6 +6,8 @@ import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 type Achievement = { nome: string; icon?: string; data?: string };
 type Historico = { nome: string; posicao: string; premio: number; data: string };
@@ -62,6 +64,8 @@ export default function Perfil() {
   const [photoPosX, setPhotoPosX] = useState(50);
   const [photoPosY, setPhotoPosY] = useState(50);
   const [savedAvatarUrl, setSavedAvatarUrl] = useState<string | null>(null);
+  const [hagoNickname, setHagoNickname] = useState<string>("");
+  const [displayPreference, setDisplayPreference] = useState<"real" | "hago" | "both">("both");
   const [showValorModal, setShowValorModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const avatarRef = useRef<HTMLDivElement | null>(null);
@@ -139,6 +143,20 @@ export default function Perfil() {
     refresh?.();
   }, [refresh]);
 
+  // Carrega preferências de nome/apelido
+  useEffect(() => {
+    try {
+      const savedNick = localStorage.getItem("dg-hago-nickname");
+      const savedPref = localStorage.getItem("dg-display-pref");
+      if (savedNick) setHagoNickname(savedNick);
+      if (savedPref === "real" || savedPref === "hago" || savedPref === "both") {
+        setDisplayPreference(savedPref);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   // Preview local na hora
   useEffect(() => {
     if (localPhotoPreview) {
@@ -172,10 +190,19 @@ export default function Perfil() {
   };
 
   const handleEditarPerfil = () => {
-    toast.info("Edição de perfil em breve");
+    toast.info("Edicao de perfil em breve");
   };
 
   const handleSalvarPerfil = async () => {
+    try {
+      localStorage.setItem("dg-hago-nickname", hagoNickname.trim());
+      localStorage.setItem("dg-display-pref", displayPreference);
+      utils.auth.me.setData(undefined, prev =>
+        prev ? { ...prev, nickname: hagoNickname.trim() || (prev as any)?.nickname } : prev
+      );
+    } catch {
+      /* ignore */
+    }
     await refresh?.();
     toast.success("Perfil salvo/atualizado");
   };
@@ -269,6 +296,13 @@ export default function Perfil() {
               </Button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Aviso para completar perfil */}
+      <div className="container mt-6">
+        <div className="rounded-xl border border-amber-400/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100 shadow-lg">
+          Complete seu perfil para personalizar como seu nome aparece no chat e nas paginas da comunidade.
         </div>
       </div>
 
@@ -403,6 +437,37 @@ export default function Perfil() {
               </div>
             </div>
 
+            <div className="grid gap-6 md:grid-cols-2 mb-6">
+              <div className="rounded-xl border border-border/60 bg-card/50 p-4 space-y-3">
+                <h3 className="text-lg font-semibold">Apelido no Hago</h3>
+                <Input
+                  placeholder="Seu apelido no Hago"
+                  value={hagoNickname}
+                  onChange={e => setHagoNickname(e.target.value)}
+                />
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Como exibir seu nome:</p>
+                  <RadioGroup value={displayPreference} onValueChange={val => setDisplayPreference(val as any)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="real" id="pref-real" />
+                      <Label htmlFor="pref-real">Nome de cadastro</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="hago" id="pref-hago" />
+                      <Label htmlFor="pref-hago">Apelido do Hago</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="both" id="pref-both" />
+                      <Label htmlFor="pref-both">Nome de cadastro (Apelido do Hago)</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Essa preferencia sera usada no chat e em telas que mostram seu nome. Use o botao "Salvar perfil" para guardar.
+                </p>
+              </div>
+            </div>
+
             {/* Saldo de Premios + saque */}
             <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border border-yellow-500/30 rounded-lg p-6 space-y-4">
               <div>
@@ -519,6 +584,7 @@ export default function Perfil() {
     </div>
   );
 }
+
 
 
 

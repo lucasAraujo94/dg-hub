@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, MessageCircle, Paperclip, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -12,6 +12,16 @@ export default function Chat() {
   const [mensagemGeral, setMensagemGeral] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const displayPref = useMemo(() => {
+    if (typeof window === "undefined") return { pref: "both", hago: "" };
+    try {
+      const pref = localStorage.getItem("dg-display-pref") || "both";
+      const hago = localStorage.getItem("dg-hago-nickname") || "";
+      return { pref, hago };
+    } catch {
+      return { pref: "both", hago: "" };
+    }
+  }, []);
 
   const parseMensagem = (raw: string) => {
     try {
@@ -90,17 +100,28 @@ export default function Chat() {
   };
 
   const renderMensagem = (msg: (typeof mensagensGeral)[number]) => {
-    const usuario = (msg as { usuario?: { id?: number; name?: string | null; nickname?: string | null; email?: string | null } }).usuario;
+    const usuario = (msg as { usuario?: { id?: number; name?: string | null; nickname?: string | null; email?: string | null; avatarUrl?: string | null } }).usuario;
     const currentUserName = user?.name || user?.email || undefined;
-    const base =
+    const baseName =
       usuario?.name ||
       usuario?.email ||
       (msg.usuarioId && user?.id === msg.usuarioId ? currentUserName : undefined) ||
       `Jogador ${msg.usuarioId ?? "?"}`;
-    const displayName = usuario?.nickname ? `${base} (${usuario.nickname})` : base;
+    const hago =
+      usuario?.nickname ||
+      (msg.usuarioId && user?.id === msg.usuarioId ? displayPref.hago : "");
+    let displayName = baseName;
+    if (displayPref.pref === "hago" && hago) {
+      displayName = hago;
+    } else if (displayPref.pref === "both" && hago) {
+      displayName = `${baseName} (${hago})`;
+    }
+    const avatarUrl =
+      (usuario as any)?.avatarUrl ||
+      (msg.usuarioId && user?.id === msg.usuarioId ? (user as any)?.avatarUrl || (user as any)?.avatar : null);
     const hora = msg.dataEnvio ? new Date(msg.dataEnvio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
     const conteudo = parseMensagem(msg.mensagem);
-    return { displayName, hora, conteudo };
+    return { displayName, hora, conteudo, avatarUrl };
   };
 
   const loadingGeral = mensagensGeralQuery.isLoading || enviarMensagem.isPending;
@@ -142,8 +163,12 @@ export default function Chat() {
                 const info = renderMensagem(msg);
                 return (
                   <div key={msg.id} className="flex gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-cyan-600 flex items-center justify-center text-white font-bold flex-shrink-0">
-                      {info.displayName[0]}
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-cyan-600 flex items-center justify-center text-white font-bold flex-shrink-0 overflow-hidden">
+                      {info.avatarUrl ? (
+                        <img src={info.avatarUrl} alt={info.displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        info.displayName[0]
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
