@@ -77,8 +77,10 @@ async function handleOAuthCallback(req: Request, res: Response) {
       }
     }
     if (processedCodes.has(code)) {
-      console.warn("[OAuth] Duplicate callback code detected, skipping", { codeMask: `${code.slice(0, 4)}***` });
-      return res.status(400).json({ error: "duplicate_code" });
+      console.warn("[OAuth] Duplicate callback code detected, treating as already processed", {
+        codeMask: `${code.slice(0, 4)}***`,
+      });
+      return res.redirect(302, decodeState(state).returnTo || "/");
     }
     processedCodes.set(code, now);
   }
