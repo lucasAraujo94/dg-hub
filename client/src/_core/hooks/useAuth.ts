@@ -26,9 +26,11 @@ export function useAuth(options?: UseAuthOptions) {
           try {
             const raw = localStorage.getItem("manus-runtime-user-info");
             const avatar = localStorage.getItem("dg-avatar-url");
+            if (!raw && avatar) {
+              return { avatarUrl: avatar, avatar };
+            }
             if (!raw) return null;
             const parsed = JSON.parse(raw);
-            // rehidrata avatar local salvo
             if (avatar && !parsed?.avatarUrl) {
               parsed.avatarUrl = avatar;
               parsed.avatar = avatar;

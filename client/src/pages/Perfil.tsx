@@ -348,10 +348,10 @@ export default function Perfil() {
       <section className="py-12 border-b border-border">
         <div className="container">
           <div className="card-elegant neon-border p-8">
-            <div className="flex items-center gap-8 mb-8">
+            <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-8 mb-8">
               <div
                 ref={avatarRef}
-                className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-2xl bg-card border border-border flex items-center justify-center shadow-lg overflow-hidden relative select-none"
+                className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-2xl bg-card border border-border flex items-center justify-center shadow-lg overflow-hidden relative select-none flex-shrink-0 min-w-[9rem] min-h-[9rem]"
                 style={{ cursor: profilePhotoUrl ? (dragging ? "grabbing" : "grab") : "default" }}
                 onMouseDown={e => {
                   if (!profilePhotoUrl) return;
