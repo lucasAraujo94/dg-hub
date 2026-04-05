@@ -13,6 +13,7 @@ export type InsertUser = {
   passwordHash?: NullableString;
   role?: "user" | "admin";
   lastSignedIn?: Date;
+  hideEmail?: boolean;
 };
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -25,6 +26,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   const role = user.openId === ENV.ownerOpenId ? ("admin" as const) : user.role;
 
   const lastSignedIn = user.lastSignedIn ?? new Date();
+  const hideEmail = user.hideEmail ?? undefined;
 
   await prisma.user.upsert({
     where: { openId: user.openId },
@@ -37,6 +39,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       passwordHash: user.passwordHash ?? null,
       role: role ?? "user",
       lastSignedIn,
+      hideEmail: hideEmail ?? false,
     },
     update: {
       name: user.name ?? undefined,
@@ -46,6 +49,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       passwordHash: user.passwordHash ?? undefined,
       role: role ?? undefined,
       lastSignedIn,
+      hideEmail,
     },
   });
 }
@@ -66,6 +70,7 @@ export async function listUsers() {
       role: true,
       createdAt: true,
       lastSignedIn: true,
+      hideEmail: true,
     },
   });
 }
@@ -215,6 +220,31 @@ export async function setUserAvatar(userId: number, avatarUrl: string) {
     where: { id: userId },
     data: { avatarUrl },
     select: { id: true, avatarUrl: true },
+  });
+}
+
+export async function setUserPreferences(
+  userId: number,
+  prefs: { nickname?: string | null; hideEmail?: boolean }
+) {
+  const normalizedNickname =
+    prefs.nickname !== undefined ? (prefs.nickname?.trim() || null) : undefined;
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      nickname: normalizedNickname,
+      hideEmail: prefs.hideEmail ?? undefined,
+    },
+    select: {
+      id: true,
+      nickname: true,
+      hideEmail: true,
+      email: true,
+      name: true,
+      role: true,
+      avatarUrl: true,
+      openId: true,
+    },
   });
 }
 

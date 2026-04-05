@@ -33,6 +33,7 @@ import {
   broadcastTournamentAnnouncement,
   criarMensagemChat,
   setUserAvatar,
+  setUserPreferences,
   sortearPartidasCampeonato,
   listUsers,
   votarEnquete,
@@ -286,6 +287,21 @@ export const appRouter = router({
 
         await setUserAvatar(ctx.user.id, url);
         return { url };
+      }),
+    setPreferences: protectedProcedure
+      .input(
+        z.object({
+          nickname: z.string().max(100).nullable().optional(),
+          hideEmail: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new Error("Usuario nao autenticado");
+        const updated = await setUserPreferences(ctx.user.id, {
+          nickname: input.nickname ?? undefined,
+          hideEmail: input.hideEmail ?? undefined,
+        });
+        return updated;
       }),
   }),
 

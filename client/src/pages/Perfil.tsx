@@ -108,6 +108,20 @@ export default function Perfil() {
     },
     onError: error => toast.error(error.message || "Falha ao salvar foto"),
   });
+  const setPreferencesMutation = trpc.profile.setPreferences.useMutation({
+    onSuccess: data => {
+      utils.auth.me.setData(undefined, prev => (prev ? { ...prev, ...data } : prev));
+      try {
+        const cached = utils.auth.me.getData(undefined);
+        if (cached && typeof window !== "undefined") {
+          localStorage.setItem("manus-runtime-user-info", JSON.stringify({ ...cached, ...data }));
+        }
+      } catch {
+        /* ignore */
+      }
+    },
+    onError: error => toast.error(error.message || "Falha ao salvar preferÇõÇæes"),
+  });
 
   // Sincroniza avatar inicial
   useEffect(() => {
@@ -163,6 +177,15 @@ export default function Perfil() {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof (user as any)?.hideEmail === "boolean") {
+      setHideEmail(Boolean((user as any).hideEmail));
+    }
+    if (typeof (user as any)?.nickname === "string") {
+      setHagoNickname((user as any).nickname || "");
+    }
+  }, [user]);
+
   // Preview local na hora
   useEffect(() => {
     if (localPhotoPreview) {
@@ -204,14 +227,22 @@ export default function Perfil() {
       localStorage.setItem("dg-hago-nickname", hagoNickname.trim());
       localStorage.setItem("dg-display-pref", displayPreference);
       localStorage.setItem("dg-hide-email", hideEmail ? "true" : "false");
-      utils.auth.me.setData(undefined, prev =>
-        prev ? { ...prev, nickname: hagoNickname.trim() || (prev as any)?.nickname, hideEmail } : prev
-      );
     } catch {
       /* ignore */
     }
-    await refresh?.();
-    toast.success("Perfil salvo/atualizado");
+    try {
+      await setPreferencesMutation.mutateAsync({
+        nickname: hagoNickname.trim() || null,
+        hideEmail,
+      });
+      utils.auth.me.setData(undefined, prev =>
+        prev ? { ...prev, nickname: hagoNickname.trim() || (prev as any)?.nickname, hideEmail } : prev
+      );
+      await refresh?.();
+      toast.success("Perfil salvo/atualizado");
+    } catch (error: any) {
+      toast.error(error?.message || "Falha ao salvar perfil");
+    }
   };
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
