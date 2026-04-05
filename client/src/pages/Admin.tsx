@@ -327,12 +327,16 @@ export default function Admin() {
                 <div className="space-y-3">
                   {usuariosQuery.data?.map(u => (
                     <div key={u.id} className="flex items-center justify-between p-4 bg-card/50 rounded-lg border border-border/50">
-                      <div>
+                      <div className="flex flex-col gap-1">
+                        <span className="inline-flex items-center gap-2 text-xs text-green-400">
+                          <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                          online
+                        </span>
                         <p className="font-semibold">
                           {u.nickname ? `${u.name || u.email || u.openId} (${u.nickname})` : u.name || u.email || u.openId}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {u.email || "sem email"} - role: <span className="font-semibold">{u.role}</span>
+                          {(u as any)?.hideEmail ? "email oculto" : u.email || "sem email"} - role: <span className="font-semibold">{u.role}</span>
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Último acesso: {u.lastSignedIn ? new Date(u.lastSignedIn as any).toLocaleString("pt-BR") : "n/d"}
@@ -359,3 +363,4 @@ export default function Admin() {
     </div>
   );
 }
+
