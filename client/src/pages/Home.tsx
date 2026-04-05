@@ -402,7 +402,9 @@ export default function Home() {
                     <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado.</p>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {campeonatosQuery.data?.map(c => {
+                      {campeonatosQuery.data
+                        ?.filter(c => !activeChampionship?.id || c.id !== activeChampionship.id)
+                        .map(c => {
                         const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
                         const status = (c as any).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
                         const faseLabel =
@@ -410,15 +412,15 @@ export default function Home() {
                         return (
                           <div key={c.id} className="p-3 rounded-xl border border-white/10 bg-white/5">
                             <div className="flex items-center justify-between mb-1">
-                              <div>
-                                <h4 className="font-semibold text-white">{c.nome}</h4>
-                                <p className="text-xs text-muted-foreground">{faseLabel}</p>
+                              <div className="min-w-0">
+                                <h4 className="font-semibold text-white break-words">{c.nome}</h4>
+                                <p className="text-xs text-muted-foreground break-words">{faseLabel}</p>
                               </div>
                               <span className="text-xs text-muted-foreground">
                                 {dataInicio ? dataInicio.toLocaleDateString("pt-BR") : "Data a definir"}
                               </span>
                             </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
+                            <p className="text-xs text-muted-foreground line-clamp-2 break-words mb-1">
                               {(c as { descricao?: string | null }).descricao ?? "Campeonato ativo"}
                             </p>
                             <div className="flex items-center justify-between text-xs text-white/80">
