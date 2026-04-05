@@ -95,14 +95,16 @@ export default function Perfil() {
       const cached = utils.auth.me.getData(undefined);
       if (typeof window !== "undefined") {
         try {
-          if (!data.url.startsWith("data:") || data.url.length < 4000) {
+          const isData = data.url.startsWith("data:");
+          const isHuge = data.url.length > 1500;
+          if (!isData && !isHuge) {
             if (cached) {
               localStorage.setItem("manus-runtime-user-info", JSON.stringify({ ...cached, avatarUrl: data.url, avatar: data.url }));
             }
-          }
-          // Evita estourar quota com data URL gigante
-          if (!data.url.startsWith("data:") || data.url.length < 4000) {
             localStorage.setItem("dg-avatar-url", data.url);
+          } else {
+            // Não persiste data URL grande no storage para evitar quota exceeded
+            localStorage.removeItem("dg-avatar-url");
           }
         } catch {
           /* ignore quota errors */

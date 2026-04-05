@@ -15,8 +15,10 @@ function normalizeRedirect(path: string) {
   return `#/${path}`;
 }
 
-const isHugeDataUrl = (value: unknown) =>
-  typeof value === "string" && value.startsWith("data:") && value.length > 4000;
+const isDataUrl = (value: unknown) =>
+  typeof value === "string" && value.startsWith("data:");
+const isHuge = (value: unknown, limit: number) =>
+  typeof value === "string" && value.length > limit;
 
 export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
@@ -111,13 +113,14 @@ export function useAuth(options?: UseAuthOptions) {
     if (!meQuery.data) return;
     try {
       const payload = { ...meQuery.data };
-      if (isHugeDataUrl((payload as any).avatarUrl)) {
-        // Não salvar data URL gigante no objeto principal
-        localStorage.setItem("dg-avatar-url", String((payload as any).avatarUrl));
+      const avatarUrl = (payload as any).avatarUrl as string | undefined;
+      // Armazena avatar separado apenas se for URL "curta" e não data URL gigante
+      if (avatarUrl && !isDataUrl(avatarUrl) && !isHuge(avatarUrl, 1500)) {
+        localStorage.setItem("dg-avatar-url", avatarUrl);
+      }
+      if (avatarUrl && (isDataUrl(avatarUrl) || isHuge(avatarUrl, 1500))) {
         delete (payload as any).avatarUrl;
         delete (payload as any).avatar;
-      } else if ((payload as any).avatarUrl) {
-        localStorage.setItem("dg-avatar-url", String((payload as any).avatarUrl));
       }
       localStorage.setItem("manus-runtime-user-info", JSON.stringify(payload));
     } catch {
