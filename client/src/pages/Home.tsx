@@ -92,6 +92,16 @@ export default function Home() {
     { refetchOnWindowFocus: false }
   );
 
+  const onlinePlayers = useMemo(() => {
+    if (!user) return [];
+    return [
+      {
+        id: user.id ?? 0,
+        name: user.name || user.email || "Jogador",
+      },
+    ];
+  }, [user]);
+
   const dataSnapshot = {
     polls: pollResultsQuery.data,
     campeonatos: campeonatosQuery.data,
@@ -506,6 +516,20 @@ export default function Home() {
                 <Button asChild size="sm">
                   <Link href="/campeonatos">Abrir página</Link>
                 </Button>
+              </div>
+              <div className="rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-3">
+                <p className="text-sm text-emerald-100 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  Jogadores online
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2 text-sm text-emerald-100">
+                  {onlinePlayers.map(p => (
+                    <span key={p.id} className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+                      <span className="w-2 h-2 rounded-full bg-green-400" />
+                      {p.name}
+                    </span>
+                  ))}
+                </div>
               </div>
               {user?.role === "admin" ? (
                 <div className="rounded-lg border border-border/60 bg-card/60 p-3 flex items-center justify-between">

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Achievement = { nome: string; icon?: string; data?: string };
 type Historico = { nome: string; posicao: string; premio: number; data: string };
@@ -66,6 +67,7 @@ export default function Perfil() {
   const [savedAvatarUrl, setSavedAvatarUrl] = useState<string | null>(null);
   const [hagoNickname, setHagoNickname] = useState<string>("");
   const [displayPreference, setDisplayPreference] = useState<"real" | "hago" | "both">("both");
+  const [hideEmail, setHideEmail] = useState(false);
   const [showValorModal, setShowValorModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const avatarRef = useRef<HTMLDivElement | null>(null);
@@ -148,9 +150,13 @@ export default function Perfil() {
     try {
       const savedNick = localStorage.getItem("dg-hago-nickname");
       const savedPref = localStorage.getItem("dg-display-pref");
+      const savedHideEmail = localStorage.getItem("dg-hide-email");
       if (savedNick) setHagoNickname(savedNick);
       if (savedPref === "real" || savedPref === "hago" || savedPref === "both") {
         setDisplayPreference(savedPref);
+      }
+      if (savedHideEmail === "true") {
+        setHideEmail(true);
       }
     } catch {
       /* ignore */
@@ -197,8 +203,9 @@ export default function Perfil() {
     try {
       localStorage.setItem("dg-hago-nickname", hagoNickname.trim());
       localStorage.setItem("dg-display-pref", displayPreference);
+      localStorage.setItem("dg-hide-email", hideEmail ? "true" : "false");
       utils.auth.me.setData(undefined, prev =>
-        prev ? { ...prev, nickname: hagoNickname.trim() || (prev as any)?.nickname } : prev
+        prev ? { ...prev, nickname: hagoNickname.trim() || (prev as any)?.nickname, hideEmail } : prev
       );
     } catch {
       /* ignore */
@@ -465,6 +472,10 @@ export default function Perfil() {
                 <p className="text-xs text-muted-foreground">
                   Essa preferencia sera usada no chat e em telas que mostram seu nome. Use o botao "Salvar perfil" para guardar.
                 </p>
+                <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card/60 p-2">
+                  <Checkbox id="hide-email" checked={hideEmail} onCheckedChange={val => setHideEmail(Boolean(val))} />
+                  <Label htmlFor="hide-email" className="text-sm">Ocultar meu email nas listagens (admin)</Label>
+                </div>
               </div>
             </div>
 
