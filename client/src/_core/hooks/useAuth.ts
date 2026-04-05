@@ -25,8 +25,15 @@ export function useAuth(options?: UseAuthOptions) {
       ? (() => {
           try {
             const raw = localStorage.getItem("manus-runtime-user-info");
+            const avatar = localStorage.getItem("dg-avatar-url");
             if (!raw) return null;
-            return JSON.parse(raw);
+            const parsed = JSON.parse(raw);
+            // rehidrata avatar local salvo
+            if (avatar && !parsed?.avatarUrl) {
+              parsed.avatarUrl = avatar;
+              parsed.avatar = avatar;
+            }
+            return parsed;
           } catch {
             return null;
           }
@@ -99,6 +106,9 @@ export function useAuth(options?: UseAuthOptions) {
     if (!meQuery.data) return;
     try {
       localStorage.setItem("manus-runtime-user-info", JSON.stringify(meQuery.data));
+      if ((meQuery.data as any)?.avatarUrl) {
+        localStorage.setItem("dg-avatar-url", (meQuery.data as any).avatarUrl as string);
+      }
     } catch {
       /* ignore */
     }

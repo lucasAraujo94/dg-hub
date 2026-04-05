@@ -1,4 +1,4 @@
-﻿import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
@@ -64,7 +64,7 @@ export const appRouter = router({
           email: z.string().email(),
           password: z.string().min(8),
           name: z.string().min(2),
-          nickname: z.string().min(2), // Nome no Hago obrigat�rio
+          nickname: z.string().min(2), // Nome no Hago obrigat?rio
         })
       )
       .mutation(async ({ input, ctx }) => {
@@ -252,7 +252,7 @@ export const appRouter = router({
 
         const allowedMime = ["image/png", "image/jpeg", "image/webp"];
         if (!allowedMime.includes(input.mimeType.toLowerCase())) {
-          throw new Error("Apenas imagens PNG, JPEG ou WEBP são permitidas");
+          throw new Error("Apenas imagens PNG, JPEG ou WEBP s�o permitidas");
         }
         const approxBytes = Math.floor((input.dataBase64.length * 3) / 4); // tamanho estimado
         const MAX_BYTES = 5 * 1024 * 1024; // 5MB
@@ -271,19 +271,9 @@ export const appRouter = router({
           const stored = await storagePut(relKey, buffer, input.mimeType);
           url = stored.url;
         } catch (error) {
-          console.warn("[Avatar] Storage upload failed, using local disk fallback", error);
-          try {
-            const uploadsDir = path.join(process.cwd(), "uploads", "avatars", String(ctx.user.id));
-            await fs.mkdir(uploadsDir, { recursive: true });
-            const filePath = path.join(uploadsDir, safeName);
-            await fs.writeFile(filePath, buffer);
-            url = `/uploads/avatars/${ctx.user.id}/${safeName}`;
-          } catch (localErr) {
-            console.error("[Avatar] Local disk fallback failed, using inline data URL", localErr);
-            // Último recurso: data URL (pode ficar maior, mas garante render)
-            url = `data:${input.mimeType};base64,${input.dataBase64}`;
+          console.warn("[Avatar] Storage upload failed, using inline data URL fallback", error);
+          url = `data:${input.mimeType};base64,${input.dataBase64}`;
           }
-        }
 
         await setUserAvatar(ctx.user.id, url);
         return { url };
@@ -465,7 +455,7 @@ export const appRouter = router({
         if (input.attachment) {
           const allowedMime = ["image/png", "image/jpeg", "image/webp", "image/gif"];
           if (!allowedMime.includes(input.attachment.mimeType.toLowerCase())) {
-            throw new Error("Apenas imagens (png, jpg, webp, gif) são permitidas no chat");
+            throw new Error("Apenas imagens (png, jpg, webp, gif) s�o permitidas no chat");
           }
           const approxBytes = Math.floor((input.attachment.dataBase64.length * 3) / 4);
           const MAX_BYTES = 5 * 1024 * 1024; // 5MB
@@ -557,6 +547,8 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
+
+
 
 
 
