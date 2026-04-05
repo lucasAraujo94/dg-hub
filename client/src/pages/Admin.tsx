@@ -318,53 +318,53 @@ export default function Admin() {
                     {campeonatosQuery.data?.map(c => {
                       const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
                       return (
-                        <div key={c.id} className="p-3 rounded-lg border border-border/60 bg-card/60 flex flex-col gap-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
+                        <div key={c.id} className="p-3 rounded-lg border border-border/60 bg-card/60 flex flex-col gap-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
                               <p className="font-semibold break-words">{c.nome}</p>
                               <p className="text-xs text-muted-foreground">
                                 {dataInicio ? dataInicio.toLocaleString("pt-BR") : "Sem data definida"} — status: {(c as any).status ?? "ativo"}
                               </p>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  const input = window.prompt("Nova data/hora (AAAA-MM-DD HH:mm)", dataInicio ? dataInicio.toISOString().slice(0, 16).replace("T", " ") : "");
-                                  if (!input) return;
-                                  const parsed = new Date(input.replace(" ", "T"));
-                                  if (Number.isNaN(parsed.getTime())) {
-                                    toast.error("Data invalida");
-                                    return;
-                                  }
-                                  atualizarCampMutation.mutate({ id: c.id, dataInicio: parsed });
-                                }}
-                                disabled={atualizarCampMutation.isPending}
-                              >
-                                {atualizarCampMutation.isPending ? "Salvando..." : "Editar data"}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => cancelarCampMutation.mutate({ id: c.id })}
-                                disabled={cancelarCampMutation.isPending}
-                              >
-                                {cancelarCampMutation.isPending ? "Cancelando..." : "Cancelar"}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => {
-                                  if (window.confirm("Excluir campeonato definitivamente?")) {
-                                    excluirCampMutation.mutate({ id: c.id });
-                                  }
-                                }}
-                                disabled={excluirCampMutation.isPending}
-                              >
-                                {excluirCampMutation.isPending ? "Excluindo..." : "Excluir"}
-                              </Button>
-                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const input = window.prompt("Nova data/hora (AAAA-MM-DD HH:mm)", dataInicio ? dataInicio.toISOString().slice(0, 16).replace("T", " ") : "");
+                                if (!input) return;
+                                const parsed = new Date(input.replace(" ", "T"));
+                                if (Number.isNaN(parsed.getTime())) {
+                                  toast.error("Data invalida");
+                                  return;
+                                }
+                                atualizarCampMutation.mutate({ id: c.id, dataInicio: parsed });
+                              }}
+                              disabled={atualizarCampMutation.isPending}
+                            >
+                              {atualizarCampMutation.isPending ? "Salvando..." : "Editar data"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => cancelarCampMutation.mutate({ id: c.id })}
+                              disabled={cancelarCampMutation.isPending}
+                            >
+                              {cancelarCampMutation.isPending ? "Cancelando..." : "Cancelar"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => {
+                                if (window.confirm("Excluir campeonato definitivamente?")) {
+                                  excluirCampMutation.mutate({ id: c.id });
+                                }
+                              }}
+                              disabled={excluirCampMutation.isPending}
+                            >
+                              {excluirCampMutation.isPending ? "Excluindo..." : "Excluir"}
+                            </Button>
                           </div>
                         </div>
                       );
