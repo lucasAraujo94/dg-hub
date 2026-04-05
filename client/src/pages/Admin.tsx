@@ -50,6 +50,27 @@ export default function Admin() {
     refetchOnWindowFocus: false,
     enabled: user?.role === "admin",
   });
+  const atualizarCampMutation = trpc.campeonatos.update.useMutation({
+    onSuccess: () => {
+      toast.success("Campeonato atualizado");
+      campeonatosQuery.refetch();
+    },
+    onError: error => toast.error(error.message || "Falha ao atualizar campeonato"),
+  });
+  const cancelarCampMutation = trpc.campeonatos.cancel.useMutation({
+    onSuccess: () => {
+      toast.success("Campeonato cancelado");
+      campeonatosQuery.refetch();
+    },
+    onError: error => toast.error(error.message || "Falha ao cancelar campeonato"),
+  });
+  const excluirCampMutation = trpc.campeonatos.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Campeonato excluido");
+      campeonatosQuery.refetch();
+    },
+    onError: error => toast.error(error.message || "Falha ao excluir campeonato"),
+  });
   const usuariosSelect = useMemo(() => usuariosQuery.data ?? [], [usuariosQuery.data]);
   const setRoleMutation = trpc.admin.setRole.useMutation({
     onSuccess: () => usuariosQuery.refetch(),
@@ -282,6 +303,74 @@ export default function Admin() {
                 <Button className="btn-primary w-full mt-4" onClick={handleSortear} disabled={sortearPartidasMutation.isPending}>
                   {sortearPartidasMutation.isPending ? "Sorteando..." : "Sortear Partidas"}
                 </Button>
+              </div>
+
+              <div className="card-elegant">
+                <h2 className="text-xl font-bold mb-4">Gerenciar Campeonatos</h2>
+                {campeonatosQuery.isLoading ? <p className="text-sm text-muted-foreground">Carregando campeonatos...</p> : null}
+                {campeonatosQuery.error ? (
+                  <p className="text-sm text-red-400">Erro: {campeonatosQuery.error.message}</p>
+                ) : null}
+                {(campeonatosQuery.data?.length ?? 0) === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {campeonatosQuery.data?.map(c => {
+                      const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
+                      return (
+                        <div key={c.id} className="p-3 rounded-lg border border-border/60 bg-card/60 flex flex-col gap-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="font-semibold break-words">{c.nome}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {dataInicio ? dataInicio.toLocaleString("pt-BR") : "Sem data definida"} — status: {(c as any).status ?? "ativo"}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const input = window.prompt("Nova data/hora (AAAA-MM-DD HH:mm)", dataInicio ? dataInicio.toISOString().slice(0, 16).replace("T", " ") : "");
+                                  if (!input) return;
+                                  const parsed = new Date(input.replace(" ", "T"));
+                                  if (Number.isNaN(parsed.getTime())) {
+                                    toast.error("Data invalida");
+                                    return;
+                                  }
+                                  atualizarCampMutation.mutate({ id: c.id, dataInicio: parsed });
+                                }}
+                                disabled={atualizarCampMutation.isPending}
+                              >
+                                {atualizarCampMutation.isPending ? "Salvando..." : "Editar data"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => cancelarCampMutation.mutate({ id: c.id })}
+                                disabled={cancelarCampMutation.isPending}
+                              >
+                                {cancelarCampMutation.isPending ? "Cancelando..." : "Cancelar"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  if (window.confirm("Excluir campeonato definitivamente?")) {
+                                    excluirCampMutation.mutate({ id: c.id });
+                                  }
+                                }}
+                                disabled={excluirCampMutation.isPending}
+                              >
+                                {excluirCampMutation.isPending ? "Excluindo..." : "Excluir"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </TabsContent>
 

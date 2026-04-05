@@ -102,10 +102,13 @@ export default function Campeonatos() {
           (camp as { totalInscritos?: number }).totalInscritos ??
           (camp as { _count?: { inscricoes?: number } })._count?.inscricoes ??
           0;
-        const inscricoesEncerradas =
-          status === "cancelado" ||
-          status === "finalizado" ||
-          (dataInicio ? Date.now() >= dataInicio.getTime() - 24 * 60 * 60 * 1000 : false);
+        const inscricoesEncerradas = (() => {
+          if (status === "cancelado" || status === "finalizado") return true;
+          if (!dataInicio) return false;
+          const diff = dataInicio.getTime() - Date.now();
+          if (diff <= 0) return true; // já começou
+          return diff < 24 * 60 * 60 * 1000; // menos de 24h
+        })();
 
         return {
           id: camp.id,

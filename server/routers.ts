@@ -390,9 +390,14 @@ export const appRouter = router({
         if (camp.dataInicio) {
           const start = new Date(camp.dataInicio);
           const startMs = start.getTime();
-          const cutoff = startMs - 24 * 60 * 60 * 1000; // 1 dia antes
-          if (!Number.isNaN(startMs) && Date.now() >= cutoff) {
-            throw new Error("Inscricoes permitidas somente ate 1 dia antes do inicio");
+          if (!Number.isNaN(startMs)) {
+            const diff = startMs - Date.now();
+            if (diff <= 0) {
+              throw new Error("Campeonato ja iniciou ou foi encerrado");
+            }
+            if (diff < 24 * 60 * 60 * 1000) {
+              throw new Error("Inscricoes permitidas somente ate 1 dia antes do inicio");
+            }
           }
         }
         await inscreverCampeonato(ctx.user.id, input.campeonatoId);
