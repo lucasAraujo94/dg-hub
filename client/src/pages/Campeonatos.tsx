@@ -102,6 +102,10 @@ export default function Campeonatos() {
           (camp as { totalInscritos?: number }).totalInscritos ??
           (camp as { _count?: { inscricoes?: number } })._count?.inscricoes ??
           0;
+        const inscricoesEncerradas =
+          status === "cancelado" ||
+          status === "finalizado" ||
+          (dataInicio ? Date.now() >= dataInicio.getTime() - 24 * 60 * 60 * 1000 : false);
 
         return {
           id: camp.id,
@@ -110,7 +114,8 @@ export default function Campeonatos() {
           participantes: participantesCount,
           premio: (camp as { premioValor?: number }).premioValor ?? 0,
           inicio: dataInicio ? dataInicio.toLocaleString("pt-BR") : "Data a definir",
-          fase: camp.descricao ?? "Em breve",
+          fase: inscricoesEncerradas ? "Inscricoes encerradas" : "Fase de inscricoes",
+          inscricoesEncerradas,
         };
       }) ?? [];
 
@@ -437,70 +442,70 @@ export default function Campeonatos() {
                   </div>
 
                   <div className="flex gap-3">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          className="flex-1 btn-primary"
-                          onClick={() => setSelectedCampId(camp.id)}
-                        >
-                          Ver Detalhes
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Inscritos no {camp.nome}</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Total de inscritos: {inscritosNomes.length}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <div className="space-y-2 max-h-64 overflow-y-auto border rounded-md p-3 bg-muted/30">
-                          {inscritosQuery.isLoading ? (
-                            <p className="text-sm text-muted-foreground">Carregando inscritos...</p>
-                          ) : null}
-                          {!inscritosQuery.isLoading && participantes.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Nenhuma inscricao ainda.</p>
-                          ) : null}
-                          {participantes.map((pessoa, idx) => (
-                            <div key={`${pessoa.name}-${idx}`} className="flex items-center justify-between text-sm">
-                              <span className="font-medium">{pessoa.name}</span>
-                              {pessoa.email ? <span className="text-muted-foreground">{pessoa.email}</span> : null}
-                            </div>
-                          ))}
-                        </div>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Fechar</AlertDialogCancel>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          className="flex-1 btn-secondary"
-                          disabled={camp.status === "finalizado"}
-                          onClick={() => setSelectedCampId(camp.id)}
-                        >
-                          Se inscrever
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmar inscricao</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Confirme sua participacao no {camp.nome} marcado para {camp.inicio}.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
                           <Button
-                            onClick={() => registrarInscricao(camp.id)}
-                            disabled={inscricaoMutation.isPending}
-                        >
-                          {inscricaoMutation.isPending ? "Inscrevendo..." : "Confirmar"}
-                        </Button>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                            className="flex-1 btn-primary"
+                            onClick={() => setSelectedCampId(camp.id)}
+                          >
+                            Ver Detalhes
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Inscritos no {camp.nome}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Total de inscritos: {inscritosNomes.length}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <div className="space-y-2 max-h-64 overflow-y-auto border rounded-md p-3 bg-muted/30">
+                            {inscritosQuery.isLoading ? (
+                              <p className="text-sm text-muted-foreground">Carregando inscritos...</p>
+                            ) : null}
+                            {!inscritosQuery.isLoading && participantes.length === 0 ? (
+                              <p className="text-sm text-muted-foreground">Nenhuma inscricao ainda.</p>
+                            ) : null}
+                            {participantes.map((pessoa, idx) => (
+                              <div key={`${pessoa.name}-${idx}`} className="flex items-center justify-between text-sm">
+                                <span className="font-medium">{pessoa.name}</span>
+                                {pessoa.email ? <span className="text-muted-foreground">{pessoa.email}</span> : null}
+                              </div>
+                            ))}
+                          </div>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Fechar</AlertDialogCancel>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            className="flex-1 btn-secondary"
+                            disabled={camp.status === "finalizado" || camp.status === "cancelado" || camp.inscricoesEncerradas}
+                            onClick={() => setSelectedCampId(camp.id)}
+                          >
+                            {camp.inscricoesEncerradas ? "Inscricoes encerradas" : "Se inscrever"}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar inscricao</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Confirme sua participacao no {camp.nome} marcado para {camp.inicio}.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <Button
+                              onClick={() => registrarInscricao(camp.id)}
+                              disabled={inscricaoMutation.isPending || camp.inscricoesEncerradas}
+                            >
+                              {inscricaoMutation.isPending ? "Inscrevendo..." : "Confirmar"}
+                            </Button>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
 
                   {isAdmin ? (
                     <div className="flex flex-col gap-2 w-full">

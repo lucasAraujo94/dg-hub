@@ -380,6 +380,19 @@ export const appRouter = router({
       .input(z.object({ campeonatoId: z.number() }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user) throw new Error("Usuario nao autenticado");
+        const camp = await getCampeonatoById(input.campeonatoId);
+        if (!camp) {
+          throw new Error("Campeonato nao encontrado");
+        }
+        if ((camp as any).status === "cancelado" || (camp as any).status === "finalizado") {
+          throw new Error("Inscricoes encerradas para este campeonato");
+        }
+        if (camp.dataInicio) {
+          const cutoff = new Date(camp.dataInicio).getTime() - 24 * 60 * 60 * 1000; // 1 dia antes
+          if (Date.now() >= cutoff) {
+            throw new Error("Inscricoes permitidas somente ate 1 dia antes do inicio");
+          }
+        }
         await inscreverCampeonato(ctx.user.id, input.campeonatoId);
         await criarNotificacao({
           usuarioId: ctx.user.id,

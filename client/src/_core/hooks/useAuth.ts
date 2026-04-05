@@ -15,6 +15,9 @@ function normalizeRedirect(path: string) {
   return `#/${path}`;
 }
 
+const isHugeDataUrl = (value: unknown) =>
+  typeof value === "string" && value.startsWith("data:") && value.length > 4000;
+
 export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
     options ?? {};
@@ -107,10 +110,16 @@ export function useAuth(options?: UseAuthOptions) {
   useEffect(() => {
     if (!meQuery.data) return;
     try {
-      localStorage.setItem("manus-runtime-user-info", JSON.stringify(meQuery.data));
-      if ((meQuery.data as any)?.avatarUrl) {
-        localStorage.setItem("dg-avatar-url", (meQuery.data as any).avatarUrl as string);
+      const payload = { ...meQuery.data };
+      if (isHugeDataUrl((payload as any).avatarUrl)) {
+        // Não salvar data URL gigante no objeto principal; guardar só em dg-avatar-url
+        localStorage.setItem("dg-avatar-url", String((payload as any).avatarUrl));
+        delete (payload as any).avatarUrl;
+        delete (payload as any).avatar;
+      } else if ((payload as any).avatarUrl) {
+        localStorage.setItem("dg-avatar-url", String((payload as any).avatarUrl));
       }
+      localStorage.setItem("manus-runtime-user-info", JSON.stringify(payload));
     } catch {
       /* ignore */
     }

@@ -94,10 +94,16 @@ export default function Perfil() {
       utils.auth.me.setData(undefined, prev => (prev ? { ...prev, avatarUrl: data.url, avatar: data.url } : prev));
       const cached = utils.auth.me.getData(undefined);
       if (typeof window !== "undefined") {
-        if (cached) {
-          localStorage.setItem("manus-runtime-user-info", JSON.stringify({ ...cached, avatarUrl: data.url, avatar: data.url }));
+        try {
+          if (!data.url.startsWith("data:") || data.url.length < 4000) {
+            if (cached) {
+              localStorage.setItem("manus-runtime-user-info", JSON.stringify({ ...cached, avatarUrl: data.url, avatar: data.url }));
+            }
+          }
+          localStorage.setItem("dg-avatar-url", data.url);
+        } catch {
+          /* ignore quota errors */
         }
-        localStorage.setItem("dg-avatar-url", data.url);
       }
       // Evita sobrescrever com dados antigos imediatamente
       setTimeout(() => {
