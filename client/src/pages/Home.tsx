@@ -382,6 +382,55 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-white">Campeonatos</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setActiveSection("campeonatos");
+                        setMenuOpen(false);
+                      }}
+                    >
+                      Abrir aba
+                    </Button>
+                  </div>
+                  {campeonatosQuery.isLoading ? (
+                    <p className="text-sm text-muted-foreground">Carregando campeonatos...</p>
+                  ) : (campeonatosQuery.data?.length ?? 0) === 0 ? (
+                    <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {campeonatosQuery.data?.map(c => {
+                        const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
+                        const status = (c as any).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
+                        const faseLabel =
+                          status === "futuro" ? "Fase de inscricoes" : status === "finalizado" ? "Finalizado" : "Em andamento";
+                        return (
+                          <div key={c.id} className="p-3 rounded-xl border border-white/10 bg-white/5">
+                            <div className="flex items-center justify-between mb-1">
+                              <div>
+                                <h4 className="font-semibold text-white">{c.nome}</h4>
+                                <p className="text-xs text-muted-foreground">{faseLabel}</p>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {dataInicio ? dataInicio.toLocaleDateString("pt-BR") : "Data a definir"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
+                              {(c as { descricao?: string | null }).descricao ?? "Campeonato ativo"}
+                            </p>
+                            <div className="flex items-center justify-between text-xs text-white/80">
+                              <span>Premio</span>
+                              <span className="font-semibold text-yellow-400">R$ {(c as any).premioValor}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
                 {pollResults.length ? (
                   pollResults.map(poll => (
                     <div
