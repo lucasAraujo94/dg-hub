@@ -351,7 +351,7 @@ export default function Perfil() {
             <div className="flex items-center gap-8 mb-8">
               <div
                 ref={avatarRef}
-                className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-card border border-border flex items-center justify-center shadow-lg overflow-hidden relative select-none"
+                className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-2xl bg-card border border-border flex items-center justify-center shadow-lg overflow-hidden relative select-none"
                 style={{ cursor: profilePhotoUrl ? (dragging ? "grabbing" : "grab") : "default" }}
                 onMouseDown={e => {
                   if (!profilePhotoUrl) return;
