@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl, hasGoogleClientId, hasOAuthProvider } from "@/const";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -28,6 +28,11 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const { isAuthenticated } = useAuth();
+  const isWebView = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent || navigator.vendor || "";
+    return /Instagram|FBAN|FBAV|Line|wv/i.test(ua);
+  }, []);
 
   // Se já estiver autenticado, redireciona para a home
   useEffect(() => {
@@ -42,8 +47,12 @@ export default function Login() {
       toast.error("Configure VITE_GOOGLE_CLIENT_ID ou VITE_OAUTH_PORTAL_URL para ativar o login.");
       return;
     }
+    if (isWebView) {
+      toast.error("Abra este link no Chrome para continuar o login com Google.");
+      return;
+    }
     window.location.href = oauthUrl;
-  }, [oauthUrl]);
+  }, [oauthUrl, isWebView]);
   const loginMutation = trpc.auth.loginLocal.useMutation({
     onSuccess: () => {
       toast.success("Login realizado! Redirecionando...");
@@ -120,15 +129,39 @@ export default function Login() {
                 </div>
 
                 <div className="mb-4 flex flex-col gap-3">
-                <Button
-                  type="button"
-                  onClick={handleOauth}
-                  variant="secondary"
-                  className="w-full justify-center gap-2 bg-white text-black hover:bg-white/90"
-                >
-                  <Mail className="h-4 w-4" />
-                  Entrar com Google
-                </Button>
+                  {isWebView ? (
+                    <div className="rounded-lg border border-amber-400/60 bg-amber-950/40 px-3 py-2 text-sm text-amber-100">
+                      Abra este link no Chrome para continuar o login com Google.
+                    </div>
+                  ) : null}
+                  <div className="grid gap-2">
+                    <Button
+                      type="button"
+                      onClick={handleOauth}
+                      variant="secondary"
+                      className="w-full justify-center gap-2 bg-white text-black hover:bg-white/90"
+                      disabled={isWebView}
+                    >
+                      <Mail className="h-4 w-4" />
+                      Entrar com Google
+                    </Button>
+                    {isWebView ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-center"
+                        onClick={() => {
+                          try {
+                            window.open(window.location.href, "_blank");
+                          } catch {
+                            window.location.href = window.location.href;
+                          }
+                        }}
+                      >
+                        Abrir no navegador
+                      </Button>
+                    ) : null}
+                  </div>
                   <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                     <div className="h-px flex-1 bg-border" />
                     ou e-mail / senha
