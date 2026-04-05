@@ -158,13 +158,18 @@ export default function Home() {
     );
   }, [campeonatosQuery.data]);
 
-  const registrarInscricao = (campeonatoId?: number) => {
+  const registrarInscricao = async (campeonatoId?: number) => {
     if (!campeonatoId) return;
     if (!user) {
       window.location.href = getLoginUrl();
       return;
     }
-    toast.info("Inscricao em breve (use a pagina de campeonatos para concluir).");
+    try {
+      await trpc.campeonatos.inscrever.mutateAsync({ campeonatoId });
+      toast.success("Inscricao confirmada!");
+    } catch (error: any) {
+      toast.error(error?.message || "Falha ao inscrever");
+    }
   };
 
   const lastWinners = useMemo(() => {
