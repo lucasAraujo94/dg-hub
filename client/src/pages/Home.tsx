@@ -595,31 +595,50 @@ export default function Home() {
                 {(campeonatosQuery.data ?? []).length === 0 ? (
                   <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado ainda.</p>
                 ) : null}
-                {(campeonatosQuery.data ?? []).map(c => {
-                  const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
-                  const status = (c as any).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
+                {(campeonatosQuery.data ?? []).map(camp => {
+                  const dataInicio = camp.dataInicio ? new Date(camp.dataInicio) : null;
+                  const status = (camp as any).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
+                  const inscricoesEncerradas = (() => {
+                    if (status === "cancelado" || status === "finalizado") return true;
+                    if (!dataInicio) return false;
+                    const diff = dataInicio.getTime() - Date.now();
+                    if (diff <= 0) return true; // já começou
+                    return diff < 24 * 60 * 60 * 1000; // menos de 24h
+                  })();
                   const faseLabel =
-                    status === "futuro" ? "Fase de inscricoes" : status === "finalizado" ? "Finalizado" : "Em andamento";
+                    status === "cancelado"
+                      ? "Cancelado"
+                      : status === "finalizado"
+                        ? "Finalizado"
+                        : inscricoesEncerradas
+                          ? "Inscricoes encerradas"
+                          : "Fase de inscricoes";
                   return (
-                    <Card key={c.id} className="p-4 border-border/70 bg-card/60 space-y-2">
+                    <Card key={camp.id} className="p-4 border-border/70 bg-card/60 space-y-2">
                       <div className="flex items-center justify-between mb-2">
                         <div>
-                          <h3 className="font-semibold">{c.nome}</h3>
-                          <p className="text-xs text-muted-foreground">{faseLabel}</p>
+                          <h3 className="font-semibold break-words">{camp.nome}</h3>
+                          <p className="text-xs text-muted-foreground break-words">{faseLabel}</p>
                         </div>
                         <span className="text-xs text-muted-foreground">
                           {dataInicio ? dataInicio.toLocaleDateString("pt-BR") : "Data a definir"}
                         </span>
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {(c as { descricao?: string | null }).descricao ?? "Campeonato ativo"}
+                      <p className="text-sm text-muted-foreground line-clamp-2 break-words">
+                        {(camp as { descricao?: string | null }).descricao ?? "Campeonato ativo"}
                       </p>
                       <div className="flex items-center justify-between mt-1 text-sm">
                         <span>Prêmio</span>
-                        <span className="font-medium text-yellow-400">R$ {(c as any).premioValor}</span>
+                        <span className="font-medium text-yellow-400">R$ {(camp as any).premioValor}</span>
                       </div>
-                      <Button className="mt-2" size="sm" variant="outline" onClick={() => registrarInscricao(c.id)}>
-                        Inscreva-se
+                      <Button
+                        className="mt-2"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => registrarInscricao(camp.id)}
+                        disabled={inscricoesEncerradas}
+                      >
+                        {inscricoesEncerradas ? "Inscricoes encerradas" : "Inscreva-se"}
                       </Button>
                     </Card>
                   );

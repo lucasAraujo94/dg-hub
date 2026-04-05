@@ -323,7 +323,12 @@ export async function updateCampeonato(data: {
 }
 
 export async function deleteCampeonato(id: number) {
-  return prisma.campeonato.delete({ where: { id } });
+  return prisma.$transaction(async tx => {
+    await tx.partida.deleteMany({ where: { campeonatoId: id } });
+    await tx.inscricao.deleteMany({ where: { campeonatoId: id } });
+    await tx.chaveamento.deleteMany({ where: { campeonatoId: id } });
+    return tx.campeonato.delete({ where: { id } });
+  });
 }
 
 // Inscrições
