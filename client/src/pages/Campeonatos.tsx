@@ -93,9 +93,8 @@ export default function Campeonatos() {
         };
       }) ?? [];
 
-    const ativos = mapped.filter(camp => camp.status === "ativo");
-    if (filtroStatus === "todos") return ativos;
-    return ativos.filter(camp => camp.status === filtroStatus);
+    if (filtroStatus === "todos") return mapped;
+    return mapped.filter(camp => camp.status === filtroStatus);
   }, [campeonatosQuery.data, filtroStatus]);
 
   const getStatusColor = (status: string) => {
