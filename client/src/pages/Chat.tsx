@@ -107,9 +107,7 @@ export default function Chat() {
       usuario?.email ||
       (msg.usuarioId && user?.id === msg.usuarioId ? currentUserName : undefined) ||
       `Jogador ${msg.usuarioId ?? "?"}`;
-    const hago =
-      usuario?.nickname ||
-      (msg.usuarioId && user?.id === msg.usuarioId ? displayPref.hago : "");
+    const hago = usuario?.nickname || (msg.usuarioId && user?.id === msg.usuarioId ? displayPref.hago || user?.nickname || "" : "");
     let displayName = baseName;
     if (displayPref.pref === "hago" && hago) {
       displayName = hago;
@@ -118,7 +116,10 @@ export default function Chat() {
     }
     const avatarUrl =
       (usuario as any)?.avatarUrl ||
-      (msg.usuarioId && user?.id === msg.usuarioId ? (user as any)?.avatarUrl || (user as any)?.avatar : null);
+      (msg.usuarioId && user?.id === msg.usuarioId ? (user as any)?.avatarUrl || (user as any)?.avatar : null) ||
+      (user as any)?.avatarUrl ||
+      (user as any)?.avatar ||
+      null;
     const hora = msg.dataEnvio ? new Date(msg.dataEnvio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
     const conteudo = parseMensagem(msg.mensagem);
     return { displayName, hora, conteudo, avatarUrl };

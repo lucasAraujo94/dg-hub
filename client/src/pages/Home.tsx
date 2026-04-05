@@ -543,6 +543,9 @@ export default function Home() {
                 </div>
               ) : null}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(campeonatosQuery.data ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado ainda.</p>
+                ) : null}
                 {(campeonatosQuery.data ?? []).map(c => {
                   const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
                   const status = (c as any).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");

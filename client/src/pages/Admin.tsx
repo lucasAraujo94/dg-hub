@@ -53,7 +53,7 @@ export default function Admin() {
   const usuariosSelect = useMemo(() => usuariosQuery.data ?? [], [usuariosQuery.data]);
   const setRoleMutation = trpc.admin.setRole.useMutation({
     onSuccess: () => usuariosQuery.refetch(),
-    onError: error => toast.error(error.message || "Falha ao atualizar permissões"),
+    onError: error => toast.error(error.message || "Falha ao atualizar permissoes"),
   });
 
   if (user?.role !== "admin") {
@@ -73,12 +73,12 @@ export default function Admin() {
 
   const handleCriarCampeonato = async () => {
     if (!nomeCampeonato || !dataInicio || !premioValor) {
-      toast.error("Informe nome, data e prêmio");
+      toast.error("Informe nome, data e premio");
       return;
     }
     const parsedDate = new Date(dataInicio);
     if (Number.isNaN(parsedDate.getTime())) {
-      toast.error("Data inválida");
+      toast.error("Data invalida");
       return;
     }
     await criarCampeonatoMutation.mutateAsync({
@@ -95,7 +95,7 @@ export default function Admin() {
 
   const handleInscreverUsuario = async () => {
     if (!inscricaoUsuarioId || !inscricaoCampeonatoId) {
-      toast.error("Informe usuário e campeonato");
+      toast.error("Informe usuario e campeonato");
       return;
     }
     await inscreverUsuarioMutation.mutateAsync({
@@ -131,7 +131,7 @@ export default function Admin() {
             <h1 className="text-3xl font-bold gradient-text">Painel Administrativo</h1>
             <div className="w-20" />
           </div>
-          <p className="text-muted-foreground">Gerencie campeonatos e usuários.</p>
+          <p className="text-muted-foreground">Gerencie campeonatos e usuarios.</p>
         </div>
       </div>
 
@@ -152,7 +152,7 @@ export default function Admin() {
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Usuários</p>
+                  <p className="text-sm text-muted-foreground mb-2">Usuarios</p>
                   <p className="text-3xl font-bold">
                     {usuariosQuery.isLoading ? "..." : usuariosQuery.data?.length ?? 0}
                   </p>
@@ -163,7 +163,7 @@ export default function Admin() {
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Depósito PIX</p>
+                  <p className="text-sm text-muted-foreground mb-2">Deposito PIX</p>
                   <p className="text-xs text-muted-foreground">Gere QR para premiar jogadores</p>
                 </div>
                 <Button
@@ -188,8 +188,8 @@ export default function Admin() {
           <Tabs defaultValue="campeonatos" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-8">
               <TabsTrigger value="campeonatos">Campeonatos</TabsTrigger>
-              <TabsTrigger value="usuarios">Usuários</TabsTrigger>
-              <TabsTrigger value="depositos">Depósitos</TabsTrigger>
+              <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
+              <TabsTrigger value="depositos">Depositos</TabsTrigger>
             </TabsList>
 
             {/* Campeonatos */}
@@ -202,16 +202,16 @@ export default function Admin() {
                     <Input value={nomeCampeonato} onChange={e => setNomeCampeonato(e.target.value)} placeholder="Ex: Grand Tournament #43" />
                   </div>
                   <div>
-                    <label className="text-sm font-semibold mb-2 block">Descrição</label>
-                    <Input value={descricaoCampeonato} onChange={e => setDescricaoCampeonato(e.target.value)} placeholder="Descrição do campeonato" />
+                    <label className="text-sm font-semibold mb-2 block">Descricao</label>
+                    <Input value={descricaoCampeonato} onChange={e => setDescricaoCampeonato(e.target.value)} placeholder="Descricao do campeonato" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="text-sm font-semibold mb-2 block">Data de Início</label>
+                      <label className="text-sm font-semibold mb-2 block">Data de Inicio</label>
                       <Input type="datetime-local" value={dataInicio} onChange={e => setDataInicio(clampDateYear(e.target.value))} />
                     </div>
                     <div>
-                      <label className="text-sm font-semibold mb-2 block">Valor do Prêmio (R$)</label>
+                      <label className="text-sm font-semibold mb-2 block">Valor do Premio (R$)</label>
                       <Input value={premioValor} onChange={e => setPremioValor(e.target.value)} placeholder="Ex: 500" />
                     </div>
                   </div>
@@ -285,11 +285,11 @@ export default function Admin() {
               </div>
             </TabsContent>
 
-            {/* Depósitos */}
+            {/* Depositos */}
             <TabsContent value="depositos" className="space-y-6">
               <div className="card-elegant" ref={depositoRef}>
                 <h2 className="text-xl font-bold mb-2">Depositar via PIX para Jogador</h2>
-                <p className="text-sm text-muted-foreground mb-4">Em breve. Funcionalidade em finalização.</p>
+                <p className="text-sm text-muted-foreground mb-4">Em breve. Funcionalidade em finalizacao.</p>
                 <div className="opacity-60 pointer-events-none select-none">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
@@ -312,48 +312,52 @@ export default function Admin() {
               </div>
             </TabsContent>
 
-            {/* Usuários */}
+            {/* Usuarios */}
             <TabsContent value="usuarios" className="space-y-6">
               <div className="card-elegant">
                 <div className="flex items-center gap-2 mb-4">
                   <ShieldCheck className="w-5 h-5 text-green-400" />
-                  <h2 className="text-2xl font-bold">Usuários</h2>
+                  <h2 className="text-2xl font-bold">Usuarios</h2>
                 </div>
-                {usuariosQuery.isLoading ? <p className="text-sm text-muted-foreground">Carregando usuários...</p> : null}
+                {usuariosQuery.isLoading ? <p className="text-sm text-muted-foreground">Carregando usuarios...</p> : null}
                 {usuariosQuery.error ? <p className="text-sm text-red-400">Erro: {usuariosQuery.error.message}</p> : null}
                 {!usuariosQuery.isLoading && (usuariosQuery.data?.length ?? 0) === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhum usuário cadastrado.</p>
+                  <p className="text-sm text-muted-foreground">Nenhum usuario cadastrado.</p>
                 ) : null}
                 <div className="space-y-3">
-                  {usuariosQuery.data?.map(u => (
-                    <div key={u.id} className="flex items-center justify-between p-4 bg-card/50 rounded-lg border border-border/50">
-                      <div className="flex flex-col gap-1">
-                        <span className="inline-flex items-center gap-2 text-xs text-green-400">
-                          <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-                          online
-                        </span>
-                        <p className="font-semibold">
-                          {u.nickname ? `${u.name || u.email || u.openId} (${u.nickname})` : u.name || u.email || u.openId}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {(u as any)?.hideEmail ? "email oculto" : u.email || "sem email"} - role: <span className="font-semibold">{u.role}</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Último acesso: {u.lastSignedIn ? new Date(u.lastSignedIn as any).toLocaleString("pt-BR") : "n/d"}
-                        </p>
+                  {usuariosQuery.data?.map(u => {
+                    const lastSeen = u.lastSignedIn ? new Date(u.lastSignedIn as any).getTime() : 0;
+                    const isOnline = lastSeen > 0 && Date.now() - lastSeen < 10 * 60 * 1000;
+                    return (
+                      <div key={u.id} className="flex items-center justify-between p-4 bg-card/50 rounded-lg border border-border/50">
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className={`w-2 h-2 rounded-full inline-block ${isOnline ? "bg-green-500" : "bg-zinc-500"}`} />
+                            {isOnline ? "online" : "offline"}
+                          </span>
+                          <p className="font-semibold">
+                            {u.nickname ? `${u.name || u.email || u.openId} (${u.nickname})` : u.name || u.email || u.openId}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {(u as any)?.hideEmail ? "email oculto" : u.email || "sem email"} - role: <span className="font-semibold">{u.role}</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Ultimo acesso: {u.lastSignedIn ? new Date(u.lastSignedIn as any).toLocaleString("pt-BR") : "n/d"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggleRole(u.openId, u.email, u.role)}
+                            disabled={setRoleMutation.isPending}
+                          >
+                            {u.role === "admin" ? "Tornar usuario" : "Tornar admin"}
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleToggleRole(u.openId, u.email, u.role)}
-                          disabled={setRoleMutation.isPending}
-                        >
-                          {u.role === "admin" ? "Tornar usuário" : "Tornar admin"}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </TabsContent>
@@ -363,4 +367,3 @@ export default function Admin() {
     </div>
   );
 }
-
