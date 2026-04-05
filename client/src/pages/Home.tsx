@@ -20,6 +20,7 @@ import { Link } from "wouter";
 import { useMemo, useState } from "react";
 import HomeBg from "../assets/dg-games-bg.png";
 import { toast } from "sonner";
+import { getLoginUrl } from "@/const";
 
 export default function Home() {
   const { user, loading, error, logout } = useAuth({
@@ -45,7 +46,6 @@ export default function Home() {
 
   const handleMenuButton = () => {
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    // Em mobile, abre/fecha; em desktop, sempre expande (normal) ao clicar
     if (isMobile) {
       setMenuOpen(open => !open);
       return;
@@ -66,7 +66,7 @@ export default function Home() {
     onSuccess: () => {
       pollResultsQuery.refetch();
       toast.success("Enquete criada");
-      setPollPergunta("Qual jogo você quer no próximo campeonato?");
+      setPollPergunta("Qual jogo voce quer no proximo campeonato?");
       setPollClosesAt("");
       setPollOptionsText("");
     },
@@ -75,23 +75,23 @@ export default function Home() {
 
   const pollDeleteMutation = trpc.poll.delete.useMutation({
     onSuccess: () => {
-      toast.success("Enquete excluída");
+      toast.success("Enquete excluida");
       pollResultsQuery.refetch();
     },
     onError: err => toast.error(err.message || "Falha ao excluir enquete"),
   });
 
-  const [pollPergunta, setPollPergunta] = useState("Qual jogo você quer no próximo campeonato?");
+  const [pollPergunta, setPollPergunta] = useState("Qual jogo voce quer no proximo campeonato?");
   const [pollClosesAt, setPollClosesAt] = useState("");
   const [pollOptionsText, setPollOptionsText] = useState("Ludo\nGolpeie e Esquiva\nVermelhinha\nCondutor de Ritmo");
 
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, { refetchOnWindowFocus: false });
+
   const rankingTopQuery = trpc.rankings.getByTipo.useQuery(
     { tipo: "geral", limite: 3 },
     { refetchOnWindowFocus: false }
   );
 
-  // Temporary render/debug logs to track why the Home might not render in prod
   const dataSnapshot = {
     polls: pollResultsQuery.data,
     campeonatos: campeonatosQuery.data,
@@ -110,24 +110,27 @@ export default function Home() {
     ranking: rankingTopQuery.error ?? null,
   };
 
-  console.log("HOME RENDER");
-  console.log("data:", dataSnapshot);
-  console.log("user:", user);
-  console.log("isLoading:", isLoadingSnapshot);
-  console.log("error:", errorSnapshot);
+  console.log("HOME RENDER", { dataSnapshot, isLoadingSnapshot, errorSnapshot, user });
 
   const activeChampionship = useMemo(() => {
     const list =
-      campeonatosQuery.data?.map(camp => {
+      (campeonatosQuery.data ?? []).map(camp => {
         const dataInicio = camp.dataInicio ? new Date(camp.dataInicio) : null;
         const status =
           (camp as { status?: string }).status ??
           (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
+        const fase =
+          status === "futuro"
+            ? "Fase de inscricoes"
+            : status === "finalizado"
+              ? "Finalizado"
+              : "Em andamento";
         return {
+          id: camp.id,
           nome: camp.nome,
           inicio: dataInicio ? dataInicio.toLocaleString("pt-BR") : "Data a definir",
           premio: (camp as { premioValor?: number }).premioValor ?? 0,
-          fase: status === "futuro" ? "Inscrições" : "Em andamento",
+          fase,
           status,
         };
       }) ?? [];
@@ -135,13 +138,24 @@ export default function Home() {
     return (
       list.find(item => item.status === "ativo") ||
       list.find(item => item.status === "futuro") || {
-        nome: "Campeonato Relâmpago",
-        inicio: "Sábado 04/04/2026 às 18:00",
+        id: undefined,
+        nome: "Campeonato Relampago",
+        inicio: "Sabado 04/04/2026 as 18:00",
         premio: 50,
-        fase: "Fase de inscrições",
+        fase: "Fase de inscricoes",
+        status: "futuro",
       }
     );
   }, [campeonatosQuery.data]);
+
+  const registrarInscricao = (campeonatoId?: number) => {
+    if (!campeonatoId) return;
+    if (!user) {
+      window.location.href = getLoginUrl();
+      return;
+    }
+    toast.info("Inscricao em breve (use a pagina de campeonatos para concluir).");
+  };
 
   const lastWinners = useMemo(() => {
     if (rankingTopQuery.data?.length) {
@@ -153,14 +167,14 @@ export default function Home() {
           position: idx + 1,
           name,
           points: `${r.pontuacao} pontos`,
-          badge: "🏆",
+          badge: "🏅",
         };
       });
     }
     return [
-      { position: 1, name: "Anna", points: "Campeã - Ludo", badge: "🏆" },
-      { position: 2, name: "Lucas", points: "Campeão - Golpeie e Esquiva", badge: "🏆" },
-      { position: 3, name: "Reeh", points: "Campeão - Vermelhinha", badge: "🏆" },
+      { position: 1, name: "Anna", points: "Campeã - Ludo", badge: "🏅" },
+      { position: 2, name: "Lucas", points: "Campeão - Golpeie e Esquiva", badge: "🏅" },
+      { position: 3, name: "Reeh", points: "Campeão - Vermelhinha", badge: "🏅" },
     ];
   }, [rankingTopQuery.data]);
 
@@ -331,7 +345,7 @@ export default function Home() {
                             Enquete
                           </div>
                           <h2 className="text-3xl md:text-4xl font-semibold leading-tight text-white">
-                            {poll.question || "Próximo campeonato: escolha o modo"}
+                            {poll.question || "Proximo campeonato: escolha o modo"}
                           </h2>
                           <p className="text-sm text-emerald-100/80">
                             Vote no jogo que quer ver no próximo torneio. 1 voto por jogador logado.
@@ -505,12 +519,18 @@ export default function Home() {
                 </div>
               ) : null}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {campeonatosQuery.data?.map(c => {
+                {(campeonatosQuery.data ?? []).map(c => {
                   const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
+                  const status = (c as any).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
+                  const faseLabel =
+                    status === "futuro" ? "Fase de inscricoes" : status === "finalizado" ? "Finalizado" : "Em andamento";
                   return (
-                    <Card key={c.id} className="p-4 border-border/70 bg-card/60">
+                    <Card key={c.id} className="p-4 border-border/70 bg-card/60 space-y-2">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold">{c.nome}</h3>
+                        <div>
+                          <h3 className="font-semibold">{c.nome}</h3>
+                          <p className="text-xs text-muted-foreground">{faseLabel}</p>
+                        </div>
                         <span className="text-xs text-muted-foreground">
                           {dataInicio ? dataInicio.toLocaleDateString("pt-BR") : "Data a definir"}
                         </span>
@@ -518,10 +538,13 @@ export default function Home() {
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {(c as { descricao?: string | null }).descricao ?? "Campeonato ativo"}
                       </p>
-                      <div className="flex items-center justify-between mt-3 text-sm">
+                      <div className="flex items-center justify-between mt-1 text-sm">
                         <span>Prêmio</span>
                         <span className="font-medium text-yellow-400">R$ {(c as any).premioValor}</span>
                       </div>
+                      <Button className="mt-2" size="sm" variant="outline" onClick={() => registrarInscricao(c.id)}>
+                        Inscreva-se
+                      </Button>
                     </Card>
                   );
                 }) ?? <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado.</p>}
@@ -587,6 +610,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
