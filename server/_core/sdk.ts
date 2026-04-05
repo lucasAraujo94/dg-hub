@@ -100,15 +100,7 @@ class OAuthService {
   }
 
   private resolveRedirectUri(): string {
-    const explicit =
-      process.env.VITE_GOOGLE_REDIRECT_URL ||
-      process.env.GOOGLE_REDIRECT_URL;
-    if (explicit) return explicit;
-    const origin = process.env.VITE_BACKEND_ORIGIN;
-    const path =
-      process.env.VITE_GOOGLE_REDIRECT_PATH ||
-      "/auth/google/callback";
-    if (origin) return `${origin}${path}`;
+    // Redirect fixo para evitar divergência entre authorize e token exchange
     return "https://app.dggames.online/auth/google/callback";
   }
 

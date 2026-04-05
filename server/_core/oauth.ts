@@ -11,6 +11,7 @@ type OAuthState = {
 };
 
 let oauthCallbackHits = 0;
+const processedCodes = new Map<string, number>(); // code -> timestamp
 
 function describeDbTarget() {
   const url = process.env.DATABASE_URL;
@@ -66,6 +67,21 @@ async function handleOAuthCallback(req: Request, res: Response) {
     hasState: Boolean(state),
     hits: oauthCallbackHits,
   });
+
+  if (code) {
+    const now = Date.now();
+    // expira itens com mais de 10 minutos
+    for (const [storedCode, ts] of processedCodes) {
+      if (now - ts > 10 * 60 * 1000) {
+        processedCodes.delete(storedCode);
+      }
+    }
+    if (processedCodes.has(code)) {
+      console.warn("[OAuth] Duplicate callback code detected, skipping", { codeMask: `${code.slice(0, 4)}***` });
+      return res.status(400).json({ error: "duplicate_code" });
+    }
+    processedCodes.set(code, now);
+  }
 
   if (!code || !state) {
     res.status(400).json({ error: "code and state are required" });

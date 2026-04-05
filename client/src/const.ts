@@ -13,14 +13,7 @@ const normalizePath = (value: string) => {
 };
 
 // Redirect fixo para evitar divergência entre authorize e token exchange
-const GOOGLE_REDIRECT_URI =
-  import.meta.env.VITE_GOOGLE_REDIRECT_URL ||
-  (() => {
-    const origin = import.meta.env.VITE_BACKEND_ORIGIN;
-    const path = normalizePath(import.meta.env.VITE_GOOGLE_REDIRECT_PATH || "/auth/google/callback");
-    if (origin) return `${origin}${path}`;
-    return "https://app.dggames.online/auth/google/callback";
-  })();
+const GOOGLE_REDIRECT_URI = "https://app.dggames.online/auth/google/callback";
 
 const getRedirectUri = () => GOOGLE_REDIRECT_URI;
 
