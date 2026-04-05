@@ -23,12 +23,13 @@ type Aba = "lista" | "chaveamento";
 
 export default function Campeonatos() {
   const { user, isAuthenticated } = useAuth();
+  const isAdmin = user?.role === "admin";
   const nomeUsuario = user?.name ? `${user.name}${(user as any).nickname ? ` (${(user as any).nickname})` : ""}` : "Convidado";
   const emailUsuario = (user as { email?: string } | null | undefined)?.email;
 
   const [rounds, setRounds] = useState<Match[][]>([]);
   const [sorteando, setSorteando] = useState(false);
-  const [aba] = useState<Aba>("lista");
+  const [aba, setAba] = useState<Aba>("lista");
   const [ultimaPrimeiraRodada, setUltimaPrimeiraRodada] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "futuro" | "finalizado">("todos");
   const [selectedCampId, setSelectedCampId] = useState<number | null>(null);
@@ -225,7 +226,22 @@ export default function Campeonatos() {
   };
 
   const handleSortearConfrontos = () => {
-    toast.info("Chaveamento dinâmico foi desativado.");
+    if (!isAdmin) {
+      toast.error("Apenas admins podem sortear o chaveamento.");
+      return;
+    }
+    if (!inscritosNomes.length) {
+      toast.error("Nenhum inscrito para sortear.");
+      return;
+    }
+    setSorteando(true);
+    try {
+      gerarRounds(inscritosNomes);
+      setAba("chaveamento");
+      toast.success("Chaveamento gerado.");
+    } finally {
+      setSorteando(false);
+    }
   };
 
   const narrarCampeonatos = () => {
@@ -268,6 +284,20 @@ export default function Campeonatos() {
             <Button variant="outline" size="sm" className="gap-2" disabled>
               <Filter className="w-4 h-4" />
               Filtrar
+            </Button>
+            <Button
+              variant={aba === "lista" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAba("lista")}
+            >
+              Lista
+            </Button>
+            <Button
+              variant={aba === "chaveamento" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAba("chaveamento")}
+            >
+              Chaveamento
             </Button>
             <Button
               variant={filtroStatus === "todos" ? "default" : "outline"}
