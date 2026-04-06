@@ -624,56 +624,79 @@ export default function Campeonatos() {
       </section>
 
       {aba === "chaveamento" ? (
-        <section className="py-8 border-t border-border">
+        <section className="py-8 border-t border-border bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.12),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_40%)]">
           <div className="container space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Chaveamento</h2>
-              {rounds.length > 0 ? <span className="text-sm text-muted-foreground">{rounds[0].length} partidas iniciais</span> : null}
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chaveamento</p>
+                <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
+              </div>
+              {rounds.length > 0 ? (
+                <span className="text-sm text-muted-foreground">
+                  {rounds[0].length} partidas iniciais • Seed fixo para todos
+                </span>
+              ) : null}
             </div>
             {rounds.length === 0 ? (
               <div className="card-elegant p-4 text-sm text-muted-foreground">
-                Nenhum chaveamento gerado. Admin pode usar "Sortear chaveamento" com o campeonato selecionado.
+                Nenhum chaveamento gerado. Admin pode usar “Sortear chaveamento” com o campeonato selecionado; após isso,
+                todos visualizam aqui automaticamente.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {rounds.map((round, roundIndex) => (
-                  <div key={roundIndex} className="card-elegant p-4 space-y-3">
-                    <h3 className="text-sm font-semibold">Round {roundIndex + 1}</h3>
-                    <div className="space-y-2">
-                      {round.map((match, matchIndex) => (
-                        <div key={`${roundIndex}-${matchIndex}`} className="rounded-lg border border-border/60 bg-card/50 p-3 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">{match.jogador1}</span>
-                            <span className="text-xs text-muted-foreground">vs</span>
-                            <span className="text-sm font-medium">{match.jogador2}</span>
-                          </div>
-                          {isAdmin ? (
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant={match.vencedor === match.jogador1 ? "default" : "outline"}
-                                className="flex-1"
-                                onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1)}
-                              >
-                                Vitória {match.jogador1}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant={match.vencedor === match.jogador2 ? "default" : "outline"}
-                                className="flex-1"
-                                onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2)}
-                              >
-                                Vitória {match.jogador2}
-                              </Button>
+              <div className="overflow-x-auto pb-2">
+                <div className="min-w-full grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
+                  {rounds.map((round, roundIndex) => (
+                    <div
+                      key={roundIndex}
+                      className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4 space-y-3 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.45)]"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold">Round {roundIndex + 1}</h3>
+                        <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Eliminação</span>
+                      </div>
+                      <div className="space-y-3">
+                        {round.map((match, matchIndex) => (
+                          <div
+                            key={`${roundIndex}-${matchIndex}`}
+                            className="rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/10 to-cyan-500/10 p-3 space-y-2 shadow-inner"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-medium truncate">{match.jogador1}</span>
+                              <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                                vs
+                              </span>
+                              <span className="text-sm font-medium truncate text-right">{match.jogador2}</span>
                             </div>
-                          ) : match.vencedor ? (
-                            <p className="text-xs text-muted-foreground">Vencedor: {match.vencedor}</p>
-                          ) : null}
-                        </div>
-                      ))}
+                            {isAdmin ? (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant={match.vencedor === match.jogador1 ? "default" : "outline"}
+                                  className="flex-1"
+                                  onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1)}
+                                >
+                                  Vitória {match.jogador1}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={match.vencedor === match.jogador2 ? "default" : "outline"}
+                                  className="flex-1"
+                                  onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2)}
+                                >
+                                  Vitória {match.jogador2}
+                                </Button>
+                              </div>
+                            ) : match.vencedor ? (
+                              <p className="text-xs text-muted-foreground">Vencedor: {match.vencedor}</p>
+                            ) : (
+                              <p className="text-[11px] text-muted-foreground">Aguardando resultado</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
