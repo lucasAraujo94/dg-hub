@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+﻿import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +22,7 @@ export default function Admin() {
 
   const [nomeCampeonato, setNomeCampeonato] = useState("");
   const [descricaoCampeonato, setDescricaoCampeonato] = useState("");
+  const [jogoCampeonato, setJogoCampeonato] = useState("");
   const [dataInicio, setDataInicio] = useState("");
   const [premioValor, setPremioValor] = useState("");
   const [inscricaoUsuarioId, setInscricaoUsuarioId] = useState("");
@@ -84,7 +85,7 @@ export default function Admin() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Acesso negado</h2>
           <p className="text-muted-foreground mb-6">Apenas administradores podem acessar este painel.</p>
-          <p className="text-sm text-muted-foreground">Sessão expira em ~10 min</p>
+          <p className="text-sm text-muted-foreground">SessÃ£o expira em ~10 min</p>
           <Link href="/">
             <Button className="btn-primary w-full">Voltar para Home</Button>
           </Link>
@@ -94,8 +95,8 @@ export default function Admin() {
   }
 
   const handleCriarCampeonato = async () => {
-    if (!nomeCampeonato || !dataInicio || !premioValor) {
-      toast.error("Informe nome, data e premio");
+    if (!nomeCampeonato || !dataInicio || !premioValor || !jogoCampeonato) {
+      toast.error("Informe nome, jogo, data e premio");
       return;
     }
     const parsedDate = new Date(dataInicio);
@@ -108,9 +109,11 @@ export default function Admin() {
       descricao: descricaoCampeonato || undefined,
       dataInicio: parsedDate,
       premioValor: Number(premioValor),
+      jogo: jogoCampeonato,
     });
     setNomeCampeonato("");
     setDescricaoCampeonato("");
+    setJogoCampeonato("");
     setDataInicio("");
     setPremioValor("");
   };
@@ -227,6 +230,10 @@ export default function Admin() {
                     <label className="text-sm font-semibold mb-2 block">Descricao</label>
                     <Input value={descricaoCampeonato} onChange={e => setDescricaoCampeonato(e.target.value)} placeholder="Descricao do campeonato" />
                   </div>
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Jogo</label>
+                    <Input value={jogoCampeonato} onChange={e => setJogoCampeonato(e.target.value)} placeholder="Ex: Free Fire" />
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="text-sm font-semibold mb-2 block">Data de Inicio</label>
@@ -324,8 +331,9 @@ export default function Admin() {
                             <div className="min-w-0 flex-1">
                               <p className="font-semibold break-words">{c.nome}</p>
                               <p className="text-xs text-muted-foreground">
-                                {dataInicio ? dataInicio.toLocaleString("pt-BR") : "Sem data definida"} — status: {(c as any).status ?? "ativo"}
+                                {dataInicio ? dataInicio.toLocaleString("pt-BR") : "Sem data definida"} - status: {(c as any).status ?? "ativo"}
                               </p>
+                              <p className="text-xs text-muted-foreground">Jogo: {(c as any).jogo ?? "n/d"} {c.campeaoId ? "- Campeao ID " + c.campeaoId : ""}</p>
                             </div>
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -353,6 +361,23 @@ export default function Admin() {
                               disabled={cancelarCampMutation.isPending}
                             >
                               {cancelarCampMutation.isPending ? "Cancelando..." : "Cancelar"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const campeaoId = window.prompt("ID do campeao deste campeonato?");
+                                if (!campeaoId) return;
+                                const num = Number(campeaoId);
+                                if (Number.isNaN(num)) {
+                                  toast.error("Informe um ID numerico");
+                                  return;
+                                }
+                                definirCampeaoMutation.mutate({ campeonatoId: c.id, campeaoId: num });
+                              }}
+                              disabled={definirCampeaoMutation.isPending}
+                            >
+                              {definirCampeaoMutation.isPending ? "Salvando..." : "Definir campeao (+100 pts)"}
                             </Button>
                             <Button
                               size="sm"
@@ -457,3 +482,10 @@ export default function Admin() {
     </div>
   );
 }
+  const definirCampeaoMutation = trpc.campeonatos.definirCampeao.useMutation({
+    onSuccess: () => {
+      toast.success("Campeao definido e ranking atualizado (+100 pontos)");
+      campeonatosQuery.refetch();
+    },
+    onError: error => toast.error(error.message || "Falha ao definir campeao"),
+  });

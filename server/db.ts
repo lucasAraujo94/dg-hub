@@ -291,6 +291,7 @@ export async function createCampeonato(data: {
   descricao?: string;
   dataInicio: Date;
   premioValor: number;
+  jogo: string;
 }) {
   return prisma.campeonato.create({
     data: {
@@ -298,6 +299,7 @@ export async function createCampeonato(data: {
       descricao: data.descricao ?? null,
       dataInicio: data.dataInicio,
       premioValor: data.premioValor,
+      jogo: data.jogo,
     },
   });
 }
@@ -309,6 +311,8 @@ export async function updateCampeonato(data: {
   dataInicio?: Date;
   premioValor?: number;
   status?: string;
+  jogo?: string;
+  campeaoId?: number | null;
 }) {
   return prisma.campeonato.update({
     where: { id: data.id },
@@ -318,6 +322,8 @@ export async function updateCampeonato(data: {
       dataInicio: data.dataInicio ?? undefined,
       premioValor: data.premioValor ?? undefined,
       status: data.status ?? undefined,
+      jogo: data.jogo ?? undefined,
+      campeaoId: data.campeaoId !== undefined ? data.campeaoId : undefined,
     },
   });
 }
@@ -404,6 +410,29 @@ export async function marcarLembreteEnviado(usuarioId: number, campeonatoId: num
   return true;
 }
 
+export async function definirCampeaoCampeonato(params: { campeonatoId: number; campeaoId: number }) {
+  return prisma.$transaction(async tx => {
+    const camp = await tx.campeonato.update({
+      where: { id: params.campeonatoId },
+      data: { campeaoId: params.campeaoId, status: "finalizado" },
+    });
+
+    await tx.ranking.upsert({
+      where: { usuarioId_tipoRanking: { usuarioId: params.campeaoId, tipoRanking: "geral" } },
+      create: { usuarioId: params.campeaoId, tipoRanking: "geral", pontuacao: 100 },
+      update: { pontuacao: { increment: 100 } },
+    });
+
+    await tx.estatistica.upsert({
+      where: { usuarioId: params.campeaoId },
+      create: { usuarioId: params.campeaoId, campeonatoVencidos: 1 },
+      update: { campeonatoVencidos: { increment: 1 } },
+    });
+
+    return camp;
+  });
+}
+
 // Partidas
 export async function createPartida(data: {
   campeonatoId: number;
@@ -483,13 +512,13 @@ export async function atualizarRanking(usuarioId: number, tipo: "geral" | "seman
       pontuacao: pontos,
     },
     update: {
-      pontuacao: pontos,
+      pontuacao: { increment: pontos },
     },
   });
 }
 
 export async function getRankingPorTipo(tipo: "geral" | "semanal" | "mensal", limite: number = 10) {
-  return prisma.ranking.findMany({
+  const ranking = await prisma.ranking.findMany({
     where: { tipoRanking: tipo },
     orderBy: { pontuacao: "desc" },
     take: limite,
@@ -505,6 +534,20 @@ export async function getRankingPorTipo(tipo: "geral" | "semanal" | "mensal", li
       },
     },
   });
+
+  const userIds = ranking.map(r => r.usuarioId);
+  if (userIds.length === 0) return ranking;
+
+  const campeonatosVencidos = await prisma.campeonato.findMany({
+    where: { campeaoId: { in: userIds } },
+    select: { id: true, nome: true, jogo: true, campeaoId: true },
+  });
+
+  return ranking.map(r => ({
+    ...r,
+    campeonatosCampeao: campeonatosVencidos.filter(c => c.campeaoId === r.usuarioId),
+    wins: campeonatosVencidos.filter(c => c.campeaoId === r.usuarioId).length,
+  }));
 }
 
 // Estatísticas

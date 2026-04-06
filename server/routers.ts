@@ -42,6 +42,7 @@ import {
   excluirEnquete,
   updateCampeonato,
   deleteCampeonato,
+  definirCampeaoCampeonato,
 } from "./db";
 import { sdk } from "./_core/sdk";
 import bcrypt from "bcryptjs";
@@ -345,6 +346,7 @@ export const appRouter = router({
           descricao: z.string().optional(),
           dataInicio: z.date(),
           premioValor: z.number(),
+          jogo: z.string().min(2),
         })
       )
       .mutation(async ({ input }) => createCampeonato(input)),
@@ -357,6 +359,8 @@ export const appRouter = router({
           dataInicio: z.date().optional(),
           premioValor: z.number().optional(),
           status: z.string().optional(),
+          jogo: z.string().optional(),
+          campeaoId: z.number().nullable().optional(),
         })
       )
       .mutation(async ({ input }) => updateCampeonato(input)),
@@ -366,6 +370,9 @@ export const appRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => deleteCampeonato(input.id)),
+    definirCampeao: adminProcedure
+      .input(z.object({ campeonatoId: z.number(), campeaoId: z.number() }))
+      .mutation(async ({ input }) => definirCampeaoCampeonato(input)),
     update: adminProcedure
       .input(
         z.object({
@@ -434,7 +441,7 @@ export const appRouter = router({
   // Rankings
   rankings: router({
     getByTipo: publicProcedure
-      .input(z.object({ tipo: z.enum(["geral", "semanal", "mensal"]), limite: z.number().default(10) }))
+      .input(z.object({ tipo: z.enum(["geral", "semanal", "mensal"]), limite: z.number().default(500) }))
       .query(async ({ input }) => {
         return getRankingPorTipo(input.tipo, input.limite);
       }),

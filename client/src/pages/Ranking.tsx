@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+﻿import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Medal, Flame } from "lucide-react";
 import { Link } from "wouter";
@@ -11,7 +11,7 @@ export default function Ranking() {
   const { user } = useAuth();
   const [tipo, setTipo] = useState<RankingTipo>("geral");
   const rankingQuery = trpc.rankings.getByTipo.useQuery(
-    { tipo, limite: 50 },
+    { tipo, limite: 500 },
     { refetchOnWindowFocus: false }
   );
 
@@ -33,8 +33,11 @@ export default function Ranking() {
   const RankingTable = ({ data }: { data: typeof rankingData }) => (
     <div className="space-y-4">
       {data.map((player, index) => {
-        const usuario = (player as { usuario?: { name?: string | null; email?: string | null } }).usuario;
+        const usuario = (player as { usuario?: { name?: string | null; email?: string | null; nickname?: string | null } }).usuario;
         const displayName = usuario?.name || usuario?.email || `Jogador ${player.usuarioId}`;
+        const campeonatosCampeao =
+          (player as { campeonatosCampeao?: Array<{ id: number; nome: string; jogo: string }> }).campeonatosCampeao ??
+          [];
         return (
           <div
             key={`${player.usuarioId}-${player.tipoRanking}-${index}`}
@@ -53,6 +56,18 @@ export default function Ranking() {
                 <p className="text-xs text-muted-foreground">
                   {player.pontuacao} pontos
                 </p>
+                {campeonatosCampeao.length > 0 ? (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-[11px] text-muted-foreground">Campeao em:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {campeonatosCampeao.map(c => (
+                        <span key={c.id} className="text-[11px] px-2 py-1 rounded-full bg-white/5 border border-white/10">
+                          {c.nome} â€” {c.jogo}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
             <div className="text-right">
@@ -75,7 +90,7 @@ export default function Ranking() {
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               {"<- Voltar"}
             </Link>
-            <h1 className="text-3xl font-bold gradient-text">Últimos Campeões</h1>
+            <h1 className="text-3xl font-bold gradient-text">Ranking de Campeoes</h1>
             <div className="w-20" />
           </div>
           <p className="text-muted-foreground">Acompanhe os melhores jogadores.</p>
@@ -120,8 +135,7 @@ export default function Ranking() {
         <div className="container space-y-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold mb-3">Ranking ({tipo})</h2>
-              <p className="text-muted-foreground">Últimos campeões em destaque.</p>
+              <p className="text-muted-foreground">Campeoes e pontuacao acumulada.</p>
             </div>
             <div className="flex gap-2">
               <Button

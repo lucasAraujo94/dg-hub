@@ -143,6 +143,7 @@ export default function Campeonatos() {
         return {
           id: camp.id,
           nome: camp.nome,
+          jogo: (camp as { jogo?: string }).jogo ?? "Jogo",
           status,
           participantes: participantesCount,
           premio: (camp as { premioValor?: number }).premioValor ?? 0,

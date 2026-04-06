@@ -42,16 +42,19 @@ model Campeonato {
   id             Int          @id @default(autoincrement())
   nome           String       @db.VarChar(255)
   descricao      String?      @db.Text
+  jogo           String       @db.VarChar(100)
   dataInicio     DateTime
   dataFim        DateTime?
   status         String       @default("futuro") @db.VarChar(20)
   premioValor    Decimal      @default(0) @db.Decimal(10, 2)
   criadoEm       DateTime     @default(now())
   atualizadoEm   DateTime     @updatedAt
+  campeaoId      Int?
 
   inscricoes     Inscricao[]
   partidas       Partida[]
   chaveamento    Chaveamento?
+  campeao        User?        @relation(fields: [campeaoId], references: [id])
 
   @@map("campeonatos")
 }
