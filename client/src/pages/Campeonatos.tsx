@@ -157,10 +157,25 @@ export default function Campeonatos() {
     }
   };
 
-  const shuffle = (arr: string[]) => {
+  const hashString = (value: string | number) => {
+    const str = String(value);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash >>> 0;
+  };
+
+  const seededShuffle = (arr: string[], seedValue: number) => {
     const clone = [...arr];
+    let seed = seedValue || 1;
+    const random = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    };
     for (let i = clone.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(random() * (i + 1));
       [clone[i], clone[j]] = [clone[j], clone[i]];
     }
     return clone;
@@ -194,9 +209,10 @@ export default function Campeonatos() {
     return clone;
   };
 
-  const gerarRounds = (participantesNomes: string[], tentativa = 0) => {
+  const gerarRounds = (participantesNomes: string[], seed?: number, tentativa = 0) => {
     const totalAlvo = proximaPotenciaDeDois(participantesNomes.length || 1);
-    const embaralhados = shuffle(participantesNomes);
+    const baseSeed = seed ?? hashString(participantesNomes.join("|"));
+    const embaralhados = seededShuffle(participantesNomes, baseSeed + (tentativa || 0));
     while (embaralhados.length < totalAlvo) {
       embaralhados.push(BYE);
     }
@@ -222,7 +238,7 @@ export default function Campeonatos() {
 
     const assinaturaAtual = assinaturaPrimeiraRodada(novoRounds[0]);
     if (assinaturaAtual === ultimaPrimeiraRodada && tentativa < 8) {
-      return gerarRounds(participantesNomes, tentativa + 1);
+      return gerarRounds(participantesNomes, seed, tentativa + 1);
     }
 
     setUltimaPrimeiraRodada(assinaturaAtual);
@@ -273,13 +289,21 @@ export default function Campeonatos() {
     }
     setSorteando(true);
     try {
-      gerarRounds(inscritosNomes);
+      gerarRounds(inscritosNomes, selectedCampId ?? 0);
       setAba("chaveamento");
       toast.success("Chaveamento gerado.");
     } finally {
       setSorteando(false);
     }
   };
+
+  // Gera chaveamento determinístico para todos verem assim que houver inscritos
+  useEffect(() => {
+    if (!selectedCampId) return;
+    if (!inscritosNomes.length) return;
+    if (rounds.length > 0) return;
+    gerarRounds(inscritosNomes, selectedCampId);
+  }, [inscritosNomes, selectedCampId, rounds.length]);
 
   const narrarCampeonatos = () => {
     const lista = campeonatos.map(
@@ -671,4 +695,3 @@ export default function Campeonatos() {
     </div>
   );
 }
-
