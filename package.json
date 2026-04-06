@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx watch server/_core/index.ts",
-    "build": "pnpm prisma migrate deploy && pnpm prisma generate && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=cjs --outfile=dist/index.cjs",
+    "build": "pnpm prisma generate && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=cjs --outfile=dist/index.cjs",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
