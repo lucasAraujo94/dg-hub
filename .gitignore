@@ -1,0 +1,18 @@
+# Ignore local deps and build outputs
+node_modules/
+dist/
+.build/
+
+# Prisma generated
+prisma/.env
+
+# pnpm store/dlx cache dirs (not in repo)
+.pnpm-store/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+
