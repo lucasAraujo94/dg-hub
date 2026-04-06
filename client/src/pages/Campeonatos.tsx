@@ -17,7 +17,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
 
-const BYE = "BYE";
+const BYE = "W.O";
 type Match = { jogador1: string; jogador2: string; vencedor?: string };
 type Aba = "lista" | "chaveamento";
 
