@@ -331,6 +331,33 @@ export async function deleteCampeonato(id: number) {
   });
 }
 
+export async function getCampeonatosParaLembrete(inicioJanela: Date, fimJanela: Date) {
+  return prisma.campeonato.findMany({
+    where: {
+      dataInicio: {
+        gte: inicioJanela,
+        lte: fimJanela,
+      },
+      status: { notIn: ["cancelado", "finalizado"] },
+    },
+    include: {
+      inscricoes: {
+        include: {
+          usuario: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              nickname: true,
+              hideEmail: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
 // Inscrições
 export async function inscreverCampeonato(usuarioId: number, campeonatoId: number) {
   const existente = await prisma.inscricao.findFirst({
@@ -358,6 +385,23 @@ export async function getInscricoesCampeonato(campeonatoId: number) {
       },
     },
   });
+}
+
+export async function marcarLembreteEnviado(usuarioId: number, campeonatoId: number, etiqueta: string) {
+  const mensagem = `camp-${campeonatoId}-${etiqueta}`;
+  const existing = await prisma.notificacao.findFirst({
+    where: { usuarioId, tipo: "lembrete-campeonato", mensagem },
+  });
+  if (existing) return false;
+  await prisma.notificacao.create({
+    data: {
+      usuarioId,
+      mensagem,
+      tipo: "lembrete-campeonato",
+      lida: 0,
+    },
+  });
+  return true;
 }
 
 // Partidas

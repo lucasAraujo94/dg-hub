@@ -13,6 +13,7 @@ import { prisma } from "./prisma";
 import axios from "axios";
 import { ENV } from "./env";
 import crypto from "crypto";
+import { startReminderScheduler } from "./reminders";
 
 // Default to development to enable Vite middleware when NODE_ENV is unset (Windows-friendly)
 process.env.NODE_ENV ??= "development";
@@ -164,6 +165,9 @@ async function startServer() {
   server.listen(port, host, () => {
     console.log(`Server running on port ${port}`);
   });
+
+  // Lembrete de campeonatos (24h antes)
+  startReminderScheduler();
 }
 
 startServer().catch(console.error);
