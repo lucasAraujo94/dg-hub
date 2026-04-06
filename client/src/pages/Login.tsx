@@ -15,7 +15,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Link } from "wouter";
-import { Mail } from "lucide-react";
+import { Mail, MessageCircle, ShieldCheck, Trophy } from "lucide-react";
 import { z } from "zod";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -34,7 +34,6 @@ export default function Login() {
     return /Instagram|FBAN|FBAV|Line|wv/i.test(ua);
   }, []);
 
-  // Se já estiver autenticado, redireciona para a home
   useEffect(() => {
     if (isAuthenticated) {
       window.location.href = "#/";
@@ -53,6 +52,7 @@ export default function Login() {
     }
     window.location.href = oauthUrl;
   }, [oauthUrl, isWebView]);
+
   const loginMutation = trpc.auth.loginLocal.useMutation({
     onSuccess: () => {
       toast.success("Login realizado! Redirecionando...");
@@ -64,6 +64,7 @@ export default function Login() {
       toast.error(error.message || "Falha ao entrar");
     },
   });
+
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
@@ -103,21 +104,46 @@ export default function Login() {
         <div className="flex flex-1 items-center justify-center">
           <div className="grid w-full max-w-4xl gap-8 rounded-3xl border border-white/5 bg-white/5 p-6 backdrop-blur-xl shadow-[0_20px_80px_-40px_rgba(0,0,0,0.65)] lg:grid-cols-2">
             <div className="space-y-4">
-              <p className="text-xs uppercase tracking-[0.32em] text-emerald-200/80">Acesso seguro</p>
+              <p className="text-xs uppercase tracking-[0.32em] text-emerald-200/80">Bem-vindo</p>
               <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-                Entre com{" "}
+                Conecte-se ao{" "}
                 <span className="text-transparent bg-gradient-to-r from-emerald-300 via-white to-primary bg-clip-text">
-                  sua conta DG Hub
+                  DG Games
                 </span>
               </h1>
               <p className="text-base text-muted-foreground">
-                Autenticacao rapida para acessar campeonatos, radio e chat. SSO via Google ou credenciais locais.
+                Entre para disputar campeonatos, acompanhar chaveamentos em tempo real e conversar com a comunidade.
               </p>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Sessao protegida com token e cookie seguro.</li>
-                <li>• Redirecionamento imediato para o dashboard.</li>
-                <li>• Fluxo alinhado com cadastro Hago + DG Hub.</li>
-              </ul>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
+                <div className="flex items-start gap-2">
+                  <Trophy className="w-4 h-4 text-emerald-300 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-foreground">Campeonatos ao vivo</p>
+                    <p>Inscreva-se e receba lembrete 24h antes da partida.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <ShieldCheck className="w-4 h-4 text-primary mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-foreground">Sessão protegida</p>
+                    <p>Login OAuth com cookies seguros e expiração curta.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <MessageCircle className="w-4 h-4 text-cyan-300 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-foreground">Chat integrado</p>
+                    <p>Participe das conversas e mantenha seu perfil visível.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Mail className="w-4 h-4 text-amber-300 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-foreground">Perfil único</p>
+                    <p>Foto e apelido sincronizados em todo o app.</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-b from-[#0c1024]/90 via-[#090e1a]/92 to-[#0a1020]/90 p-6 shadow-[0_20px_60px_-40px_rgba(92,123,255,0.45)]">
@@ -178,12 +204,7 @@ export default function Login() {
                         <FormItem>
                           <FormLabel>E-mail</FormLabel>
                           <FormControl>
-                            <Input
-                              type="email"
-                              autoComplete="email"
-                              placeholder="voce@email.com"
-                              {...field}
-                            />
+                            <Input type="email" autoComplete="email" placeholder="voce@email.com" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -197,12 +218,7 @@ export default function Login() {
                         <FormItem>
                           <FormLabel>Senha</FormLabel>
                           <FormControl>
-                            <Input
-                              type="password"
-                              autoComplete="current-password"
-                              placeholder="Sua senha"
-                              {...field}
-                            />
+                            <Input type="password" autoComplete="current-password" placeholder="Sua senha" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -211,7 +227,7 @@ export default function Login() {
 
                     <div className="flex flex-col gap-3 text-sm">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Nao compartilhe sua senha.</span>
+                        <span>Não compartilhe sua senha.</span>
                         <a className="text-primary underline-offset-4 hover:underline">Precisa de ajuda?</a>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -233,3 +249,4 @@ export default function Login() {
     </div>
   );
 }
+
