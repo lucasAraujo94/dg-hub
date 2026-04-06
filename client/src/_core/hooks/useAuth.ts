@@ -118,10 +118,7 @@ export function useAuth(options?: UseAuthOptions) {
       if (avatarUrl && !isDataUrl(avatarUrl) && !isHuge(avatarUrl, 1500)) {
         localStorage.setItem("dg-avatar-url", avatarUrl);
       }
-      if (avatarUrl && (isDataUrl(avatarUrl) || isHuge(avatarUrl, 1500))) {
-        delete (payload as any).avatarUrl;
-        delete (payload as any).avatar;
-      }
+      
       localStorage.setItem("manus-runtime-user-info", JSON.stringify(payload));
     } catch {
       /* ignore */
@@ -153,3 +150,4 @@ export function useAuth(options?: UseAuthOptions) {
     logout,
   };
 }
+
