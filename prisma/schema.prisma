@@ -66,8 +66,8 @@ model Inscricao {
   campeonatoId  Int
   dataInscricao DateTime  @default(now())
 
-  usuario    User       @relation(fields: [usuarioId], references: [id])
-  campeonato Campeonato @relation(fields: [campeonatoId], references: [id])
+  usuario    User       @relation(fields: [usuarioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  campeonato Campeonato @relation(fields: [campeonatoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("inscricoes")
 }
