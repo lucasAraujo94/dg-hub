@@ -52,7 +52,16 @@ const { compare, hash } = bcrypt;
 export const appRouter = router({
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query((opts) => opts.ctx.user),
+    me: publicProcedure.query((opts) => {
+      if (opts.ctx.user) {
+        console.log("[auth.me]", {
+          openId: opts.ctx.user.openId,
+          hasAvatar: Boolean((opts.ctx.user as any).avatarUrl),
+          hasEmail: Boolean(opts.ctx.user.email),
+        });
+      }
+      return opts.ctx.user;
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
