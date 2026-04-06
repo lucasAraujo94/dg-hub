@@ -448,7 +448,7 @@ export default function Campeonatos() {
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            className="flex-1 btn-primary"
+                            className="flex-1 btn-primary text-sm sm:text-base py-3"
                             onClick={() => setSelectedCampId(camp.id)}
                           >
                             Ver Detalhes
@@ -484,11 +484,11 @@ export default function Campeonatos() {
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            className="flex-1 btn-secondary"
-                            disabled={camp.status === "finalizado" || camp.status === "cancelado" || camp.inscricoesEncerradas}
+                            className="flex-1 btn-secondary text-sm sm:text-base py-3"
+                            disabled={camp.status === "finalizado" || camp.status === "cancelado" || camp.inscricoesEncerradas || inscritosNomes.includes(nomeUsuario)}
                             onClick={() => setSelectedCampId(camp.id)}
                           >
-                            {camp.inscricoesEncerradas ? "Inscricoes encerradas" : "Se inscrever"}
+                            {camp.inscricoesEncerradas ? "Inscricoes encerradas" : (inscritosNomes.includes(nomeUsuario) ? "Ja inscrito" : "Se inscrever")}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -581,6 +581,12 @@ export default function Campeonatos() {
     </div>
   );
 }
+
+
+
+
+
+
 
 
 

@@ -333,6 +333,13 @@ export async function deleteCampeonato(id: number) {
 
 // Inscrições
 export async function inscreverCampeonato(usuarioId: number, campeonatoId: number) {
+  const existente = await prisma.inscricao.findFirst({
+    where: { usuarioId, campeonatoId },
+    select: { id: true },
+  });
+  if (existente) {
+    throw new Error("Usuario ja inscrito neste campeonato");
+  }
   return prisma.inscricao.create({ data: { usuarioId, campeonatoId } });
 }
 
