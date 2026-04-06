@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,16 +24,16 @@ export default function Campeonatos() {
   const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.role === "admin";
   const nomeUsuario = user?.name ? `${user.name}${(user as any).nickname ? ` (${(user as any).nickname})` : ""}` : "Convidado";
-  const emailUsuario = (user as { email?: string } | null | undefined)?.email;
   const usuarioId = (user as { id?: number } | null | undefined)?.id;
 
   const [rounds, setRounds] = useState<Match[][]>([]);
   const [sorteando, setSorteando] = useState(false);
+  const [celebrationWinner, setCelebrationWinner] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [ultimaPrimeiraRodada, setUltimaPrimeiraRodada] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "futuro" | "finalizado">("todos");
   const [selectedCampId, setSelectedCampId] = useState<number | null>(null);
-  const [celebrationWinner, setCelebrationWinner] = useState<string | null>(null);
-  const [showCelebration, setShowCelebration] = useState(false);
+  const [manualUserId, setManualUserId] = useState<number | null>(null);
 
   const utils = trpc.useUtils();
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -41,18 +41,18 @@ export default function Campeonatos() {
     { campeonatoId: selectedCampId ?? 0 },
     { enabled: Boolean(selectedCampId), refetchOnWindowFocus: false }
   );
+
   const inscricaoMutation = trpc.campeonatos.inscrever.useMutation({
     onSuccess: async () => {
-      toast.success("Inscrição confirmada!");
+      toast.success("Inscricao confirmada!");
       await Promise.all([
         utils.campeonatos.list.invalidate(),
         selectedCampId ? utils.campeonatos.getParticipantes.invalidate({ campeonatoId: selectedCampId }) : Promise.resolve(),
       ]);
     },
-    onError: error => {
-      toast.error(error.message || "Falha ao inscrever");
-    },
+    onError: error => toast.error(error.message || "Falha ao inscrever"),
   });
+
   const updateCampMutation = trpc.campeonatos.update.useMutation({
     onSuccess: () => {
       toast.success("Campeonato atualizado");
@@ -60,6 +60,7 @@ export default function Campeonatos() {
     },
     onError: err => toast.error(err.message || "Falha ao atualizar campeonato"),
   });
+
   const cancelCampMutation = trpc.campeonatos.cancel.useMutation({
     onSuccess: () => {
       toast.success("Campeonato cancelado");
@@ -67,17 +68,19 @@ export default function Campeonatos() {
     },
     onError: err => toast.error(err.message || "Falha ao cancelar campeonato"),
   });
+
   const deleteCampMutation = trpc.campeonatos.delete.useMutation({
     onSuccess: () => {
-      toast.success("Campeonato excluído");
+      toast.success("Campeonato excluido");
       utils.campeonatos.list.invalidate();
     },
     onError: err => toast.error(err.message || "Falha ao excluir campeonato"),
   });
+
   const listUsersQuery = trpc.admin.listUsers.useQuery(undefined, { enabled: isAdmin, refetchOnWindowFocus: false });
   const adminInscreverMutation = trpc.admin.inscreverUsuarioCampeonato.useMutation({
     onSuccess: async () => {
-      toast.success("Inscrição adicionada");
+      toast.success("Inscricao adicionada");
       await Promise.all([
         utils.campeonatos.list.invalidate(),
         selectedCampId ? utils.campeonatos.getParticipantes.invalidate({ campeonatoId: selectedCampId }) : Promise.resolve(),
@@ -85,8 +88,6 @@ export default function Campeonatos() {
     },
     onError: err => toast.error(err.message || "Falha ao inscrever"),
   });
-
-  const [manualUserId, setManualUserId] = useState<number | null>(null);
 
   useEffect(() => {
     if (selectedCampId || !campeonatosQuery.data?.length) return;
@@ -111,8 +112,13 @@ export default function Campeonatos() {
     const mapped =
       campeonatosQuery.data?.map(camp => {
         const dataInicio = camp.dataInicio ? new Date(camp.dataInicio) : null;
-        const status =
-          (camp as { status?: string }).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
+        const agora = Date.now();
+        const statusOriginal = (camp as { status?: string }).status;
+        const status = statusOriginal
+          ? statusOriginal
+          : dataInicio && dataInicio.getTime() > agora
+          ? "futuro"
+          : "ativo";
         const participantesCount =
           (camp as { participantes?: number }).participantes ??
           (camp as { totalInscritos?: number }).totalInscritos ??
@@ -121,9 +127,17 @@ export default function Campeonatos() {
         const inscricoesEncerradas = (() => {
           if (status === "cancelado" || status === "finalizado") return true;
           if (!dataInicio) return false;
-          const diff = dataInicio.getTime() - Date.now();
-          if (diff <= 0) return true; // já começou
-          return diff < 24 * 60 * 60 * 1000; // menos de 24h
+          const diff = dataInicio.getTime() - agora;
+          if (diff <= 0) return true;
+          return diff < 24 * 60 * 60 * 1000;
+        })();
+        const fase = (() => {
+          if (status === "cancelado") return "Cancelado";
+          if (status === "finalizado") return "Finalizado";
+          if (!dataInicio || dataInicio.getTime() > agora) {
+            return inscricoesEncerradas ? "Inscricoes encerradas" : "Fase de inscricoes";
+          }
+          return "Eliminacao";
         })();
 
         return {
@@ -133,7 +147,7 @@ export default function Campeonatos() {
           participantes: participantesCount,
           premio: (camp as { premioValor?: number }).premioValor ?? 0,
           inicio: dataInicio ? dataInicio.toLocaleString("pt-BR") : "Data a definir",
-          fase: inscricoesEncerradas ? "Inscrições encerradas" : "Fase de inscrições",
+          fase,
           inscricoesEncerradas,
         };
       }) ?? [];
@@ -271,11 +285,12 @@ export default function Campeonatos() {
       const partida = clone[roundIndex][matchIndex];
       partida.vencedor = vencedor;
       const propagado = propagarVencedores(clone);
-      const isFinal = roundIndex === propagado.length - 1;
-      if (isFinal && vencedor) {
-        setCelebrationWinner(vencedor);
+      const ultimaRodada = propagado[propagado.length - 1];
+      const finalMatch = ultimaRodada?.[0];
+      if (finalMatch?.vencedor) {
+        setCelebrationWinner(finalMatch.vencedor);
         setShowCelebration(true);
-        setTimeout(() => setShowCelebration(false), 4500);
+        setTimeout(() => setShowCelebration(false), 3000);
       }
       return propagado;
     });
@@ -293,7 +308,7 @@ export default function Campeonatos() {
 
     const jaInscrito = (usuarioId && inscritosIds.includes(usuarioId)) || inscritosNomes.some(n => n === nomeUsuario);
     if (jaInscrito) {
-      toast.info("Você já está inscrito neste campeonato.");
+      toast.info("Voce ja esta inscrito neste campeonato.");
       return;
     }
 
@@ -316,14 +331,12 @@ export default function Campeonatos() {
     setSorteando(true);
     try {
       gerarRounds(inscritosNomes, selectedCampId ?? 0);
-      setAba("chaveamento");
       toast.success("Chaveamento gerado.");
     } finally {
       setSorteando(false);
     }
   };
 
-  // Gera chaveamento determinístico para todos verem assim que houver inscritos
   useEffect(() => {
     if (!selectedCampId) return;
     if (!inscritosNomes.length) return;
@@ -361,16 +374,27 @@ export default function Campeonatos() {
             <h1 className="text-3xl font-bold gradient-text">Campeonatos</h1>
             <div className="w-20" />
           </div>
-          <p className="text-muted-foreground">Explore todos os campeonatos disponíveis e se inscreva para competir.</p>
+          <p className="text-muted-foreground">Explore todos os campeonatos disponiveis e se inscreva para competir.</p>
         </div>
       </div>
+
+      {showCelebration && celebrationWinner ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="bg-black/60 backdrop-blur-sm absolute inset-0" />
+          <div className="relative z-10 text-center space-y-3 px-6 py-4 rounded-2xl border border-purple-500/40 bg-gradient-to-r from-purple-900/70 to-cyan-900/70 shadow-2xl">
+            <div className="text-4xl">*</div>
+            <p className="text-lg font-semibold">Campeao definido!</p>
+            <p className="text-2xl font-bold text-purple-200">{celebrationWinner}</p>
+          </div>
+        </div>
+      ) : null}
 
       <section className="py-6 border-b border-border">
         <div className="container space-y-4">
           <div className="flex items-center gap-3 flex-wrap">
             <Button variant="outline" size="sm" className="gap-2" disabled>
               <Filter className="w-4 h-4" />
-              Filtrar
+              Filtros
             </Button>
             <Button
               variant={filtroStatus === "todos" ? "default" : "outline"}
@@ -413,403 +437,95 @@ export default function Campeonatos() {
         </div>
       </section>
 
-      {showCelebration && celebrationWinner ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-          <div className="relative bg-card/90 border border-white/10 rounded-2xl px-6 py-5 shadow-2xl text-center max-w-md w-full mx-4">
-            <p className="text-sm uppercase tracking-[0.3em] text-emerald-200 mb-2">Campeao</p>
-            <h3 className="text-2xl font-bold mb-2 text-white">{celebrationWinner}</h3>
-            <p className="text-muted-foreground mb-4">Parabens! O titulo e seu.</p>
-            <div className="relative h-24 overflow-hidden rounded-xl bg-gradient-to-r from-purple-500/20 via-transparent to-cyan-500/20 border border-white/10">
-              {Array.from({ length: 20 }).map((_, idx) => (
-                <span
-                  key={idx}
-                  className="absolute text-lg animate-bounce"
-                  style={{
-                    left: `${(idx * 5) % 100}%`,
-                    animationDelay: `${(idx % 5) * 0.2}s`,
-                    top: `${(idx * 7) % 80}%`,
-                  }}
-                >
-                  🎉
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      <section className="py-12">
-        <div className="container grid grid-cols-1 lg:grid-cols-[260px,1fr] gap-6">
-          <aside className="card-elegant h-fit p-4 space-y-4 border border-border/70">
+      <section className="py-8 border-t border-border bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.12),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_40%)]">
+        <div className="container space-y-4">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold mb-2">Funcionalidades</p>
-              <div className="space-y-2">
-                <Button variant="default" size="sm" className="w-full justify-start">
-                  Lista de campeonatos
-                </Button>
-              </div>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chaveamento</p>
+              <h2 className="text-xl font-semibold">Visualizacao em tempo real</h2>
             </div>
-
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Inscritos: {inscritosNomes.length}</p>
-              <p className="text-xs text-muted-foreground">
-                Ao sortear, os confrontos usam os participantes inscritos no campeonato selecionado.
-              </p>
-            </div>
-          </aside>
-
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <span className="text-sm text-muted-foreground">{inscritosNomes.length} inscritos no campeonato selecionado</span>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {campeonatosQuery.isLoading ? (
-                <div className="card-elegant p-4 text-sm text-muted-foreground">Carregando campeonatos...</div>
-              ) : null}
-              {campeonatosQuery.error ? (
-                <div className="card-elegant p-4 text-sm text-red-400">
-                  Erro ao carregar campeonatos: {campeonatosQuery.error.message}
-                </div>
-              ) : null}
-              {!campeonatosQuery.isLoading && campeonatos.length === 0 ? (
-                <div className="card-elegant p-4 text-sm text-muted-foreground">Nenhum campeonato encontrado.</div>
-              ) : null}
-              {campeonatos.map(camp => {
-                const isSelected = selectedCampId === camp.id;
-                const jaInscrito =
-                  isSelected &&
-                  ((usuarioId && inscritosIds.includes(usuarioId)) || inscritosNomes.includes(nomeUsuario));
-                const inscricoesDisponiveis =
-                  !camp.inscricoesEncerradas && camp.status !== "finalizado" && camp.status !== "cancelado";
-                return (
-                  <div key={camp.id} className="card-elegant group hover:border-purple-500/50 transition-all">
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex-1">
-                        <h2 className="text-xl font-bold mb-2">{camp.nome}</h2>
-                        <div
-                          className={`inline-flex items-center px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(camp.status)}`}
-                        >
-                          {getStatusLabel(camp.status)}
-                        </div>
-                      </div>
-                      <Trophy className="w-8 h-8 text-purple-400/30 group-hover:text-purple-400/60 transition-colors" />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 mb-6 py-4 border-t border-b border-border/50">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Participantes</p>
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-cyan-400" />
-                          <span className="font-semibold">{camp.participantes}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Prêmio</p>
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-yellow-400" />
-                          <span className="font-semibold">R$ {camp.premio}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Fase</p>
-                        <p className="font-semibold text-sm">{camp.fase}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                      <Clock className="w-4 h-4" />
-                      {camp.inicio}
-                    </div>
-
-                    {isSelected ? (
-                      <div className="mb-4 rounded-lg border border-border/60 bg-card/50 p-3">
-                        <p className="text-sm font-semibold mb-1">Participantes ({inscritosNomes.length})</p>
-                        {jaInscrito ? (
-                          <p className="text-xs text-emerald-400">Sua inscrição está confirmada.</p>
-                        ) : (
-                          <p className="text-xs text-amber-300">Você ainda não está inscrito neste campeonato.</p>
-                        )}
-                        {inscritosQuery.isLoading ? (
-                          <p className="text-xs text-muted-foreground">Carregando inscritos...</p>
-                        ) : participantes.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">Nenhuma inscrição ainda.</p>
-                        ) : (
-                          <div className="flex flex-wrap gap-2">
-                            {participantes.map((p, idx) => (
-                              <span
-                                key={`${p.name}-${idx}`}
-                                className="text-xs px-2 py-1 rounded-full bg-white/5 border border-white/10"
-                              >
-                                {p.name}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-
-                    <div className="flex flex-wrap gap-3">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            className="flex-1 min-w-[140px] btn-primary text-sm sm:text-base py-3"
-                            onClick={() => setSelectedCampId(camp.id)}
-                          >
-                            Ver detalhes
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Inscritos no {camp.nome}</AlertDialogTitle>
-                            <AlertDialogDescription>Total de inscritos: {inscritosNomes.length}</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <div className="space-y-2 max-h-64 overflow-y-auto border rounded-md p-3 bg-muted/30">
-                            {inscritosQuery.isLoading ? (
-                              <p className="text-sm text-muted-foreground">Carregando inscritos...</p>
-                            ) : null}
-                            {!inscritosQuery.isLoading && participantes.length === 0 ? (
-                              <p className="text-sm text-muted-foreground">Nenhuma inscrição ainda.</p>
-                            ) : null}
-                            {participantes.map((pessoa, idx) => (
-                              <div key={`${pessoa.name}-${idx}`} className="flex items-center justify-between text-sm">
-                                <span className="font-medium">{pessoa.name}</span>
-                                {pessoa.email ? <span className="text-muted-foreground">{pessoa.email}</span> : null}
-                              </div>
-                            ))}
-                          </div>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Fechar</AlertDialogCancel>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-
-                      <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              className="flex-1 min-w-[140px] btn-secondary text-sm sm:text-base py-3"
-                              disabled={!inscricoesDisponiveis || jaInscrito}
-                              onClick={() => setSelectedCampId(camp.id)}
-                            >
-                              {!inscricoesDisponiveis
-                                ? "Inscrições encerradas"
-                                : jaInscrito
-                                ? "Já inscrito"
-                                : "Se inscrever"}
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmar inscrição</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Confirme sua participação no {camp.nome} marcado para {camp.inicio}.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <Button
-                              onClick={() => registrarInscricao(camp.id)}
-                              disabled={inscricaoMutation.isPending || !inscricoesDisponiveis || jaInscrito}
-                            >
-                              {inscricaoMutation.isPending ? "Inscrevendo..." : "Confirmar"}
-                            </Button>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-
-                      {isAdmin ? (
-                        <div className="flex flex-col gap-2 w-full">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const input = window.prompt("Nova data de início (yyyy-mm-dd hh:mm)", camp.inicio);
-                              if (!input) return;
-                              const parsed = new Date(input);
-                              if (Number.isNaN(parsed.getTime())) {
-                                toast.error("Data inválida");
-                                return;
-                              }
-                              updateCampMutation.mutate({ id: camp.id, dataInicio: parsed });
-                            }}
-                            disabled={updateCampMutation.isPending}
-                          >
-                            {updateCampMutation.isPending ? "Salvando..." : "Editar data de início"}
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="secondary" size="sm" onClick={() => setSelectedCampId(camp.id)}>
-                                Inscrever jogador (admin)
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Inscrever manualmente</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Escolha o jogador para inscrever no campeonato {camp.nome}.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <div className="space-y-2">
-                                {listUsersQuery.isLoading ? (
-                                  <p className="text-sm text-muted-foreground">Carregando usuários...</p>
-                                ) : null}
-                                {listUsersQuery.data && (
-                                  <select
-                                    className="w-full rounded-md border border-border bg-card/60 p-2 text-sm"
-                                    value={manualUserId ?? ""}
-                                    onChange={e => setManualUserId(e.target.value ? Number(e.target.value) : null)}
-                                  >
-                                    <option value="">Selecione um usuário</option>
-                                    {listUsersQuery.data.map(u => (
-                                      <option key={u.id} value={u.id}>
-                                        {u.nickname ? `${u.name || u.email} (${u.nickname})` : u.name || u.email || u.openId} —{" "}
-                                        {u.email || "sem email"}
-                                      </option>
-                                    ))}
-                                  </select>
-                                )}
-                              </div>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Fechar</AlertDialogCancel>
-                                <Button
-                                  onClick={() => {
-                                    if (!manualUserId) {
-                                      toast.error("Selecione um usuário");
-                                      return;
-                                    }
-                                    adminInscreverMutation.mutate({ usuarioId: manualUserId, campeonatoId: camp.id });
-                                  }}
-                                  disabled={adminInscreverMutation.isPending}
-                                >
-                                  {adminInscreverMutation.isPending ? "Inscrevendo..." : "Confirmar inscrição"}
-                                </Button>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              if (window.confirm("Cancelar campeonato?")) {
-                                cancelCampMutation.mutate({ id: camp.id });
-                              }
-                            }}
-                            disabled={cancelCampMutation.isPending}
-                          >
-                            {cancelCampMutation.isPending ? "Cancelando..." : "Cancelar campeonato"}
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              if (window.confirm("Excluir campeonato definitivamente?")) {
-                                deleteCampMutation.mutate({ id: camp.id });
-                              }
-                            }}
-                            disabled={deleteCampMutation.isPending}
-                          >
-                            {deleteCampMutation.isPending ? "Excluindo..." : "Excluir campeonato"}
-                          </Button>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {rounds.length > 0 ? (
+              <span className="text-sm text-muted-foreground">
+                {rounds[0].length} partidas iniciais â€¢ seed fixo para todos
+              </span>
+            ) : null}
           </div>
-        </div>
-      </section>
-
-      {/* Chaveamento visível para todos; admin controla vencedores */}
-      {true ? (
-        <section className="py-8 border-t border-border bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.12),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_40%)]">
-          <div className="container space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chaveamento</p>
-                <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
-              </div>
-              {rounds.length > 0 ? (
-                <span className="text-sm text-muted-foreground">
-                  {rounds[0].length} partidas iniciais • Seed fixo para todos
-                </span>
-              ) : null}
+          {rounds.length === 0 ? (
+            <div className="card-elegant p-4 text-sm text-muted-foreground">
+              Nenhum chaveamento gerado. Admin pode usar "Sortear chaveamento" com o campeonato selecionado; depois disso,
+              todos veem aqui automaticamente.
             </div>
-            {rounds.length === 0 ? (
-              <div className="card-elegant p-4 text-sm text-muted-foreground">
-                Nenhum chaveamento gerado. Admin pode usar “Sortear chaveamento” com o campeonato selecionado; após isso,
-                todos visualizam aqui automaticamente.
-              </div>
-            ) : (
-              <div className="overflow-x-auto pb-2">
-                <div className="min-w-full grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
-                  {rounds.map((round, roundIndex) => (
-                    <div
-                      key={roundIndex}
-                      className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4 space-y-3 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.45)]"
-                    >
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold">Round {roundIndex + 1}</h3>
-                        <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Eliminação</span>
-                      </div>
-                      <div className="space-y-3">
-                        {round.map((match, matchIndex) => (
-                          <div
-                            key={`${roundIndex}-${matchIndex}`}
-                            className="rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/10 to-cyan-500/10 p-3 space-y-2 shadow-inner"
-                          >
+          ) : (
+            <div className="overflow-x-auto pb-2">
+              <div className="min-w-full grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
+                {rounds.map((round, roundIndex) => (
+                  <div
+                    key={roundIndex}
+                    className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4 space-y-3 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.45)]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold">Round {roundIndex + 1}</h3>
+                      <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Eliminacao</span>
+                    </div>
+                    <div className="space-y-3">
+                      {round.map((match, matchIndex) => (
+                        <div
+                          key={`${roundIndex}-${matchIndex}`}
+                          className="rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/10 to-cyan-500/10 p-3 space-y-2 shadow-inner"
+                        >
                           <div className="flex items-center justify-between gap-2 min-w-0">
-                            <span className="text-sm font-medium truncate" title={match.jogador1}>{match.jogador1}</span>
+                            <span className="text-sm font-medium truncate" title={match.jogador1}>
+                              {match.jogador1}
+                            </span>
                             <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
                               vs
                             </span>
-                            <span className="text-sm font-medium truncate text-right" title={match.jogador2}>{match.jogador2}</span>
+                            <span className="text-sm font-medium truncate text-right" title={match.jogador2}>
+                              {match.jogador2}
+                            </span>
                           </div>
-                            {isAdmin ? (
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant={match.vencedor === match.jogador1 ? "default" : "outline"}
-                                  className="flex-1"
-                                  onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1)}
-                                >
-                                  Vitória {match.jogador1}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant={match.vencedor === match.jogador2 ? "default" : "outline"}
-                                  className="flex-1"
-                                  onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2)}
-                                >
-                                  Vitória {match.jogador2}
-                                </Button>
-                              </div>
-                            ) : match.vencedor ? (
-                              <p className="text-xs text-muted-foreground">Vencedor: {match.vencedor}</p>
-                            ) : (
-                              <p className="text-[11px] text-muted-foreground">Aguardando resultado</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                          {isAdmin ? (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant={match.vencedor === match.jogador1 ? "default" : "outline"}
+                                className="flex-1"
+                                onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1)}
+                              >
+                                Vitoria {match.jogador1}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={match.vencedor === match.jogador2 ? "default" : "outline"}
+                                className="flex-1"
+                                onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2)}
+                              >
+                                Vitoria {match.jogador2}
+                              </Button>
+                            </div>
+                          ) : match.vencedor ? (
+                            <p className="text-xs text-muted-foreground">Vencedor: {match.vencedor}</p>
+                          ) : (
+                            <p className="text-[11px] text-muted-foreground">Aguardando resultado</p>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-        </section>
-      ) : null}
+            </div>
+          )}
+        </div>
+      </section>
 
       <section className="py-12 border-t border-border">
         <div className="container">
           <div className="card-elegant text-center neon-border">
             <Trophy className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-4">Não encontrou o que procura?</h3>
-            <p className="text-muted-foreground mb-6">Novos campeonatos são adicionados diariamente. Fique atento!</p>
-            <Button className="btn-secondary" onClick={() => toast.success("Aviso ativado! Você receberá notificações in-app.")}>
+            <h3 className="text-2xl font-bold mb-4">Nao encontrou o que procura?</h3>
+            <p className="text-muted-foreground mb-6">Novos campeonatos sao adicionados diariamente. Fique atento!</p>
+            <Button className="btn-secondary" onClick={() => toast.success("Aviso ativado! Voce recebera notificacoes in-app.")}>
               Notifique-me sobre novos campeonatos
             </Button>
           </div>
