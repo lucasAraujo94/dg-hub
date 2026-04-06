@@ -228,14 +228,17 @@ export default function Home() {
               <span className="text-lg font-bold gradient-text">DG Hub</span>
             </div>
           </div>
-          <div className="flex items-center gap-3 text-sm ms-auto justify-end text-right">
-            <span className="text-muted-foreground">
-              Olá, {user?.nickname ? `${user.name ?? user.email ?? "jogador"} (${user.nickname})` : user?.name ?? "jogador"}
-            </span>
-            <Button onClick={logout} variant="outline" size="sm">
-              Sair
-            </Button>
-          </div>
+            <div className="flex items-center gap-3 text-sm ms-auto justify-end text-right">
+              <div className="flex flex-col items-end">
+                <span className="text-muted-foreground">
+                  Olá, {user?.nickname ? `${user.name ?? user.email ?? "jogador"} (${user.nickname})` : user?.name ?? "jogador"}
+                </span>
+                <span className="text-[11px] text-muted-foreground">Sessão expira em ~10 min</span>
+              </div>
+              <Button onClick={logout} variant="outline" size="sm">
+                Sair
+              </Button>
+            </div>
         </div>
       </header>
 
@@ -710,3 +713,4 @@ export default function Home() {
     </div>
   );
 }
+

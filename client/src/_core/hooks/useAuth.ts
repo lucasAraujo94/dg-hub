@@ -8,6 +8,8 @@ type UseAuthOptions = {
   redirectPath?: string;
 };
 
+const SESSION_EXPIRES_MINUTES = 10;
+
 function normalizeRedirect(path: string) {
   if (/^https?:\/\//i.test(path)) return path;
   if (path.startsWith("#")) return path;
@@ -99,6 +101,7 @@ export function useAuth(options?: UseAuthOptions) {
       loading: meQuery.isLoading || logoutMutation.isPending,
       error: meQuery.error ?? logoutMutation.error ?? null,
       isAuthenticated: Boolean(userSafe),
+      sessionExpiresInMinutes: SESSION_EXPIRES_MINUTES,
     }),
     [
       userSafe,
