@@ -19,7 +19,6 @@ import { getLoginUrl } from "@/const";
 
 const BYE = "W.O";
 type Match = { jogador1: string; jogador2: string; vencedor?: string };
-type Aba = "lista" | "chaveamento";
 
 export default function Campeonatos() {
   const { user, isAuthenticated } = useAuth();
@@ -30,10 +29,11 @@ export default function Campeonatos() {
 
   const [rounds, setRounds] = useState<Match[][]>([]);
   const [sorteando, setSorteando] = useState(false);
-  const [aba, setAba] = useState<Aba>("lista");
   const [ultimaPrimeiraRodada, setUltimaPrimeiraRodada] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "futuro" | "finalizado">("todos");
   const [selectedCampId, setSelectedCampId] = useState<number | null>(null);
+  const [celebrationWinner, setCelebrationWinner] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const utils = trpc.useUtils();
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -270,7 +270,14 @@ export default function Campeonatos() {
       const clone = prev.map(r => r.map(m => ({ ...m })));
       const partida = clone[roundIndex][matchIndex];
       partida.vencedor = vencedor;
-      return propagarVencedores(clone);
+      const propagado = propagarVencedores(clone);
+      const isFinal = roundIndex === propagado.length - 1;
+      if (isFinal && vencedor) {
+        setCelebrationWinner(vencedor);
+        setShowCelebration(true);
+        setTimeout(() => setShowCelebration(false), 4500);
+      }
+      return propagado;
     });
   };
 
@@ -365,16 +372,6 @@ export default function Campeonatos() {
               <Filter className="w-4 h-4" />
               Filtrar
             </Button>
-            <Button variant={aba === "lista" ? "default" : "outline"} size="sm" onClick={() => setAba("lista")}>
-              Lista
-            </Button>
-            <Button
-              variant={aba === "chaveamento" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setAba("chaveamento")}
-            >
-              Chaveamento
-            </Button>
             <Button
               variant={filtroStatus === "todos" ? "default" : "outline"}
               size="sm"
@@ -415,6 +412,32 @@ export default function Campeonatos() {
           </div>
         </div>
       </section>
+
+      {showCelebration && celebrationWinner ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative bg-card/90 border border-white/10 rounded-2xl px-6 py-5 shadow-2xl text-center max-w-md w-full mx-4">
+            <p className="text-sm uppercase tracking-[0.3em] text-emerald-200 mb-2">Campeao</p>
+            <h3 className="text-2xl font-bold mb-2 text-white">{celebrationWinner}</h3>
+            <p className="text-muted-foreground mb-4">Parabens! O titulo e seu.</p>
+            <div className="relative h-24 overflow-hidden rounded-xl bg-gradient-to-r from-purple-500/20 via-transparent to-cyan-500/20 border border-white/10">
+              {Array.from({ length: 20 }).map((_, idx) => (
+                <span
+                  key={idx}
+                  className="absolute text-lg animate-bounce"
+                  style={{
+                    left: `${(idx * 5) % 100}%`,
+                    animationDelay: `${(idx % 5) * 0.2}s`,
+                    top: `${(idx * 7) % 80}%`,
+                  }}
+                >
+                  🎉
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <section className="py-12">
         <div className="container grid grid-cols-1 lg:grid-cols-[260px,1fr] gap-6">
@@ -699,7 +722,8 @@ export default function Campeonatos() {
         </div>
       </section>
 
-      {aba === "chaveamento" ? (
+      {/* Chaveamento visível para todos; admin controla vencedores */}
+      {true ? (
         <section className="py-8 border-t border-border bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.12),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_40%)]">
           <div className="container space-y-4">
             <div className="flex items-center justify-between">
@@ -736,13 +760,13 @@ export default function Campeonatos() {
                             key={`${roundIndex}-${matchIndex}`}
                             className="rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/10 to-cyan-500/10 p-3 space-y-2 shadow-inner"
                           >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-medium truncate">{match.jogador1}</span>
-                              <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
-                                vs
-                              </span>
-                              <span className="text-sm font-medium truncate text-right">{match.jogador2}</span>
-                            </div>
+                          <div className="flex items-center justify-between gap-2 min-w-0">
+                            <span className="text-sm font-medium truncate" title={match.jogador1}>{match.jogador1}</span>
+                            <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                              vs
+                            </span>
+                            <span className="text-sm font-medium truncate text-right" title={match.jogador2}>{match.jogador2}</span>
+                          </div>
                             {isAdmin ? (
                               <div className="flex gap-2">
                                 <Button
