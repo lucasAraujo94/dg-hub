@@ -373,24 +373,6 @@ export const appRouter = router({
     definirCampeao: adminProcedure
       .input(z.object({ campeonatoId: z.number(), campeaoId: z.number() }))
       .mutation(async ({ input }) => definirCampeaoCampeonato(input)),
-    update: adminProcedure
-      .input(
-        z.object({
-          id: z.number(),
-          nome: z.string().optional(),
-          descricao: z.string().optional(),
-          dataInicio: z.date().optional(),
-          premioValor: z.number().optional(),
-          status: z.string().optional(),
-        })
-      )
-      .mutation(async ({ input }) => updateCampeonato(input)),
-    cancel: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => updateCampeonato({ id: input.id, status: "cancelado" })),
-    delete: adminProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => deleteCampeonato(input.id)),
 
     inscrever: protectedProcedure
       .input(z.object({ campeonatoId: z.number() }))
