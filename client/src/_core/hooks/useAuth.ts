@@ -17,14 +17,11 @@ function normalizeRedirect(path: string) {
   return `#/${path}`;
 }
 
-const isDataUrl = (value: unknown) =>
-  typeof value === "string" && value.startsWith("data:");
-const isHuge = (value: unknown, limit: number) =>
-  typeof value === "string" && value.length > limit;
+const isDataUrl = (value: unknown) => typeof value === "string" && value.startsWith("data:");
+const isHuge = (value: unknown, limit: number) => typeof value === "string" && value.length > limit;
 
 export function useAuth(options?: UseAuthOptions) {
-  const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
-    options ?? {};
+  const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } = options ?? {};
   const utils = trpc.useUtils();
 
   const cachedUser =
@@ -54,8 +51,7 @@ export function useAuth(options?: UseAuthOptions) {
     refetchOnWindowFocus: false,
     initialData: cachedUser ?? undefined,
     onError: error => {
-      const isUnauthorized =
-        error instanceof TRPCClientError && error.message === UNAUTHED_ERR_MSG;
+      const isUnauthorized = error instanceof TRPCClientError && error.message === UNAUTHED_ERR_MSG;
       if (isUnauthorized && typeof window !== "undefined") {
         try {
           localStorage.removeItem("manus-runtime-user-info");
@@ -76,10 +72,7 @@ export function useAuth(options?: UseAuthOptions) {
     try {
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {
-      if (
-        error instanceof TRPCClientError &&
-        error.data?.code === "UNAUTHORIZED"
-      ) {
+      if (error instanceof TRPCClientError && error.data?.code === "UNAUTHORIZED") {
         return;
       }
       throw error;
@@ -89,9 +82,7 @@ export function useAuth(options?: UseAuthOptions) {
     }
   }, [logoutMutation, utils]);
 
-  const isUnauthorized =
-    meQuery.error instanceof TRPCClientError &&
-    meQuery.error.message === UNAUTHED_ERR_MSG;
+  const isUnauthorized = meQuery.error instanceof TRPCClientError && meQuery.error.message === UNAUTHED_ERR_MSG;
 
   const userSafe = isUnauthorized ? null : meQuery.data ?? null;
 
@@ -103,13 +94,7 @@ export function useAuth(options?: UseAuthOptions) {
       isAuthenticated: Boolean(userSafe),
       sessionExpiresInMinutes: SESSION_EXPIRES_MINUTES,
     }),
-    [
-      userSafe,
-      meQuery.error,
-      meQuery.isLoading,
-      logoutMutation.error,
-      logoutMutation.isPending,
-    ]
+    [userSafe, meQuery.error, meQuery.isLoading, logoutMutation.error, logoutMutation.isPending]
   );
 
   useEffect(() => {
@@ -117,12 +102,17 @@ export function useAuth(options?: UseAuthOptions) {
     try {
       const payload = { ...meQuery.data };
       const avatarUrl = (payload as any).avatarUrl as string | undefined;
-      // Armazena avatar separado apenas se for URL "curta" e não data URL gigante
+      // guardar avatar curto no cache separado
       if (avatarUrl && !isDataUrl(avatarUrl) && !isHuge(avatarUrl, 1500)) {
         localStorage.setItem("dg-avatar-url", avatarUrl);
       }
-      
-      localStorage.setItem("manus-runtime-user-info", JSON.stringify(payload));
+      // evitar gravar data URL gigante no cache persistente
+      const payloadForStorage = { ...payload };
+      if (avatarUrl && (isDataUrl(avatarUrl) || isHuge(avatarUrl, 1500))) {
+        delete (payloadForStorage as any).avatarUrl;
+        delete (payloadForStorage as any).avatar;
+      }
+      localStorage.setItem("manus-runtime-user-info", JSON.stringify(payloadForStorage));
     } catch {
       /* ignore */
     }
@@ -139,13 +129,7 @@ export function useAuth(options?: UseAuthOptions) {
     if (current === target) return;
 
     window.location.replace(target);
-  }, [
-    redirectOnUnauthenticated,
-    redirectPath,
-    logoutMutation.isPending,
-    meQuery.isLoading,
-    state.user,
-  ]);
+  }, [redirectOnUnauthenticated, redirectPath, logoutMutation.isPending, meQuery.isLoading, state.user]);
 
   return {
     ...state,
@@ -153,4 +137,3 @@ export function useAuth(options?: UseAuthOptions) {
     logout,
   };
 }
-

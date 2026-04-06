@@ -158,18 +158,21 @@ export default function Home() {
     );
   }, [campeonatosQuery.data]);
 
+  const inscreverMutation = trpc.campeonatos.inscrever.useMutation({
+    onSuccess: () => {
+      toast.success("Inscricao confirmada!");
+      campeonatosQuery.refetch();
+    },
+    onError: err => toast.error(err.message || "Falha ao inscrever"),
+  });
+
   const registrarInscricao = async (campeonatoId?: number) => {
     if (!campeonatoId) return;
     if (!user) {
       window.location.href = getLoginUrl();
       return;
     }
-    try {
-      await trpc.campeonatos.inscrever.mutateAsync({ campeonatoId });
-      toast.success("Inscricao confirmada!");
-    } catch (error: any) {
-      toast.error(error?.message || "Falha ao inscrever");
-    }
+    await inscreverMutation.mutateAsync({ campeonatoId });
   };
 
   const lastWinners = useMemo(() => {
