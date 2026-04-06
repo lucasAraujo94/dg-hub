@@ -42,6 +42,14 @@ export default function Campeonatos() {
     { enabled: Boolean(selectedCampId), refetchOnWindowFocus: false }
   );
 
+  const exibirApelido = (nomeComApelido: string) => {
+    const match = nomeComApelido.match(/\(([^)]+)\)/);
+    if (match && match[1]) {
+      return `(${match[1]})`;
+    }
+    return nomeComApelido;
+  };
+
   const inscricaoMutation = trpc.campeonatos.inscrever.useMutation({
     onSuccess: async () => {
       toast.success("Inscricao confirmada!");
@@ -474,15 +482,16 @@ export default function Campeonatos() {
                           key={`${roundIndex}-${matchIndex}`}
                           className="rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/10 to-cyan-500/10 p-3 space-y-2 shadow-inner"
                         >
+                          <p className="text-[11px] text-muted-foreground">Selecione o vencedor desta partida</p>
                           <div className="flex items-center justify-between gap-2 min-w-0">
                             <span className="text-sm font-medium truncate" title={match.jogador1}>
-                              {match.jogador1}
+                              {exibirApelido(match.jogador1)}
                             </span>
                             <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
                               vs
                             </span>
                             <span className="text-sm font-medium truncate text-right" title={match.jogador2}>
-                              {match.jogador2}
+                              {exibirApelido(match.jogador2)}
                             </span>
                           </div>
                           {isAdmin ? (
@@ -493,7 +502,7 @@ export default function Campeonatos() {
                                 className="flex-1"
                                 onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1)}
                               >
-                                Vitoria {match.jogador1}
+                                {exibirApelido(match.jogador1)}
                               </Button>
                               <Button
                                 size="sm"
@@ -501,11 +510,11 @@ export default function Campeonatos() {
                                 className="flex-1"
                                 onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2)}
                               >
-                                Vitoria {match.jogador2}
+                                {exibirApelido(match.jogador2)}
                               </Button>
                             </div>
                           ) : match.vencedor ? (
-                            <p className="text-xs text-muted-foreground">Vencedor: {match.vencedor}</p>
+                            <p className="text-xs text-muted-foreground">Vencedor: {exibirApelido(match.vencedor)}</p>
                           ) : (
                             <p className="text-[11px] text-muted-foreground">Aguardando resultado</p>
                           )}
