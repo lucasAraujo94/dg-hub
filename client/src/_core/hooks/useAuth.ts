@@ -118,6 +118,26 @@ export function useAuth(options?: UseAuthOptions) {
     }
   }, [meQuery.data]);
 
+  // Repõe avatar do cache quando o backend não devolver (evita sumiço após logout/navegação)
+  useEffect(() => {
+    if (!meQuery.data || typeof window === "undefined") return;
+    try {
+      const cachedAvatar = localStorage.getItem("dg-avatar-url");
+      const hasAvatar = Boolean((meQuery.data as any).avatarUrl || (meQuery.data as any).avatar);
+      if (cachedAvatar && !hasAvatar) {
+        utils.auth.me.setData(
+          undefined,
+          prev =>
+            prev
+              ? { ...prev, avatarUrl: cachedAvatar, avatar: cachedAvatar }
+              : ({ ...meQuery.data, avatarUrl: cachedAvatar, avatar: cachedAvatar } as any)
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [meQuery.data, utils]);
+
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
     if (meQuery.isLoading || logoutMutation.isPending) return;

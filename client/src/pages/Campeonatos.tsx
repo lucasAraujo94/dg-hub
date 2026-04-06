@@ -42,7 +42,7 @@ export default function Campeonatos() {
   );
   const inscricaoMutation = trpc.campeonatos.inscrever.useMutation({
     onSuccess: async () => {
-      toast.success("Inscricao confirmada!");
+      toast.success("Inscrição confirmada!");
       await Promise.all([
         utils.campeonatos.list.invalidate(),
         selectedCampId ? utils.campeonatos.getParticipantes.invalidate({ campeonatoId: selectedCampId }) : Promise.resolve(),
@@ -68,7 +68,7 @@ export default function Campeonatos() {
   });
   const deleteCampMutation = trpc.campeonatos.delete.useMutation({
     onSuccess: () => {
-      toast.success("Campeonato excluido");
+      toast.success("Campeonato excluído");
       utils.campeonatos.list.invalidate();
     },
     onError: err => toast.error(err.message || "Falha ao excluir campeonato"),
@@ -83,7 +83,9 @@ export default function Campeonatos() {
     if (!inscritosQuery.data) return [];
     return inscritosQuery.data.map(item => {
       const usuario = (item as { usuario?: { name?: string | null; email?: string | null } }).usuario;
-      const name = usuario?.name || usuario?.email || `Jogador ${item.usuarioId}`;
+      const baseName = usuario?.name || usuario?.email || `Jogador ${item.usuarioId}`;
+      const nick = usuario?.nickname;
+      const name = nick ? `${baseName} (${nick})` : baseName;
       return { name, email: usuario?.email ?? undefined };
     });
   }, [inscritosQuery.data]);
@@ -95,8 +97,7 @@ export default function Campeonatos() {
       campeonatosQuery.data?.map(camp => {
         const dataInicio = camp.dataInicio ? new Date(camp.dataInicio) : null;
         const status =
-          (camp as { status?: string }).status ??
-          (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
+          (camp as { status?: string }).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
         const participantesCount =
           (camp as { participantes?: number }).participantes ??
           (camp as { totalInscritos?: number }).totalInscritos ??
@@ -117,7 +118,7 @@ export default function Campeonatos() {
           participantes: participantesCount,
           premio: (camp as { premioValor?: number }).premioValor ?? 0,
           inicio: dataInicio ? dataInicio.toLocaleString("pt-BR") : "Data a definir",
-          fase: inscricoesEncerradas ? "Inscricoes encerradas" : "Fase de inscricoes",
+          fase: inscricoesEncerradas ? "Inscrições encerradas" : "Fase de inscrições",
           inscricoesEncerradas,
         };
       }) ?? [];
@@ -238,7 +239,7 @@ export default function Campeonatos() {
     });
   };
 
-  const registrarInscricao = (campeonatoId?: number) => {
+  const registrarInscricao = async (campeonatoId?: number) => {
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
       return;
@@ -254,7 +255,11 @@ export default function Campeonatos() {
       return;
     }
 
-    inscricaoMutation.mutate({ campeonatoId });
+    try {
+      await inscricaoMutation.mutateAsync({ campeonatoId });
+    } catch (error: any) {
+      toast.error(error?.message || "Falha ao inscrever");
+    }
   };
 
   const handleSortearConfrontos = () => {
@@ -306,7 +311,7 @@ export default function Campeonatos() {
             <h1 className="text-3xl font-bold gradient-text">Campeonatos</h1>
             <div className="w-20" />
           </div>
-          <p className="text-muted-foreground">Explore todos os campeonatos disponiveis e se inscreva para competir.</p>
+          <p className="text-muted-foreground">Explore todos os campeonatos disponíveis e se inscreva para competir.</p>
         </div>
       </div>
 
@@ -317,11 +322,7 @@ export default function Campeonatos() {
               <Filter className="w-4 h-4" />
               Filtrar
             </Button>
-            <Button
-              variant={aba === "lista" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setAba("lista")}
-            >
+            <Button variant={aba === "lista" ? "default" : "outline"} size="sm" onClick={() => setAba("lista")}>
               Lista
             </Button>
             <Button
@@ -363,6 +364,11 @@ export default function Campeonatos() {
               <Volume2 className="w-4 h-4" />
               Ouvir campeonatos
             </Button>
+            {isAdmin ? (
+              <Button size="sm" variant="outline" onClick={handleSortearConfrontos} disabled={sorteando || !selectedCampId}>
+                {sorteando ? "Sorteando..." : "Sortear chaveamento"}
+              </Button>
+            ) : null}
           </div>
         </div>
       </section>
@@ -389,9 +395,7 @@ export default function Campeonatos() {
 
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <span className="text-sm text-muted-foreground">
-                {inscritosNomes.length} inscritos no campeonato selecionado
-              </span>
+              <span className="text-sm text-muted-foreground">{inscritosNomes.length} inscritos no campeonato selecionado</span>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -406,67 +410,94 @@ export default function Campeonatos() {
               {!campeonatosQuery.isLoading && campeonatos.length === 0 ? (
                 <div className="card-elegant p-4 text-sm text-muted-foreground">Nenhum campeonato encontrado.</div>
               ) : null}
-              {campeonatos.map((camp) => (
-                <div key={camp.id} className="card-elegant group hover:border-purple-500/50 transition-all">
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex-1">
-                      <h2 className="text-xl font-bold mb-2">{camp.nome}</h2>
-                      <div className={`inline-flex items-center px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(camp.status)}`}>
-                        {getStatusLabel(camp.status)}
+              {campeonatos.map(camp => {
+                const isSelected = selectedCampId === camp.id;
+                const jaInscrito = isSelected && inscritosNomes.includes(nomeUsuario);
+                const inscricoesDisponiveis =
+                  !camp.inscricoesEncerradas && camp.status !== "finalizado" && camp.status !== "cancelado";
+                return (
+                  <div key={camp.id} className="card-elegant group hover:border-purple-500/50 transition-all">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold mb-2">{camp.nome}</h2>
+                        <div
+                          className={`inline-flex items-center px-3 py-1 rounded-full border text-sm font-medium ${getStatusColor(camp.status)}`}
+                        >
+                          {getStatusLabel(camp.status)}
+                        </div>
+                      </div>
+                      <Trophy className="w-8 h-8 text-purple-400/30 group-hover:text-purple-400/60 transition-colors" />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 mb-6 py-4 border-t border-b border-border/50">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Participantes</p>
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-cyan-400" />
+                          <span className="font-semibold">{camp.participantes}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Prêmio</p>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-yellow-400" />
+                          <span className="font-semibold">R$ {camp.premio}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Fase</p>
+                        <p className="font-semibold text-sm">{camp.fase}</p>
                       </div>
                     </div>
-                    <Trophy className="w-8 h-8 text-purple-400/30 group-hover:text-purple-400/60 transition-colors" />
-                  </div>
 
-                  <div className="grid grid-cols-3 gap-4 mb-6 py-4 border-t border-b border-border/50">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Participantes</p>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-cyan-400" />
-                        <span className="font-semibold">{camp.participantes}</span>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                      <Clock className="w-4 h-4" />
+                      {camp.inicio}
+                    </div>
+
+                    {isSelected ? (
+                      <div className="mb-4 rounded-lg border border-border/60 bg-card/50 p-3">
+                        <p className="text-sm font-semibold mb-1">Participantes ({inscritosNomes.length})</p>
+                        {inscritosQuery.isLoading ? (
+                          <p className="text-xs text-muted-foreground">Carregando inscritos...</p>
+                        ) : participantes.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">Nenhuma inscrição ainda.</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {participantes.map((p, idx) => (
+                              <span
+                                key={`${p.name}-${idx}`}
+                                className="text-xs px-2 py-1 rounded-full bg-white/5 border border-white/10"
+                              >
+                                {p.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Premio</p>
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-yellow-400" />
-                        <span className="font-semibold">R$ {camp.premio}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Fase</p>
-                      <p className="font-semibold text-sm">{camp.fase}</p>
-                    </div>
-                  </div>
+                    ) : null}
 
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-                    <Clock className="w-4 h-4" />
-                    {camp.inicio}
-                  </div>
-
-                  <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            className="flex-1 btn-primary text-sm sm:text-base py-3"
+                            className="flex-1 min-w-[140px] btn-primary text-sm sm:text-base py-3"
                             onClick={() => setSelectedCampId(camp.id)}
                           >
-                            Ver Detalhes
+                            Ver detalhes
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Inscritos no {camp.nome}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Total de inscritos: {inscritosNomes.length}
-                            </AlertDialogDescription>
+                            <AlertDialogDescription>Total de inscritos: {inscritosNomes.length}</AlertDialogDescription>
                           </AlertDialogHeader>
                           <div className="space-y-2 max-h-64 overflow-y-auto border rounded-md p-3 bg-muted/30">
                             {inscritosQuery.isLoading ? (
                               <p className="text-sm text-muted-foreground">Carregando inscritos...</p>
                             ) : null}
                             {!inscritosQuery.isLoading && participantes.length === 0 ? (
-                              <p className="text-sm text-muted-foreground">Nenhuma inscricao ainda.</p>
+                              <p className="text-sm text-muted-foreground">Nenhuma inscrição ainda.</p>
                             ) : null}
                             {participantes.map((pessoa, idx) => (
                               <div key={`${pessoa.name}-${idx}`} className="flex items-center justify-between text-sm">
@@ -484,25 +515,29 @@ export default function Campeonatos() {
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            className="flex-1 btn-secondary text-sm sm:text-base py-3"
-                            disabled={camp.status === "finalizado" || camp.status === "cancelado" || camp.inscricoesEncerradas || inscritosNomes.includes(nomeUsuario)}
+                            className="flex-1 min-w-[140px] btn-secondary text-sm sm:text-base py-3"
+                            disabled={!inscricoesDisponiveis || jaInscrito}
                             onClick={() => setSelectedCampId(camp.id)}
                           >
-                            {camp.inscricoesEncerradas ? "Inscricoes encerradas" : (inscritosNomes.includes(nomeUsuario) ? "Ja inscrito" : "Se inscrever")}
+                            {!inscricoesDisponiveis
+                              ? "Inscrições encerradas"
+                              : jaInscrito
+                                ? "Já inscrito"
+                                : "Se inscrever"}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmar inscricao</AlertDialogTitle>
+                            <AlertDialogTitle>Confirmar inscrição</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Confirme sua participacao no {camp.nome} marcado para {camp.inicio}.
+                              Confirme sua participação no {camp.nome} marcado para {camp.inicio}.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
                             <Button
                               onClick={() => registrarInscricao(camp.id)}
-                              disabled={inscricaoMutation.isPending || camp.inscricoesEncerradas}
+                              disabled={inscricaoMutation.isPending || !inscricoesDisponiveis || jaInscrito}
                             >
                               {inscricaoMutation.isPending ? "Inscrevendo..." : "Confirmar"}
                             </Button>
@@ -510,69 +545,124 @@ export default function Campeonatos() {
                         </AlertDialogContent>
                       </AlertDialog>
 
-                  {isAdmin ? (
-                    <div className="flex flex-col gap-2 w-full">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const input = window.prompt("Nova data de inicio (yyyy-mm-dd hh:mm)", camp.inicio);
-                          if (!input) return;
-                          const parsed = new Date(input);
-                          if (Number.isNaN(parsed.getTime())) {
-                            toast.error("Data invalida");
-                            return;
-                          }
-                          updateCampMutation.mutate({ id: camp.id, dataInicio: parsed });
-                        }}
-                        disabled={updateCampMutation.isPending}
-                      >
-                        {updateCampMutation.isPending ? "Salvando..." : "Editar data de inicio"}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          if (window.confirm("Cancelar campeonato?")) {
-                            cancelCampMutation.mutate({ id: camp.id });
-                          }
-                        }}
-                        disabled={cancelCampMutation.isPending}
-                      >
-                        {cancelCampMutation.isPending ? "Cancelando..." : "Cancelar campeonato"}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          if (window.confirm("Excluir campeonato definitivamente?")) {
-                            deleteCampMutation.mutate({ id: camp.id });
-                          }
-                        }}
-                        disabled={deleteCampMutation.isPending}
-                      >
-                        {deleteCampMutation.isPending ? "Excluindo..." : "Excluir campeonato"}
-                      </Button>
+                      {isAdmin ? (
+                        <div className="flex flex-col gap-2 w-full">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const input = window.prompt("Nova data de início (yyyy-mm-dd hh:mm)", camp.inicio);
+                              if (!input) return;
+                              const parsed = new Date(input);
+                              if (Number.isNaN(parsed.getTime())) {
+                                toast.error("Data inválida");
+                                return;
+                              }
+                              updateCampMutation.mutate({ id: camp.id, dataInicio: parsed });
+                            }}
+                            disabled={updateCampMutation.isPending}
+                          >
+                            {updateCampMutation.isPending ? "Salvando..." : "Editar data de início"}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (window.confirm("Cancelar campeonato?")) {
+                                cancelCampMutation.mutate({ id: camp.id });
+                              }
+                            }}
+                            disabled={cancelCampMutation.isPending}
+                          >
+                            {cancelCampMutation.isPending ? "Cancelando..." : "Cancelar campeonato"}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              if (window.confirm("Excluir campeonato definitivamente?")) {
+                                deleteCampMutation.mutate({ id: camp.id });
+                              }
+                            }}
+                            disabled={deleteCampMutation.isPending}
+                          >
+                            {deleteCampMutation.isPending ? "Excluindo..." : "Excluir campeonato"}
+                          </Button>
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
       </section>
 
+      {aba === "chaveamento" ? (
+        <section className="py-8 border-t border-border">
+          <div className="container space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Chaveamento</h2>
+              {rounds.length > 0 ? <span className="text-sm text-muted-foreground">{rounds[0].length} partidas iniciais</span> : null}
+            </div>
+            {rounds.length === 0 ? (
+              <div className="card-elegant p-4 text-sm text-muted-foreground">
+                Nenhum chaveamento gerado. Admin pode usar "Sortear chaveamento" com o campeonato selecionado.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {rounds.map((round, roundIndex) => (
+                  <div key={roundIndex} className="card-elegant p-4 space-y-3">
+                    <h3 className="text-sm font-semibold">Round {roundIndex + 1}</h3>
+                    <div className="space-y-2">
+                      {round.map((match, matchIndex) => (
+                        <div key={`${roundIndex}-${matchIndex}`} className="rounded-lg border border-border/60 bg-card/50 p-3 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{match.jogador1}</span>
+                            <span className="text-xs text-muted-foreground">vs</span>
+                            <span className="text-sm font-medium">{match.jogador2}</span>
+                          </div>
+                          {isAdmin ? (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant={match.vencedor === match.jogador1 ? "default" : "outline"}
+                                className="flex-1"
+                                onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1)}
+                              >
+                                Vitória {match.jogador1}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={match.vencedor === match.jogador2 ? "default" : "outline"}
+                                className="flex-1"
+                                onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2)}
+                              >
+                                Vitória {match.jogador2}
+                              </Button>
+                            </div>
+                          ) : match.vencedor ? (
+                            <p className="text-xs text-muted-foreground">Vencedor: {match.vencedor}</p>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      ) : null}
+
       <section className="py-12 border-t border-border">
         <div className="container">
           <div className="card-elegant text-center neon-border">
             <Trophy className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-4">Nao encontrou o que procura?</h3>
-            <p className="text-muted-foreground mb-6">Novos campeonatos sao adicionados diariamente. Fique atento!</p>
-            <Button
-              className="btn-secondary"
-              onClick={() => toast.success("Aviso ativado! Você receberá notificações in-app.")}
-            >
+            <h3 className="text-2xl font-bold mb-4">Não encontrou o que procura?</h3>
+            <p className="text-muted-foreground mb-6">Novos campeonatos são adicionados diariamente. Fique atento!</p>
+            <Button className="btn-secondary" onClick={() => toast.success("Aviso ativado! Você receberá notificações in-app.")}>
               Notifique-me sobre novos campeonatos
             </Button>
           </div>
@@ -581,13 +671,4 @@ export default function Campeonatos() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
 
