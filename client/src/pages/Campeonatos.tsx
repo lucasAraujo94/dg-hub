@@ -225,14 +225,14 @@ export default function Campeonatos() {
   };
 
   const gerarRounds = (participantesNomes: string[], seed?: number, tentativa = 0) => {
-    const totalAlvo = proximaPotenciaDeDois(participantesNomes.length || 1);
+    const totalAlvo = Math.max(2, proximaPotenciaDeDois(participantesNomes.length || 1));
     const baseSeed = seed ?? hashString(participantesNomes.join("|"));
     const embaralhados = seededShuffle(participantesNomes, baseSeed + (tentativa || 0));
     while (embaralhados.length < totalAlvo) {
       embaralhados.push(BYE);
     }
 
-    const totalRounds = Math.log2(totalAlvo);
+    const totalRounds = Math.max(1, Math.log2(totalAlvo));
     const novoRounds: Match[][] = Array.from({ length: totalRounds }, () => []);
 
     for (let i = 0; i < totalAlvo; i += 2) {
@@ -241,14 +241,18 @@ export default function Campeonatos() {
       const match: Match = { jogador1, jogador2 };
       if (jogador1 === BYE && jogador2 !== BYE) match.vencedor = jogador2;
       if (jogador2 === BYE && jogador1 !== BYE) match.vencedor = jogador1;
-      novoRounds[0].push(match);
+      novoRounds[0]?.push(match);
     }
 
     for (let r = 1; r < totalRounds; r++) {
       const matchesCount = totalAlvo / Math.pow(2, r + 1);
       for (let m = 0; m < matchesCount; m++) {
-        novoRounds[r].push({ jogador1: "Aguardando", jogador2: "Aguardando" });
+        novoRounds[r]?.push({ jogador1: "Aguardando", jogador2: "Aguardando" });
       }
+    }
+
+    if (!novoRounds[0] || novoRounds[0].length === 0) {
+      return;
     }
 
     const assinaturaAtual = assinaturaPrimeiraRodada(novoRounds[0]);
