@@ -26,6 +26,7 @@ export default function Campeonatos() {
   const isAdmin = user?.role === "admin";
   const nomeUsuario = user?.name ? `${user.name}${(user as any).nickname ? ` (${(user as any).nickname})` : ""}` : "Convidado";
   const emailUsuario = (user as { email?: string } | null | undefined)?.email;
+  const usuarioId = (user as { id?: number } | null | undefined)?.id;
 
   const [rounds, setRounds] = useState<Match[][]>([]);
   const [sorteando, setSorteando] = useState(false);
@@ -73,6 +74,19 @@ export default function Campeonatos() {
     },
     onError: err => toast.error(err.message || "Falha ao excluir campeonato"),
   });
+  const listUsersQuery = trpc.admin.listUsers.useQuery(undefined, { enabled: isAdmin, refetchOnWindowFocus: false });
+  const adminInscreverMutation = trpc.admin.inscreverUsuarioCampeonato.useMutation({
+    onSuccess: async () => {
+      toast.success("Inscrição adicionada");
+      await Promise.all([
+        utils.campeonatos.list.invalidate(),
+        selectedCampId ? utils.campeonatos.getParticipantes.invalidate({ campeonatoId: selectedCampId }) : Promise.resolve(),
+      ]);
+    },
+    onError: err => toast.error(err.message || "Falha ao inscrever"),
+  });
+
+  const [manualUserId, setManualUserId] = useState<number | null>(null);
 
   useEffect(() => {
     if (selectedCampId || !campeonatosQuery.data?.length) return;
@@ -82,15 +96,16 @@ export default function Campeonatos() {
   const participantes = useMemo(() => {
     if (!inscritosQuery.data) return [];
     return inscritosQuery.data.map(item => {
-      const usuario = (item as { usuario?: { name?: string | null; email?: string | null } }).usuario;
+      const usuario = (item as { usuario?: { id?: number | null; name?: string | null; email?: string | null; nickname?: string | null } }).usuario;
       const baseName = usuario?.name || usuario?.email || `Jogador ${item.usuarioId}`;
       const nick = usuario?.nickname;
       const name = nick ? `${baseName} (${nick})` : baseName;
-      return { name, email: usuario?.email ?? undefined };
+      return { name, email: usuario?.email ?? undefined, id: usuario?.id ?? null };
     });
   }, [inscritosQuery.data]);
 
   const inscritosNomes = useMemo(() => participantes.map(i => i.name), [participantes]);
+  const inscritosIds = useMemo(() => participantes.map(i => i.id).filter(Boolean) as number[], [participantes]);
 
   const campeonatos = useMemo(() => {
     const mapped =
@@ -265,7 +280,7 @@ export default function Campeonatos() {
       return;
     }
 
-    const jaInscrito = inscritosNomes.some(n => n === nomeUsuario);
+    const jaInscrito = (usuarioId && inscritosIds.includes(usuarioId)) || inscritosNomes.some(n => n === nomeUsuario);
     if (jaInscrito) {
       toast.info("Você já está inscrito neste campeonato.");
       return;
@@ -436,7 +451,9 @@ export default function Campeonatos() {
               ) : null}
               {campeonatos.map(camp => {
                 const isSelected = selectedCampId === camp.id;
-                const jaInscrito = isSelected && inscritosNomes.includes(nomeUsuario);
+                const jaInscrito =
+                  isSelected &&
+                  ((usuarioId && inscritosIds.includes(usuarioId)) || inscritosNomes.includes(nomeUsuario));
                 const inscricoesDisponiveis =
                   !camp.inscricoesEncerradas && camp.status !== "finalizado" && camp.status !== "cancelado";
                 return (
@@ -482,6 +499,11 @@ export default function Campeonatos() {
                     {isSelected ? (
                       <div className="mb-4 rounded-lg border border-border/60 bg-card/50 p-3">
                         <p className="text-sm font-semibold mb-1">Participantes ({inscritosNomes.length})</p>
+                        {jaInscrito ? (
+                          <p className="text-xs text-emerald-400">Sua inscrição está confirmada.</p>
+                        ) : (
+                          <p className="text-xs text-amber-300">Você ainda não está inscrito neste campeonato.</p>
+                        )}
                         {inscritosQuery.isLoading ? (
                           <p className="text-xs text-muted-foreground">Carregando inscritos...</p>
                         ) : participantes.length === 0 ? (
@@ -537,15 +559,15 @@ export default function Campeonatos() {
                       </AlertDialog>
 
                       <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            className="flex-1 min-w-[140px] btn-secondary text-sm sm:text-base py-3"
-                            disabled={!inscricoesDisponiveis || jaInscrito}
-                            onClick={() => setSelectedCampId(camp.id)}
-                          >
-                            {!inscricoesDisponiveis
-                              ? "Inscrições encerradas"
-                              : jaInscrito
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              className="flex-1 min-w-[140px] btn-secondary text-sm sm:text-base py-3"
+                              disabled={!inscricoesDisponiveis || jaInscrito}
+                              onClick={() => setSelectedCampId(camp.id)}
+                            >
+                              {!inscricoesDisponiveis
+                                ? "Inscrições encerradas"
+                                : jaInscrito
                                 ? "Já inscrito"
                                 : "Se inscrever"}
                           </Button>
@@ -588,6 +610,56 @@ export default function Campeonatos() {
                           >
                             {updateCampMutation.isPending ? "Salvando..." : "Editar data de início"}
                           </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="secondary" size="sm" onClick={() => setSelectedCampId(camp.id)}>
+                                Inscrever jogador (admin)
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Inscrever manualmente</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Escolha o jogador para inscrever no campeonato {camp.nome}.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <div className="space-y-2">
+                                {listUsersQuery.isLoading ? (
+                                  <p className="text-sm text-muted-foreground">Carregando usuários...</p>
+                                ) : null}
+                                {listUsersQuery.data && (
+                                  <select
+                                    className="w-full rounded-md border border-border bg-card/60 p-2 text-sm"
+                                    value={manualUserId ?? ""}
+                                    onChange={e => setManualUserId(e.target.value ? Number(e.target.value) : null)}
+                                  >
+                                    <option value="">Selecione um usuário</option>
+                                    {listUsersQuery.data.map(u => (
+                                      <option key={u.id} value={u.id}>
+                                        {u.nickname ? `${u.name || u.email} (${u.nickname})` : u.name || u.email || u.openId} —{" "}
+                                        {u.email || "sem email"}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Fechar</AlertDialogCancel>
+                                <Button
+                                  onClick={() => {
+                                    if (!manualUserId) {
+                                      toast.error("Selecione um usuário");
+                                      return;
+                                    }
+                                    adminInscreverMutation.mutate({ usuarioId: manualUserId, campeonatoId: camp.id });
+                                  }}
+                                  disabled={adminInscreverMutation.isPending}
+                                >
+                                  {adminInscreverMutation.isPending ? "Inscrevendo..." : "Confirmar inscrição"}
+                                </Button>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                           <Button
                             variant="destructive"
                             size="sm"
