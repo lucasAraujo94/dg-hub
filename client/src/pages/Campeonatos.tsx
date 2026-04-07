@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -333,6 +333,10 @@ export default function Campeonatos() {
       toast.error("Apenas admins podem sortear o chaveamento.");
       return;
     }
+    if (rounds.length > 0) {
+      toast.error("Chaveamento já gerado. Não é possível sortear novamente.");
+      return;
+    }
     if (!inscritosNomes.length) {
       toast.error("Nenhum inscrito para sortear.");
       return;
@@ -438,7 +442,12 @@ export default function Campeonatos() {
               Ouvir campeonatos
             </Button>
             {isAdmin ? (
-              <Button size="sm" variant="outline" onClick={handleSortearConfrontos} disabled={sorteando || !selectedCampId}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSortearConfrontos}
+                disabled={sorteando || !selectedCampId || rounds.length > 0}
+              >
                 {sorteando ? "Sorteando..." : "Sortear chaveamento"}
               </Button>
             ) : null}
@@ -455,7 +464,7 @@ export default function Campeonatos() {
             </div>
             {rounds.length > 0 ? (
               <span className="text-sm text-muted-foreground">
-                {rounds[0].length} partidas iniciais â€¢ seed fixo para todos
+                {rounds[0].length} partidas iniciais {"\u2022"} seed fixo para todos
               </span>
             ) : null}
           </div>
@@ -544,3 +553,5 @@ export default function Campeonatos() {
     </div>
   );
 }
+
+
