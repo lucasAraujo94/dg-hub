@@ -50,7 +50,8 @@ const trpcClient = trpc.createClient({
     }),
   ],
 });
-
+console.log("DEPLOY_MARKER_2026_04_07_B");
+document.title = "DEPLOY_MARKER_2026_04_07_B";
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
