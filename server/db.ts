@@ -1,6 +1,5 @@
-import { prisma } from "./_core/prisma";
+import { prisma, Prisma } from "./_core/prisma";
 import { ENV } from "./_core/env";
-import { Prisma } from "@prisma/client";
 
 type NullableString = string | null | undefined;
 
