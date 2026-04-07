@@ -65,6 +65,13 @@ export default function Admin() {
     },
     onError: error => toast.error(error.message || "Falha ao cancelar campeonato"),
   });
+  const definirCampeaoMutation = trpc.campeonatos.definirCampeao.useMutation({
+    onSuccess: () => {
+      toast.success("Campeao definido e ranking atualizado (+100 pontos)");
+      campeonatosQuery.refetch();
+    },
+    onError: error => toast.error(error.message || "Falha ao definir campeao"),
+  });
   const excluirCampMutation = trpc.campeonatos.delete.useMutation({
     onSuccess: () => {
       toast.success("Campeonato excluido");
@@ -482,10 +489,3 @@ export default function Admin() {
     </div>
   );
 }
-  const definirCampeaoMutation = trpc.campeonatos.definirCampeao.useMutation({
-    onSuccess: () => {
-      toast.success("Campeao definido e ranking atualizado (+100 pontos)");
-      campeonatosQuery.refetch();
-    },
-    onError: error => toast.error(error.message || "Falha ao definir campeao"),
-  });

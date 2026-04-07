@@ -19,9 +19,4 @@ export const ENV = {
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
   mpAccessToken: process.env.MP_ACCESS_TOKEN ?? "",
   mpWebhookSecret: process.env.MP_WEBHOOK_SECRET ?? "",
-  smtpHost: process.env.SMTP_HOST ?? "",
-  smtpPort: Number(process.env.SMTP_PORT ?? "587"),
-  smtpUser: process.env.SMTP_USER ?? "",
-  smtpPass: process.env.SMTP_PASS ?? "",
-  smtpFrom: process.env.SMTP_FROM ?? "",
 };
