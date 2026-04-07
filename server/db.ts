@@ -98,7 +98,9 @@ export async function criarEnquete(pergunta: string | null, closesAt: Date | nul
   const optionsJson = JSON.stringify(sanitized);
 
   const result = await prisma.$queryRaw<Array<{ id: number }>>`
-    INSERT INTO polls (question, closesAt, createdAt, optionsJson) OUTPUT inserted.id VALUES (${pergunta}, ${closesAt}, GETDATE(), ${optionsJson})
+    INSERT INTO "polls" ("question", "closesAt", "createdAt", "optionsJson")
+    VALUES (${pergunta}, ${closesAt}, NOW(), ${optionsJson})
+    RETURNING id
   `;
   const id = result[0]?.id;
   if (!id) throw new Error("Falha ao criar enquete");
@@ -107,19 +109,20 @@ export async function criarEnquete(pergunta: string | null, closesAt: Date | nul
 
 async function listarEnquetesAbertas() {
   const rows = await prisma.$queryRaw<Array<PollRow>>`
-    SELECT id, question, closesAt, optionsJson
-    FROM polls
-    WHERE closesAt IS NULL OR closesAt > GETDATE()
-    ORDER BY createdAt DESC
+    SELECT "id", "question", "closesAt", "optionsJson"
+    FROM "polls"
+    WHERE "closesAt" IS NULL OR "closesAt" > NOW()
+    ORDER BY "createdAt" DESC
   `;
   return rows.map(mapPollRow);
 }
 
 export async function votarEnquete(usuarioId: number, pollId: number, escolha: string) {
   const rows = await prisma.$queryRaw<Array<PollRow>>`
-    SELECT TOP 1 id, question, closesAt, optionsJson
-    FROM polls
-    WHERE id = ${pollId} AND (closesAt IS NULL OR closesAt > GETDATE())
+    SELECT "id", "question", "closesAt", "optionsJson"
+    FROM "polls"
+    WHERE "id" = ${pollId} AND ("closesAt" IS NULL OR "closesAt" > NOW())
+    LIMIT 1
   `;
   const poll = rows[0];
   if (!poll) {
@@ -131,8 +134,8 @@ export async function votarEnquete(usuarioId: number, pollId: number, escolha: s
   }
 
   await prisma.$transaction([
-    prisma.$executeRaw`DELETE FROM pollVotes WHERE usuarioId = ${usuarioId} AND pollId = ${pollId}`,
-    prisma.$executeRaw`INSERT INTO pollVotes (usuarioId, escolha, pollId, createdAt) VALUES (${usuarioId}, ${escolha}, ${pollId}, GETDATE())`,
+    prisma.$executeRaw`DELETE FROM "pollVotes" WHERE "usuarioId" = ${usuarioId} AND "pollId" = ${pollId}`,
+    prisma.$executeRaw`INSERT INTO "pollVotes" ("usuarioId", "escolha", "pollId", "createdAt") VALUES (${usuarioId}, ${escolha}, ${pollId}, NOW())`,
   ]);
   return { success: true, pollId };
 }
@@ -143,10 +146,10 @@ export async function resultadosEnquete() {
 
   const pollIds = polls.map(p => p.id);
   const voteRows = await prisma.$queryRaw<Array<{ pollId: number; escolha: string; total: bigint }>>`
-    SELECT pollId, escolha, COUNT(*) as total
-    FROM pollVotes
-    WHERE pollId IN (${Prisma.join(pollIds)})
-    GROUP BY pollId, escolha
+    SELECT "pollId", "escolha", COUNT(*) as total
+    FROM "pollVotes"
+    WHERE "pollId" IN (${Prisma.join(pollIds)})
+    GROUP BY "pollId", "escolha"
   `;
 
   const pollsWithCounts = polls.map(p => {
@@ -172,8 +175,8 @@ export async function resultadosEnquete() {
 
 export async function excluirEnquete(pollId: number) {
   await prisma.$transaction([
-    prisma.$executeRaw`DELETE FROM pollVotes WHERE pollId = ${pollId}`,
-    prisma.$executeRaw`DELETE FROM polls WHERE id = ${pollId}`,
+    prisma.$executeRaw`DELETE FROM "pollVotes" WHERE "pollId" = ${pollId}`,
+    prisma.$executeRaw`DELETE FROM "polls" WHERE "id" = ${pollId}`,
   ]);
   return { success: true };
 }

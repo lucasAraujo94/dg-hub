@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlserver"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -96,7 +97,7 @@ model Partida {
 model Chaveamento {
   id             Int       @id @default(autoincrement())
   campeonatoId   Int       @unique
-  estruturaJson  String    @db.NVarChar(max)
+  estruturaJson  String    @db.Text
   criadoEm       DateTime  @default(now())
   atualizadoEm   DateTime  @updatedAt
 
@@ -221,7 +222,7 @@ model Poll {
   question  String?    @db.Text
   closesAt  DateTime?  
   createdAt DateTime   @default(now())
-  optionsJson String?  @db.NVarChar(max)
+  optionsJson String?  @db.Text
 
   votes PollVote[]
 

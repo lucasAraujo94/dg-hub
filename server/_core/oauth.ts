@@ -33,7 +33,7 @@ function describeDbTarget() {
     if (hostMatch) {
       const host = hostMatch[1];
       const port = hostMatch[2] ? `:${hostMatch[2]}` : "";
-      return `sqlserver://${host}${port}`;
+      return `db://${host}${port}`;
     }
     return "DATABASE_URL present but could not parse host";
   }
