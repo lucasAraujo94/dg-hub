@@ -7,8 +7,6 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
-
-console.log("DEPLOY_MARKER_RENDER_CHECK_2026_04_07");
 const queryClient = new QueryClient();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
@@ -51,8 +49,6 @@ const trpcClient = trpc.createClient({
     }),
   ],
 });
-console.log("DEPLOY_MARKER_2026_04_07_B");
-document.title = "DEPLOY_MARKER_2026_04_07_B";
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <trpc.Provider client={trpcClient} queryClient={queryClient}>

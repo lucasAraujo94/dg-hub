@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, MessageCircle, Paperclip, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { writeLastSeenChatAt } from "@/lib/chatNotifications";
 
 export default function Chat() {
   const { user, loading } = useAuth({ redirectOnUnauthenticated: true, redirectPath: "#/login" });
@@ -49,6 +50,15 @@ export default function Chat() {
   });
 
   const mensagensGeral = mensagensGeralQuery.data ?? [];
+
+  useEffect(() => {
+    if (mensagensGeralQuery.isLoading) return;
+    const latest = mensagensGeral[mensagensGeral.length - 1];
+    const timestamp = latest?.dataEnvio ? new Date(latest.dataEnvio).getTime() : Date.now();
+    if (!Number.isNaN(timestamp)) {
+      writeLastSeenChatAt(timestamp);
+    }
+  }, [mensagensGeral, mensagensGeralQuery.isLoading]);
 
   const fileToBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {

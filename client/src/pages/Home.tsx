@@ -17,10 +17,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Link } from "wouter";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import HomeBg from "../assets/dg-games-bg.png";
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
+import { readLastSeenChatAt, writeLastSeenChatAt } from "@/lib/chatNotifications";
 
 export default function Home() {
   const { user, loading, error, logout } = useAuth({
@@ -43,6 +44,8 @@ export default function Home() {
   >(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuCollapsed, setMenuCollapsed] = useState(false);
+  const [lastSeenChatAt, setLastSeenChatAt] = useState(() => readLastSeenChatAt());
+  const [hasNewChatMessages, setHasNewChatMessages] = useState(false);
 
   const handleMenuButton = () => {
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
@@ -86,11 +89,37 @@ export default function Home() {
   const [pollOptionsText, setPollOptionsText] = useState("Ludo\nGolpeie e Esquiva\nVermelhinha\nCondutor de Ritmo");
 
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, { refetchOnWindowFocus: false });
+  const chatHeadQuery = trpc.chat.getMensagens.useQuery(
+    { tipo: "geral", limite: 1 },
+    { refetchOnWindowFocus: true, refetchInterval: 15000 }
+  );
 
   const rankingTopQuery = trpc.rankings.getByTipo.useQuery(
     { tipo: "geral", limite: 3 },
     { refetchOnWindowFocus: false }
   );
+
+  const latestChatTimestamp = useMemo(() => {
+    const latest = chatHeadQuery.data?.[0];
+    if (!latest?.dataEnvio) return null;
+    const ts = new Date(latest.dataEnvio).getTime();
+    return Number.isNaN(ts) ? null : ts;
+  }, [chatHeadQuery.data]);
+
+  useEffect(() => {
+    if (!latestChatTimestamp) {
+      setHasNewChatMessages(false);
+      return;
+    }
+    setHasNewChatMessages(latestChatTimestamp > lastSeenChatAt);
+  }, [latestChatTimestamp, lastSeenChatAt]);
+
+  const markChatAsRead = () => {
+    const seenAt = latestChatTimestamp ?? Date.now();
+    setLastSeenChatAt(seenAt);
+    setHasNewChatMessages(false);
+    writeLastSeenChatAt(seenAt);
+  };
 
   const onlinePlayers = useMemo(() => {
     if (!user) return [];
@@ -291,6 +320,7 @@ export default function Home() {
             ].map(item => {
               const Icon = item.icon;
               const isActive = activeSection === item.key || (!item.href && item.key === "overview" && !activeSection);
+              const showChatIndicator = item.key === "chat" && hasNewChatMessages;
               const baseClasses =
                 "w-full justify-start rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all";
               const activeClasses = isActive
@@ -298,7 +328,15 @@ export default function Home() {
                 : "";
               const content = (
                 <div className="flex items-center gap-3 w-full">
-                  <Icon className={`w-4 h-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                  <div className="relative">
+                    <Icon className={`w-4 h-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                    {showChatIndicator ? (
+                      <span
+                        className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_0_2px_rgba(0,0,0,0.6)] animate-pulse"
+                        aria-label="Novas mensagens no chat"
+                      />
+                    ) : null}
+                  </div>
                   <span className={`${menuCollapsed ? "hidden md:hidden" : "md:inline"} text-sm font-medium`}>
                     {item.label}
                   </span>
@@ -315,6 +353,9 @@ export default function Home() {
                   <Link
                     href={item.href}
                     onClick={() => {
+                      if (item.key === "chat") {
+                        markChatAsRead();
+                      }
                       setMenuOpen(false);
                     }}
                   >
@@ -701,7 +742,9 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Chat</h2>
                 <Button asChild size="sm">
-                  <Link href="/chat">Ir para o chat</Link>
+                  <Link href="/chat" onClick={markChatAsRead}>
+                    Ir para o chat
+                  </Link>
                 </Button>
               </div>
               <Card className="p-5 border-border/70 bg-card/60">
