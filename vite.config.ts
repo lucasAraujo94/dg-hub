@@ -147,7 +147,10 @@ export default defineConfig({
 base: "/",
   plugins,
   resolve: {
+    dedupe: ["react", "react-dom"],
     alias: {
+      react: path.resolve(PROJECT_ROOT, "node_modules/react"),
+      "react-dom": path.resolve(PROJECT_ROOT, "node_modules/react-dom"),
       "@": path.resolve(PROJECT_ROOT, "client", "src"),
       "@shared": path.resolve(PROJECT_ROOT, "shared"),
       "@assets": path.resolve(PROJECT_ROOT, "attached_assets"),
