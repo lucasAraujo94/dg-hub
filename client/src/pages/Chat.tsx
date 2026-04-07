@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, MessageCircle, Paperclip, X } from "lucide-react";
+import { Send, MessageCircle, Paperclip, X, ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -150,9 +150,16 @@ export default function Chat() {
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container py-6">
           <div className="flex items-center justify-between mb-6">
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              {"<- Voltar"}
-            </Link>
+            <Button
+              asChild
+              variant="ghost"
+              className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-2 text-sm hover:border-border hover:bg-card"
+            >
+              <Link href="/">
+                <ArrowLeft className="w-4 h-4" />
+                <span>Voltar</span>
+              </Link>
+            </Button>
             <h1 className="text-3xl font-bold gradient-text">Chat da Comunidade</h1>
             <div className="w-20" />
           </div>
@@ -248,7 +255,7 @@ export default function Chat() {
                   placeholder="Digite sua mensagem..."
                   value={mensagemGeral}
                   onChange={e => setMensagemGeral(e.target.value)}
-                  className="flex-1"
+                  className="flex-1 h-14 text-base"
                 />
                 <Button className="btn-primary" onClick={handleEnviarMensagem} disabled={enviarMensagem.isPending}>
                   <Send className="w-4 h-4" />

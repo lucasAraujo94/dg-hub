@@ -17,7 +17,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Link } from "wouter";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import HomeBg from "../assets/dg-games-bg.png";
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
@@ -46,6 +46,10 @@ export default function Home() {
   const [menuCollapsed, setMenuCollapsed] = useState(false);
   const [lastSeenChatAt, setLastSeenChatAt] = useState(() => readLastSeenChatAt());
   const [hasNewChatMessages, setHasNewChatMessages] = useState(false);
+  const [remainingSessionMs, setRemainingSessionMs] = useState(10 * 60 * 1000);
+  const [isSessionPaused, setIsSessionPaused] = useState(false);
+  const activityTimeoutRef = useRef<number>();
+  const sessionPausedRef = useRef(false);
 
   const handleMenuButton = () => {
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
@@ -119,6 +123,43 @@ export default function Home() {
     setLastSeenChatAt(seenAt);
     setHasNewChatMessages(false);
     writeLastSeenChatAt(seenAt);
+  };
+
+  useEffect(() => {
+    const handleActivity = () => {
+      sessionPausedRef.current = true;
+      setIsSessionPaused(true);
+      if (activityTimeoutRef.current) {
+        clearTimeout(activityTimeoutRef.current);
+      }
+      activityTimeoutRef.current = window.setTimeout(() => {
+        sessionPausedRef.current = false;
+        setIsSessionPaused(false);
+      }, 3000);
+    };
+
+    const intervalId = window.setInterval(() => {
+      if (sessionPausedRef.current) return;
+      setRemainingSessionMs(prev => Math.max(0, prev - 1000));
+    }, 1000);
+
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    events.forEach(evt => window.addEventListener(evt, handleActivity));
+
+    return () => {
+      clearInterval(intervalId);
+      if (activityTimeoutRef.current) clearTimeout(activityTimeoutRef.current);
+      events.forEach(evt => window.removeEventListener(evt, handleActivity));
+    };
+  }, []);
+
+  const formatSessionTime = (ms: number) => {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const minutes = Math.floor(totalSeconds / 60)
+      .toString()
+      .padStart(2, "0");
+    const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+    return `${minutes}:${seconds}`;
   };
 
   const onlinePlayers = useMemo(() => {
@@ -265,7 +306,15 @@ export default function Home() {
                 <span className="text-muted-foreground">
                   Olá, {user?.nickname ? `${user.name ?? user.email ?? "jogador"} (${user.nickname})` : user?.name ?? "jogador"}
                 </span>
-                <span className="text-[11px] text-muted-foreground">Sessão expira em ~10 min</span>
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  Sessao expira em {formatSessionTime(remainingSessionMs)}
+                  {isSessionPaused ? (
+                    <span className="inline-flex items-center gap-1 text-amber-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      pausada
+                    </span>
+                  ) : null}
+                </span>
               </div>
               <Button onClick={logout} variant="outline" size="sm">
                 Sair
@@ -759,4 +808,6 @@ export default function Home() {
     </div>
   );
 }
+
+
 
