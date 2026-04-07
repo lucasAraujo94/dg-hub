@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Zap, Crown } from "lucide-react";
+import { Zap, Crown, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -28,8 +28,9 @@ export default function Perfil() {
     onError: error => toast.error(error.message || "Falha ao solicitar saque"),
   });
 
+  const baseName = user?.name || user?.email || "Meu perfil";
   const jogador = {
-    nome: (user?.name || user?.email || "Meu perfil") + ((user as any)?.nickname ? ` (${(user as any).nickname})` : ""),
+    nome: baseName + ((user as any)?.nickname ? ` (${(user as any).nickname})` : ""),
     ranking: (user as { ranking?: number } | null | undefined)?.ranking ?? "-",
     pontos: (user as { points?: number } | null | undefined)?.points ?? 0,
     avatar: (user as { avatarUrl?: string; avatar?: string } | null | undefined)?.avatarUrl || (user as any)?.avatar || "",
@@ -234,20 +235,21 @@ export default function Perfil() {
   };
 
   const handleSalvarPerfil = async () => {
+    const normalizedNick = hagoNickname.trim();
     try {
-      localStorage.setItem("dg-hago-nickname", hagoNickname.trim());
+      localStorage.setItem("dg-hago-nickname", normalizedNick);
       localStorage.setItem("dg-display-pref", displayPreference);
       localStorage.setItem("dg-hide-email", hideEmail ? "true" : "false");
     } catch {
       /* ignore */
     }
     try {
-      await setPreferencesMutation.mutateAsync({
-        nickname: hagoNickname.trim() || null,
+      const updated = await setPreferencesMutation.mutateAsync({
+        nickname: normalizedNick || null,
         hideEmail,
       });
       utils.auth.me.setData(undefined, prev =>
-        prev ? { ...prev, nickname: hagoNickname.trim() || (prev as any)?.nickname, hideEmail } : prev
+        prev ? { ...prev, nickname: updated.nickname ?? normalizedNick, hideEmail: updated.hideEmail } : prev
       );
       await refresh?.();
       toast.success("Perfil salvo/atualizado");
@@ -323,18 +325,26 @@ export default function Perfil() {
     }
   }, [user?.id]);
 
+  const displayName = (() => {
+    const nick = hagoNickname.trim();
+    if (displayPreference === "hago" && nick) return nick;
+    if (displayPreference === "both" && nick) return `${baseName} (${nick})`;
+    return baseName;
+  })();
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container py-6">
           <div className="flex items-center justify-between mb-6">
-            <Link href="/" className="group inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-border bg-card mr-2 group-hover:border-primary group-hover:text-primary">
-                ←
-              </span>
-              <span className="underline-offset-4 group-hover:underline">Voltar</span>
-            </Link>
+            <Button asChild variant="outline" className="gap-2 rounded-full">
+              <Link href="/">
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card"><ArrowLeft className="w-4 h-4" /></span>
+                <span>Voltar</span>
+              </Link>
+            </Button>
+            
             <h1 className="text-3xl font-bold gradient-text">Meu Perfil</h1>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleEditarPerfil}>

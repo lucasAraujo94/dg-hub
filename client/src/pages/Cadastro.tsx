@@ -97,8 +97,11 @@ export default function Cadastro() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" asChild className="text-sm">
-              <Link href="/">{`<- Voltar`}</Link>
+            <Button variant="outline" asChild className="text-sm gap-2 rounded-full">
+              <Link href="/">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">←</span>
+                <span>Voltar</span>
+              </Link>
             </Button>
             <Button variant="outline" asChild className="text-sm">
               <Link href="/login">Ja tenho conta</Link>

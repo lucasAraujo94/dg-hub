@@ -95,8 +95,11 @@ export default function Login() {
             <Button variant="ghost" asChild className="text-sm">
               <Link href="/cadastro">Criar conta</Link>
             </Button>
-            <Button variant="outline" asChild className="text-sm">
-              <Link href="/">Voltar</Link>
+            <Button variant="outline" asChild className="text-sm gap-2 rounded-full">
+              <Link href="/">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">←</span>
+                <span>Voltar</span>
+              </Link>
             </Button>
           </div>
         </header>
@@ -249,4 +252,3 @@ export default function Login() {
     </div>
   );
 }
-

@@ -157,9 +157,12 @@ export default function Admin() {
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container py-6">
           <div className="flex items-center justify-between mb-6">
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              {"<- Voltar"}
-            </Link>
+            <Button asChild variant="outline" className="gap-2 rounded-full">
+              <Link href="/">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">←</span>
+                <span>Voltar</span>
+              </Link>
+            </Button>
             <h1 className="text-3xl font-bold gradient-text">Painel Administrativo</h1>
             <div className="w-20" />
           </div>
