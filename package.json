@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsx watch server/_core/index.ts",
-    "build": "rm -rf dist .vite && pnpm prisma migrate deploy && pnpm prisma generate && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=cjs --outfile=dist/index.cjs",
+    "build": "node -e \"import { rmSync } from 'node:fs'; try { rmSync('dist', { recursive: true, force: true }); } catch {} try { rmSync('.vite', { recursive: true, force: true }); } catch {}\" && pnpm prisma migrate deploy && pnpm prisma generate && vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=cjs --outfile=dist/index.cjs",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc --noEmit",
     "format": "prettier --write .",

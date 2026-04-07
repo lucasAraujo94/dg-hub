@@ -159,18 +159,6 @@ base: "/",
   build: {
     outDir: path.resolve(PROJECT_ROOT, "dist/public"),
     emptyOutDir: true,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes("node_modules")) return;
-          if (id.includes("react")) return "vendor-react";
-          if (id.includes("@tanstack")) return "vendor-query";
-          if (id.includes("@trpc")) return "vendor-trpc";
-          if (id.includes("framer-motion")) return "vendor-motion";
-          return "vendor";
-        },
-      },
-    },
   },
   server: {
     host: true,
