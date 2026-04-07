@@ -18,19 +18,19 @@ import { startReminderScheduler } from "./reminders";
 // Default to development to enable Vite middleware when NODE_ENV is unset (Windows-friendly)
 process.env.NODE_ENV ??= "development";
 
-function isPortAvailable(port: number): Promise<boolean> {
+function isPortAvailable(port: number, host: string = "0.0.0.0"): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
-    server.listen(port, () => {
+    server.listen(port, host, () => {
       server.close(() => resolve(true));
     });
     server.on("error", () => resolve(false));
   });
 }
 
-async function findAvailablePort(startPort: number = 3000): Promise<number> {
+async function findAvailablePort(startPort: number = 3000, host: string = "0.0.0.0"): Promise<number> {
   for (let port = startPort; port < startPort + 20; port++) {
-    if (await isPortAvailable(port)) {
+    if (await isPortAvailable(port, host)) {
       return port;
     }
   }
@@ -159,12 +159,30 @@ async function startServer() {
     serveStatic(app);
   }
 
-  const port = parseInt(process.env.PORT || "10000", 10);
   const host = "0.0.0.0";
+  const preferredPort = parseInt(process.env.PORT || "10000", 10);
+  const port =
+    (await isPortAvailable(preferredPort, host)) ? preferredPort : await findAvailablePort(preferredPort + 1, host);
 
-  server.listen(port, host, () => {
-    console.log(`Server running on port ${port}`);
+  const startListening = (portToUse: number) => {
+    if (portToUse !== preferredPort) {
+      console.warn(`Port ${preferredPort} in use, switched to ${portToUse}`);
+    }
+    server.listen(portToUse, host, () => {
+      console.log(`Server running on port ${portToUse}`);
+    });
+  };
+
+  server.on("error", async err => {
+    if ((err as NodeJS.ErrnoException).code === "EADDRINUSE") {
+      const fallbackPort = await findAvailablePort(preferredPort + 1, host);
+      startListening(fallbackPort);
+      return;
+    }
+    console.error("Server error:", err);
   });
+
+  startListening(port);
 
   // Lembrete de campeonatos (24h antes)
   startReminderScheduler();
