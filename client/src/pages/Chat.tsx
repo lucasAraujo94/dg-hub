@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, MessageCircle, Paperclip, X, ArrowLeft } from "lucide-react";
+import { Send, MessageCircle, Paperclip, X, ArrowLeft, Smile } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -13,6 +13,7 @@ export default function Chat() {
   const [mensagemGeral, setMensagemGeral] = useState("");
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [showEmojis, setShowEmojis] = useState(false);
   const displayPref = useMemo(() => {
     if (typeof window === "undefined") return { pref: "both", hago: "" };
     try {
@@ -23,6 +24,10 @@ export default function Chat() {
       return { pref: "both", hago: "" };
     }
   }, []);
+  const emojis = useMemo(
+    () => ["😀", "😁", "😂", "🤣", "😊", "😍", "😎", "🤔", "🙌", "🎉", "🔥", "⚡", "👍", "👀", "🤝", "🏆", "🕹️", "💬", "😅", "🥳"],
+    []
+  );
 
   const parseMensagem = (raw: string) => {
     try {
@@ -107,6 +112,7 @@ export default function Chat() {
     setMensagemGeral("");
     setArquivo(null);
     setPreview(null);
+    setShowEmojis(false);
   };
 
   const renderMensagem = (msg: (typeof mensagensGeral)[number]) => {
@@ -169,7 +175,7 @@ export default function Chat() {
 
       <section className="py-12">
         <div className="container">
-          <div className="card-elegant flex flex-col h-96">
+          <div className="card-elegant flex flex-col min-h-[28rem] md:min-h-[36rem]">
             <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
               {loadingGeral ? (
                 <p className="text-sm text-muted-foreground">Carregando chat...</p>
@@ -251,6 +257,34 @@ export default function Chat() {
                     }}
                   />
                 </label>
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    onClick={() => setShowEmojis(open => !open)}
+                    className="h-14 px-3"
+                    aria-label="Inserir emoji"
+                  >
+                    <Smile className="w-5 h-5" />
+                  </Button>
+                  {showEmojis ? (
+                    <div className="absolute bottom-16 left-0 md:left-auto md:right-0 z-20 w-64 rounded-xl border border-border bg-card/95 backdrop-blur p-3 shadow-lg grid grid-cols-8 gap-2 text-xl">
+                      {emojis.map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          className="hover:bg-muted rounded-md p-1"
+                          onClick={() => {
+                            setMensagemGeral(prev => `${prev}${emoji}`);
+                            setShowEmojis(false);
+                          }}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
                 <Input
                   placeholder="Digite sua mensagem..."
                   value={mensagemGeral}
