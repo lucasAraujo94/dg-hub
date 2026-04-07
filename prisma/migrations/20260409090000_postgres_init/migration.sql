@@ -4,7 +4,7 @@ CREATE TABLE "users" (
     "id" SERIAL PRIMARY KEY,
     "openId" VARCHAR(64) NOT NULL,
     "name" TEXT,
-    "nickname" VARCHAR(100),
+    "nome_no_hago" VARCHAR(100),
     "email" VARCHAR(320),
     "loginMethod" VARCHAR(64),
     "passwordHash" VARCHAR(255),
