@@ -464,6 +464,7 @@ export default function Campeonatos() {
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chaveamento</p>
               <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
+              <p className="text-[11px] text-muted-foreground mt-1">Toque no nome para marcar o vencedor.</p>
             </div>
             {rounds.length > 0 ? (
               <span className="text-sm text-muted-foreground">

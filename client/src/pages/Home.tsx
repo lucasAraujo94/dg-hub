@@ -502,7 +502,7 @@ export default function Home() {
                               {(c as { descricao?: string | null }).descricao ?? "Campeonato ativo"}
                             </p>
                             <div className="flex items-center justify-between text-xs text-white/80">
-                              <span>Premio</span>
+                              <span>Prêmio</span>
                               <span className="font-semibold text-yellow-400">R$ {(c as any).premioValor}</span>
                             </div>
                           </div>
@@ -528,7 +528,7 @@ export default function Home() {
                             {poll.question || "Próximo campeonato: escolha o modo"}
                           </h2>
                           <p className="text-sm text-emerald-100/80">
-                            Vote no jogo que quer ver no prÃ³ximo torneio. 1 voto por jogador logado.
+                            Vote no jogo que quer ver no próximo torneio. 1 voto por jogador logado.
                           </p>
                           <div className="grid grid-cols-1 gap-2">
                             {poll.options?.map(opt => {
@@ -582,7 +582,7 @@ export default function Home() {
                               </div>
                             ) : null}
                             <div className="mt-2 text-xs text-emerald-100/70">
-                              A enquete Ã© atualizada em tempo real apÃ³s cada voto.
+                              A enquete é atualizada em tempo real após cada voto.
                             </div>
                           </div>
                         </div>
@@ -698,7 +698,7 @@ export default function Home() {
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
                 <Button asChild size="sm">
-                  <Link href="/campeonatos">Abrir pÃ¡gina</Link>
+                  <Link href="/campeonatos">Abrir página</Link>
                 </Button>
               </div>
               <div className="rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-3">

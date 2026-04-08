@@ -21,13 +21,13 @@ import { z } from "zod";
 const cadastroSchema = z
   .object({
     fullName: z.string().min(3, "Informe seu nome completo"),
-  nickname: z.string().min(2, "Informe seu Nome no Hago"),
+    nickname: z.string().min(2, "Informe seu Nome no Hago"),
     email: z.string().email("E-mail invalido"),
     password: z.string().min(8, "Minimo de 8 caracteres"),
     confirmPassword: z.string().min(8, "Confirme a senha"),
-    acceptTerms: z.literal(true, {
-      errorMap: () => ({ message: "Aceite os termos para continuar" }),
-    }),
+    acceptTerms: z
+      .boolean()
+      .refine(val => val === true, { message: "Aceite os termos para continuar" }),
   })
   .refine(data => data.password === data.confirmPassword, {
     path: ["confirmPassword"],
@@ -133,7 +133,7 @@ export default function Cadastro() {
                 },
                 {
                   title: "Radar de premiacoes",
-                  desc: "Alertas de premios e bonus na home e push.",
+                  desc: "Alertas de prêmios e bonus na home e push.",
                 },
                 {
                   title: "Radio integrada",
