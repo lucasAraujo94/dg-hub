@@ -48,6 +48,15 @@ export default function Home() {
   const [hasNewChatMessages, setHasNewChatMessages] = useState(false);
   const [remainingSessionMs, setRemainingSessionMs] = useState(10 * 60 * 1000);
   const [isSessionPaused, setIsSessionPaused] = useState(false);
+  const [displayPref, setDisplayPref] = useState<"real" | "hago" | "both">(() => {
+    if (typeof window === "undefined") return "both";
+    const stored = localStorage.getItem("dg-display-pref");
+    return stored === "real" || stored === "hago" || stored === "both" ? stored : "both";
+  });
+  const [hagoNickLocal, setHagoNickLocal] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("dg-hago-nickname") || "";
+  });
   const activityTimeoutRef = useRef<number>();
   const sessionPausedRef = useRef(false);
 
@@ -118,6 +127,25 @@ export default function Home() {
     setHasNewChatMessages(latestChatTimestamp > lastSeenChatAt);
   }, [latestChatTimestamp, lastSeenChatAt]);
 
+  useEffect(() => {
+    const syncDisplay = () => {
+      if (typeof window === "undefined") return;
+      const pref = localStorage.getItem("dg-display-pref");
+      const nick = localStorage.getItem("dg-hago-nickname") || "";
+      if (pref === "real" || pref === "hago" || pref === "both") {
+        setDisplayPref(pref);
+      }
+      setHagoNickLocal(nick);
+    };
+    syncDisplay();
+    window.addEventListener("storage", syncDisplay);
+    window.addEventListener("focus", syncDisplay);
+    return () => {
+      window.removeEventListener("storage", syncDisplay);
+      window.removeEventListener("focus", syncDisplay);
+    };
+  }, []);
+
   const markChatAsRead = () => {
     const seenAt = latestChatTimestamp ?? Date.now();
     setLastSeenChatAt(seenAt);
@@ -173,13 +201,13 @@ export default function Home() {
   }, [user]);
 
   const displayName = useMemo(() => {
-    const pref = typeof window !== "undefined" ? localStorage.getItem("dg-display-pref") || "both" : "both";
-    const hago = typeof window !== "undefined" ? localStorage.getItem("dg-hago-nickname") || user?.nickname || "" : user?.nickname || "";
+    const pref = displayPref;
+    const hago = (hagoNickLocal || user?.nickname || "").trim();
     const real = user?.name || user?.email || "jogador";
     if (pref === "hago" && hago) return hago;
     if (pref === "both" && hago) return `${real} (${hago})`;
     return real;
-  }, [user]);
+  }, [user, displayPref, hagoNickLocal]);
 
   const dataSnapshot = {
     polls: pollResultsQuery.data,
