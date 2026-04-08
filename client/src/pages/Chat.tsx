@@ -265,9 +265,9 @@ export default function Chat() {
         </div>
       </header>
 
-      <main className="container py-6 space-y-4">
+      <main className="container py-4 sm:py-6 space-y-4">
         <div className="flex flex-col gap-4">
-          <div className="flex-1 min-h-[50vh] max-h-[65vh] overflow-y-auto rounded-xl border border-border/60 bg-card/60 p-3 space-y-2">
+          <div className="flex-1 min-h-[40vh] max-h-[60vh] sm:min-h-[50vh] sm:max-h-[65vh] overflow-y-auto rounded-xl border border-border/60 bg-card/60 p-3 space-y-2">
             {mensagensGeral.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">Nenhuma mensagem ainda.</p>
             ) : (
@@ -279,9 +279,9 @@ export default function Chat() {
             {preview ? (
               <div className="relative inline-block">
                 {arquivo?.type.startsWith("audio/") ? (
-                  <audio controls src={preview} className="w-64 rounded-md border border-white/10 bg-black/30 p-2" />
+                  <audio controls src={preview} className="w-full sm:w-64 rounded-md border border-white/10 bg-black/30 p-2" />
                 ) : (
-                  <img src={preview} alt="Pré-visualização" className="h-24 rounded-md border border-white/10 object-cover" />
+                  <img src={preview} alt="Pré-visualização" className="h-32 sm:h-24 rounded-md border border-white/10 object-cover" />
                 )}
                 <Button
                   size="icon"
@@ -298,11 +298,12 @@ export default function Chat() {
               </div>
             ) : null}
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <Input
                 placeholder="Digite sua mensagem..."
                 value={mensagemGeral}
                 onChange={e => setMensagemGeral(e.target.value)}
+                className="w-full"
                 onKeyDown={e => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -317,7 +318,8 @@ export default function Chat() {
                 accept="image/*,audio/*"
                 onChange={handleFileChange}
               />
-              <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Anexar imagem">
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Anexar imagem ou áudio">
                 <Paperclip className="h-4 w-4" />
               </Button>
               <Button
@@ -328,29 +330,30 @@ export default function Chat() {
               >
                 {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
-              <div className="relative">
-                <Button variant="ghost" size="icon" onClick={() => setShowEmojis(s => !s)} title="Emoji">
-                  <Smile className="h-4 w-4" />
+                <div className="relative">
+                  <Button variant="ghost" size="icon" onClick={() => setShowEmojis(s => !s)} title="Emoji">
+                    <Smile className="h-4 w-4" />
+                  </Button>
+                  {showEmojis ? (
+                    <div className="absolute right-0 z-10 mt-2 grid grid-cols-5 gap-1 rounded-md border border-border bg-card p-2 text-lg">
+                      {emojis.map(em => (
+                        <button
+                          key={em}
+                          className="h-8 w-8 flex items-center justify-center rounded hover:bg-white/10"
+                          onClick={() => handleEmoji(em)}
+                          type="button"
+                        >
+                          {em}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <Button onClick={handleEnviarMensagem} disabled={enviarMensagem.isPending}>
+                  <Send className="h-4 w-4 mr-1" />
+                  Enviar
                 </Button>
-                {showEmojis ? (
-                  <div className="absolute right-0 z-10 mt-2 grid grid-cols-6 gap-1 rounded-md border border-border bg-card p-2 text-lg">
-                    {emojis.map(em => (
-                      <button
-                        key={em}
-                        className="h-8 w-8 flex items-center justify-center rounded hover:bg-white/10"
-                        onClick={() => handleEmoji(em)}
-                        type="button"
-                      >
-                        {em}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
               </div>
-              <Button onClick={handleEnviarMensagem} disabled={enviarMensagem.isPending}>
-                <Send className="h-4 w-4 mr-1" />
-                Enviar
-              </Button>
             </div>
           </div>
         </div>
