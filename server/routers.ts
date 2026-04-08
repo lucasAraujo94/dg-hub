@@ -267,9 +267,9 @@ export const appRouter = router({
           throw new Error("Apenas imagens PNG, JPEG ou WEBP são permitidas");
         }
         const approxBytes = Math.floor((input.dataBase64.length * 3) / 4); // tamanho estimado
-        const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+        const MAX_BYTES = 3 * 1024 * 1024; // 3MB para evitar payloads gigantes
         if (approxBytes > MAX_BYTES) {
-          throw new Error("Arquivo de avatar muito grande (limite 5MB)");
+          throw new Error("Arquivo de avatar muito grande (limite 3MB)");
         }
 
         const buffer = Buffer.from(input.dataBase64, "base64");
@@ -277,7 +277,7 @@ export const appRouter = router({
         const safeName = `avatar-${Date.now()}.${ext}`;
         const relKey = `avatars/${ctx.user.id}/${safeName}`;
 
-                let url: string;
+                        let url: string;
         try {
           // Prefer external storage when configured
           const stored = await storagePut(relKey, buffer, input.mimeType);
@@ -285,6 +285,11 @@ export const appRouter = router({
         } catch (error) {
           console.warn("[Avatar] Storage upload failed, using inline data URL fallback", error);
           url = `data:${input.mimeType};base64,${input.dataBase64}`;
+        }
+
+        // Evita data URL absurda em fallback (mesmo com TEXT)
+        if (url.startsWith("data:") && url.length > 500000) {
+          throw new Error("Falha ao salvar avatar: imagem muito grande para fallback. Tente novamente ou use uma imagem menor.");
         }
 
         const updated = await setUserAvatar(ctx.user.id, url);
@@ -514,7 +519,7 @@ export const appRouter = router({
             throw new Error("Apenas imagens (png, jpg, webp, gif) são permitidas no chat");
           }
           const approxBytes = Math.floor((input.attachment.dataBase64.length * 3) / 4);
-          const MAX_BYTES = 5 * 1024 * 1024; // 5MB
+          const MAX_BYTES = 3 * 1024 * 1024; // 3MB para evitar payloads gigantes
           if (approxBytes > MAX_BYTES) {
             throw new Error("Anexo muito grande (limite 5MB)");
           }
@@ -603,6 +608,8 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
+
+
 
 
 
