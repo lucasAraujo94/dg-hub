@@ -30,7 +30,7 @@ export default function Perfil() {
 
   const baseName = user?.name || user?.email || "Meu perfil";
   const jogador = {
-    nome: baseName + ((user as any)?.nickname ? ` (${(user as any).nickname})` : ""),
+    nome: baseName,
     ranking: (user as { ranking?: number } | null | undefined)?.ranking ?? "-",
     pontos: (user as { points?: number } | null | undefined)?.points ?? 0,
     avatar: (user as { avatarUrl?: string; avatar?: string } | null | undefined)?.avatarUrl || (user as any)?.avatar || "",
@@ -466,7 +466,7 @@ export default function Perfil() {
                 ) : null}
               </div>
               <div className="flex-1">
-                <h2 className="text-4xl font-bold mb-2">{jogador.nome}</h2>
+                <h2 className="text-4xl font-bold mb-2">{displayName}</h2>
                 <div className="flex items-center gap-4 mb-4">
                   <div className="badge-elegant">
                     <Crown className="w-4 h-4" />
