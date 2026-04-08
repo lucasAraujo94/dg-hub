@@ -317,21 +317,19 @@ export default function Home() {
             </div>
           </div>
             <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 text-sm w-full md:w-auto ms-auto justify-end text-left md:text-right">
-              <div className="flex flex-col items-start md:items-end">
-                <span className="text-muted-foreground">
-                  OlÃ¡, {user?.nickname ? `${user.name ?? user.email ?? "jogador"} (${user.nickname})` : user?.name ?? "jogador"}
-                </span>
-                <span className="text-[11px] text-muted-foreground flex items-center gap-1 flex-wrap">
-                  Sessao expira em {formatSessionTime(remainingSessionMs)}
-                  {isSessionPaused ? (
-                    <span className="inline-flex items-center gap-1 text-amber-400">
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      pausada
-                    </span>
-                  ) : null}
-                </span>
-              </div>
-              <Button onClick={logout} variant="outline" size="sm" className="w-full md:w-auto">
+              <div className="flex flex-col items-start md:items-end max-w-[240px]">
+              <span className="text-muted-foreground break-words">Ola, {displayName}</span>
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1 flex-wrap">
+                Sessao expira em {formatSessionTime(remainingSessionMs)}
+                {isSessionPaused ? (
+                  <span className="inline-flex items-center gap-1 text-amber-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    pausada
+                  </span>
+                ) : null}
+              </span>
+            </div>
+            <Button onClick={logout} variant="outline" size="sm" className="w-full md:w-auto">
                 Sair
               </Button>
             </div>
@@ -806,6 +804,10 @@ export default function Home() {
     </div>
   );
 }
+
+
+
+
 
 
 

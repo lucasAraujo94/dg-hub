@@ -478,7 +478,7 @@ export default function Campeonatos() {
             </div>
           ) : (
             <div className="overflow-x-auto pb-2">
-              <div className="min-w-full grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
+              <div className="min-w-full grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
                 {rounds.map((round, roundIndex) => (
                   <div
                     key={roundIndex}
