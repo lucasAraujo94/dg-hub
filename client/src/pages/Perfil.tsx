@@ -84,6 +84,21 @@ export default function Perfil() {
     enabled: Boolean(user),
     refetchOnWindowFocus: false,
   });
+  const rankingPerfilQuery = trpc.rankings.getByTipo.useQuery(
+    { tipo: "geral", limite: 1000 },
+    { enabled: Boolean(user?.id), refetchOnWindowFocus: false }
+  );
+  const rankingDerived = useMemo(() => {
+    if (!rankingPerfilQuery.data || !user?.id) return null;
+    const idx = rankingPerfilQuery.data.findIndex(item => item.usuarioId === user.id);
+    if (idx === -1) return null;
+    const entry = rankingPerfilQuery.data[idx];
+    return {
+      pos: idx + 1,
+      points: entry.pontuacao,
+      wins: (entry as { wins?: number } | null | undefined)?.wins ?? 0,
+    };
+  }, [rankingPerfilQuery.data, user?.id]);
   const utils = trpc.useUtils();
   const setAvatarMutation = trpc.profile.setAvatar.useMutation({
     onSuccess: async data => {
@@ -455,11 +470,11 @@ export default function Perfil() {
                 <div className="flex items-center gap-4 mb-4">
                   <div className="badge-elegant">
                     <Crown className="w-4 h-4" />
-                    Ranking #{jogador.ranking}
+                    Ranking #{rankingDerived?.pos ?? jogador.ranking}
                   </div>
                   <div className="badge-elegant">
                     <Zap className="w-4 h-4" />
-                    {jogador.pontos} pontos
+                    {(rankingDerived?.points ?? jogador.pontos) as number} pontos
                   </div>
                 </div>
                 <p className="text-muted-foreground mb-4">
