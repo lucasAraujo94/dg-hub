@@ -106,7 +106,7 @@ export default function Ranking() {
                     )}
                     <div className="flex flex-col min-w-0">
                       <span className="font-semibold text-foreground break-words">{displayName}</span>
-                      <span className="text-[11px] text-muted-foreground truncate">{usuario?.email || ""}</span>
+                      <span className="text-[11px] text-muted-foreground truncate">Campeonatos: {wins}</span>
                     </div>
                   </div>
                 </td>
