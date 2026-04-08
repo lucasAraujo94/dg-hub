@@ -44,7 +44,7 @@ export default function Ranking() {
             <th className="px-4 py-3">Jogador</th>
             <th className="px-4 py-3 text-center">Pontos</th>
             <th className="px-4 py-3 text-center">Vitorias</th>
-            <th className="px-4 py-3">Campeonatos</th>
+            <th className="px-4 py-3">Ultimo titulo</th>
           </tr>
         </thead>
         <tbody>
@@ -53,6 +53,15 @@ export default function Ranking() {
             const baseName = usuario?.name || usuario?.email || `Jogador ${player.usuarioId}`;
             const displayName = usuario?.nickname ? `${baseName} (${usuario.nickname})` : baseName;
             const campeonatosCampeao = player.campeonatosCampeao ?? [];
+            const lastTitle =
+              campeonatosCampeao.length === 0
+                ? null
+                : campeonatosCampeao.reduce<
+                    { id: number; nome: string; jogo: string } | null
+                  >((acc, curr) => {
+                    if (!acc) return curr;
+                    return curr.id > acc.id ? curr : acc;
+                  }, null);
             const pos = index + 1;
             const wins = player.wins ?? campeonatosCampeao.length ?? 0;
             const avatarUrl =
@@ -112,17 +121,10 @@ export default function Ranking() {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  {campeonatosCampeao.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {campeonatosCampeao.map(c => (
-                        <span
-                          key={c.id}
-                          className="px-2.5 py-1 rounded-full border border-white/10 bg-white/10 text-[11px] inline-flex items-center gap-1"
-                        >
-                          {c.nome} - {c.jogo}
-                        </span>
-                      ))}
-                    </div>
+                  {lastTitle ? (
+                    <span className="px-2.5 py-1 rounded-full border border-white/10 bg-white/10 text-[11px] inline-flex items-center gap-1">
+                      {lastTitle.nome} - {lastTitle.jogo}
+                    </span>
                   ) : (
                     <span className="text-[12px] text-muted-foreground">Nenhum titulo ainda</span>
                   )}
