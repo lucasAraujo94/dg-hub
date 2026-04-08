@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
-import { Send, Paperclip, X, ArrowLeft, MessageCircle, Mic, Square } from "lucide-react";
+import { Send, Paperclip, X, ArrowLeft, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -17,11 +17,6 @@ export default function Chat() {
   const [preview, setPreview] = useState<string | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const recordTimeoutRef = useRef<number | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
 
   const [displayPref, setDisplayPref] = useState<{ pref: DisplayPref; hago: string }>(() => {
     if (typeof window === "undefined") return { pref: "real", hago: "" };
@@ -161,87 +156,6 @@ export default function Chat() {
     setShowEmojis(false);
   };
 
-  const clearRecordTimeout = () => {
-    if (recordTimeoutRef.current) {
-      clearTimeout(recordTimeoutRef.current);
-      recordTimeoutRef.current = null;
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-        toast.error("Microfone indisponivel no navegador atual");
-        return;
-      }
-      const hasRecorder = typeof MediaRecorder !== "undefined";
-      if (!hasRecorder) {
-        toast.error("Gravacao de audio nao e suportada neste navegador.");
-        return;
-      }
-      const supportedType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm"
-        : MediaRecorder.isTypeSupported("audio/mp4")
-          ? "audio/mp4"
-          : "";
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = supportedType ? new MediaRecorder(stream, { mimeType: supportedType }) : new MediaRecorder(stream);
-      streamRef.current = stream;
-      chunksRef.current = [];
-      recorder.ondataavailable = e => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      recorder.onstop = () => {
-        const blobType = supportedType || "audio/webm";
-        const blob = new Blob(chunksRef.current, { type: blobType });
-        const file = new File([blob], "gravacao.webm", { type: blobType });
-        setArquivo(file);
-        const url = URL.createObjectURL(blob);
-        setPreview(url);
-        chunksRef.current = [];
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
-      };
-      recorder.start();
-      mediaRecorderRef.current = recorder;
-      setIsRecording(true);
-      clearRecordTimeout();
-      recordTimeoutRef.current = window.setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-          mediaRecorderRef.current.stop();
-          toast.info("Limite de 1 minuto de audio atingido.");
-        }
-      }, 60_000);
-    } catch (err) {
-      console.error(err);
-      setIsRecording(false);
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-        streamRef.current = null;
-      }
-      const msg =
-        (err as any)?.name === "NotAllowedError"
-          ? "Permissao de microfone negada. Verifique o navegador e tente novamente."
-          : "Nao foi possivel acessar o microfone. Confira permissoes, HTTPS e se o dispositivo esta liberado.";
-      toast.error(msg);
-    }
-  };
-
-  const stopRecording = () => {
-    const rec = mediaRecorderRef.current;
-    if (rec && rec.state !== "inactive") {
-      rec.stop();
-      setIsRecording(false);
-      clearRecordTimeout();
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-  };
-
   const renderMensagem = (msg: (typeof mensagensGeral)[number]) => {
     const usuario = (msg as { usuario?: { id?: number; name?: string | null; nickname?: string | null; email?: string | null; avatarUrl?: string | null } }).usuario;
     const parsed = parseMensagem(msg.mensagem);
@@ -359,21 +273,13 @@ export default function Chat() {
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept="image/*,audio/*"
+                accept="image/*"
                 onChange={handleFileChange}
               />
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Anexar imagem ou áudio">
-                <Paperclip className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={isRecording ? "destructive" : "ghost"}
-                size="icon"
-                onClick={isRecording ? stopRecording : startRecording}
-                title={isRecording ? "Parar gravação" : "Gravar áudio"}
-              >
-                {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </Button>
+                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Anexar imagem">
+                  <Paperclip className="h-4 w-4" />
+                </Button>
                 <Button onClick={handleEnviarMensagem} disabled={enviarMensagem.isPending}>
                   <Send className="h-4 w-4 mr-1" />
                   Enviar
@@ -386,4 +292,3 @@ export default function Chat() {
     </div>
   );
 }
-
