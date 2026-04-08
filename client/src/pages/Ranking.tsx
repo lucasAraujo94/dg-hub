@@ -1,4 +1,4 @@
-﻿import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Medal, Flame } from "lucide-react";
 import { Link } from "wouter";
@@ -30,39 +30,39 @@ export default function Ranking() {
     };
   }, [currentUserId, rankingData]);
 
-  const RankingTable = ({ data }: { data: typeof rankingData }) => (
+    const RankingTable = ({ data }: { data: typeof rankingData }) => (
     <div className="space-y-4">
       {data.map((player, index) => {
         const usuario = (player as { usuario?: { name?: string | null; email?: string | null; nickname?: string | null } }).usuario;
         const displayName = usuario?.name || usuario?.email || `Jogador ${player.usuarioId}`;
-        const campeonatosCampeao =
-          (player as { campeonatosCampeao?: Array<{ id: number; nome: string; jogo: string }> }).campeonatosCampeao ??
-          [];
+        const campeonatosCampeao = (player as { campeonatosCampeao?: Array<{ id: number; nome: string; jogo: string }> }).campeonatosCampeao ?? [];
+        const pos = index + 1;
+        const chipColor = pos === 1 ? "from-amber-500/40 to-amber-300/30" : pos === 2 ? "from-slate-500/30 to-slate-300/20" : "from-orange-500/30 to-orange-300/20";
+        const wins = (player as any).wins ?? campeonatosCampeao.length ?? 0;
+        const initials = (displayName?.trim()?.charAt(0)?.toUpperCase() || "J").slice(0, 1);
         return (
           <div
             key={`${player.usuarioId}-${player.tipoRanking}-${index}`}
-            className="card-elegant flex items-center justify-between p-5 md:p-6 hover:border-purple-500/50 transition-all group"
+            className="card-elegant flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5 md:p-6 hover:border-purple-500/50 transition-all group"
           >
-            <div className="flex items-center gap-5 flex-1">
-              <span className="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
-                <Medal className="w-6 h-6 text-amber-400 fill-amber-300/40" />
-                <span className="sr-only">Posicao {index + 1}</span>
-              </span>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-lg">{displayName}</p>
-                  <span className="text-xs text-muted-foreground">#{index + 1}</span>
+            <div className="flex items-center gap-4 flex-1 w-full">
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${chipColor} border border-white/10 flex items-center justify-center text-lg font-bold text-white`}>
+                {pos}
+              </div>
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-semibold text-lg truncate">{displayName}</p>
+                  <span className="text-xs text-muted-foreground">#{pos}</span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {player.pontuacao} pontos
-                </p>
+                <p className="text-xs text-muted-foreground">{player.pontuacao} pontos</p>
+                <p className="text-[11px] text-muted-foreground">Vit�rias em campeonatos: {wins}</p>
                 {campeonatosCampeao.length > 0 ? (
                   <div className="mt-2 space-y-1">
                     <p className="text-[11px] text-muted-foreground">Campeao em:</p>
                     <div className="flex flex-wrap gap-2">
                       {campeonatosCampeao.map(c => (
                         <span key={c.id} className="text-[11px] px-2 py-1 rounded-full bg-white/5 border border-white/10">
-                          {c.nome} â€” {c.jogo}
+                          {c.nome} � {c.jogo}
                         </span>
                       ))}
                     </div>
@@ -70,26 +70,29 @@ export default function Ranking() {
                 ) : null}
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text">
-                {player.pontuacao}
-              </p>
-              <p className="text-xs text-muted-foreground">pontos</p>
+            <div className="flex items-center gap-3 self-start md:self-center">
+              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm font-semibold">
+                {initials}
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text">
+                  {player.pontuacao}
+                </p>
+                <p className="text-xs text-muted-foreground">pontos</p>
+              </div>
             </div>
           </div>
         );
       })}
     </div>
-  );
-
-  return (
+  );  return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container py-6">
           <div className="flex items-center justify-between mb-6">
             <Button asChild variant="outline" className="gap-2 rounded-full">
               <Link href="/">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">←</span>
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">?</span>
                 <span>Voltar</span>
               </Link>
             </Button>
@@ -185,3 +188,5 @@ export default function Ranking() {
     </div>
   );
 }
+
+

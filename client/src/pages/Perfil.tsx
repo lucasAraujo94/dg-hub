@@ -87,22 +87,23 @@ export default function Perfil() {
   const utils = trpc.useUtils();
   const setAvatarMutation = trpc.profile.setAvatar.useMutation({
     onSuccess: async data => {
-      setProfilePhotoUrl(data.url);
-      setSavedAvatarUrl(data.url);
+      const nextUrl = (data as any).avatarUrl || data.url;
+      setProfilePhotoUrl(nextUrl);
+      setSavedAvatarUrl(nextUrl);
       setLocalPhotoPreview(null);
       setPhotoFileName("");
       // Atualiza o cache de auth/localStorage para manter a foto ao navegar
-      utils.auth.me.setData(undefined, prev => (prev ? { ...prev, avatarUrl: data.url, avatar: data.url } : prev));
+      utils.auth.me.setData(undefined, prev => (prev ? { ...prev, avatarUrl: nextUrl, avatar: nextUrl } : prev));
       const cached = utils.auth.me.getData(undefined);
       if (typeof window !== "undefined") {
         try {
-          const isData = data.url.startsWith("data:");
-          const isHuge = data.url.length > 1500;
+          const isData = nextUrl.startsWith("data:");
+          const isHuge = nextUrl.length > 1500;
           if (!isData && !isHuge) {
             if (cached) {
-              localStorage.setItem("manus-runtime-user-info", JSON.stringify({ ...cached, avatarUrl: data.url, avatar: data.url }));
+              localStorage.setItem("manus-runtime-user-info", JSON.stringify({ ...cached, avatarUrl: nextUrl, avatar: nextUrl }));
             }
-            localStorage.setItem("dg-avatar-url", data.url);
+            localStorage.setItem("dg-avatar-url", nextUrl);
           } else {
             // Não persiste data URL grande no storage para evitar quota exceeded
             localStorage.removeItem("dg-avatar-url");
@@ -648,6 +649,7 @@ export default function Perfil() {
     </div>
   );
 }
+
 
 
 

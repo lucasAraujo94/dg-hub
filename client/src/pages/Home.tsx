@@ -285,7 +285,7 @@ export default function Home() {
     >
       {/* Top bar */}
       <header className="border-b border-border bg-card/70 backdrop-blur-sm">
-        <div className="w-full flex items-center h-14 px-4 md:px-6 relative">
+        <div className="w-full flex flex-wrap items-start md:items-center gap-3 px-4 md:px-6 py-3 md:h-16 relative">
           <div className="flex items-center gap-3">
             <button
               className="h-12 w-12 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors border border-white/10 cursor-pointer select-none"
@@ -301,12 +301,12 @@ export default function Home() {
               <span className="text-lg font-bold gradient-text">DG Hub</span>
             </div>
           </div>
-            <div className="flex items-center gap-3 text-sm ms-auto justify-end text-right">
-              <div className="flex flex-col items-end">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 text-sm w-full md:w-auto ms-auto justify-end text-left md:text-right">
+              <div className="flex flex-col items-start md:items-end">
                 <span className="text-muted-foreground">
                   Olá, {user?.nickname ? `${user.name ?? user.email ?? "jogador"} (${user.nickname})` : user?.name ?? "jogador"}
                 </span>
-                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1 flex-wrap">
                   Sessao expira em {formatSessionTime(remainingSessionMs)}
                   {isSessionPaused ? (
                     <span className="inline-flex items-center gap-1 text-amber-400">
@@ -316,7 +316,7 @@ export default function Home() {
                   ) : null}
                 </span>
               </div>
-              <Button onClick={logout} variant="outline" size="sm">
+              <Button onClick={logout} variant="outline" size="sm" className="w-full md:w-auto">
                 Sair
               </Button>
             </div>
@@ -662,7 +662,7 @@ export default function Home() {
           {activeSection === "campeonatos" && (
             <section className="space-y-4">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-xl font-semibold">Campeonatos</h2>
+                <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
                 <Button asChild size="sm">
                   <Link href="/campeonatos">Abrir página</Link>
                 </Button>
@@ -751,7 +751,7 @@ export default function Home() {
           {activeSection === "rankings" && (
             <section className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Últimos campeões</h2>
+                <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
                 <Button asChild size="sm">
                   <Link href="/ranking">Ver ranking completo</Link>
                 </Button>
@@ -775,7 +775,7 @@ export default function Home() {
           {activeSection === "perfil" && (
             <section className="space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Perfil</h2>
+                <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
                 <Button asChild size="sm">
                   <Link href="/perfil">Abrir perfil</Link>
                 </Button>
@@ -789,7 +789,7 @@ export default function Home() {
           {activeSection === "chat" && (
             <section className="space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Chat</h2>
+                <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
                 <Button asChild size="sm">
                   <Link href="/chat" onClick={markChatAsRead}>
                     Ir para o chat
@@ -808,6 +808,9 @@ export default function Home() {
     </div>
   );
 }
+
+
+
 
 
 
