@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, MessageCircle, Paperclip, X, ArrowLeft, Smile } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -14,20 +14,41 @@ export default function Chat() {
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
-  const displayPref = useMemo(() => {
+  const [displayPref, setDisplayPref] = useState<{ pref: "real" | "hago" | "both"; hago: string }>(() => {
     if (typeof window === "undefined") return { pref: "both", hago: "" };
     try {
       const pref = localStorage.getItem("dg-display-pref") || "both";
       const hago = localStorage.getItem("dg-hago-nickname") || "";
-      return { pref, hago };
+      const safePref = pref === "real" || pref === "hago" || pref === "both" ? pref : "both";
+      return { pref: safePref, hago };
     } catch {
       return { pref: "both", hago: "" };
     }
-  }, []);
+  });
   const emojis = useMemo(
-    () => ["😀", "😁", "😂", "🤣", "😊", "😍", "😎", "🤔", "🙌", "🎉", "🔥", "⚡", "👍", "👀", "🤝", "🏆", "🕹️", "💬", "😅", "🥳"],
+    () => ["😀", "😁", "😂", "🤣", "😅", "😊", "😍", "😘", "🤩", "😎", "😇", "🤔", "😴", "😡", "👍", "👎", "🙏", "🙌", "🎉", "🔥"],
     []
   );
+
+  useEffect(() => {
+    const syncPref = () => {
+      if (typeof window === "undefined") return;
+      try {
+        const pref = localStorage.getItem("dg-display-pref") || "both";
+        const hago = localStorage.getItem("dg-hago-nickname") || "";
+        const safePref = pref === "real" || pref === "hago" || pref === "both" ? pref : "both";
+        setDisplayPref({ pref: safePref, hago });
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener("storage", syncPref);
+    window.addEventListener("focus", syncPref);
+    return () => {
+      window.removeEventListener("storage", syncPref);
+      window.removeEventListener("focus", syncPref);
+    };
+  }, []);
 
   const parseMensagem = (raw: string) => {
     try {
@@ -115,202 +136,14 @@ export default function Chat() {
     setShowEmojis(false);
   };
 
+  const resolveNome = (u: { name?: string | null; email?: string | null; nickname?: string | null }) => {
+    const base = u.name || u.email || "Jogador";
+    const nick = u.nickname || displayPref.hago || "";
+    if (displayPref.pref === "hago" && nick) return nick;
+    if (displayPref.pref === "both" && nick) return `${base} (${nick})`;
+    return base;
+  };
+
   const renderMensagem = (msg: (typeof mensagensGeral)[number]) => {
     const usuario = (msg as { usuario?: { id?: number; name?: string | null; nickname?: string | null; email?: string | null; avatarUrl?: string | null } }).usuario;
     const currentUserName = user?.name || user?.email || undefined;
-    const baseName =
-      usuario?.name ||
-      usuario?.email ||
-      (msg.usuarioId && user?.id === msg.usuarioId ? currentUserName : undefined) ||
-      `Jogador ${msg.usuarioId ?? "?"}`;
-    const hago = usuario?.nickname || (msg.usuarioId && user?.id === msg.usuarioId ? displayPref.hago || user?.nickname || "" : "");
-    let displayName = baseName;
-    if (displayPref.pref === "hago" && hago) {
-      displayName = hago;
-    } else if (displayPref.pref === "both" && hago) {
-      displayName = `${baseName} (${hago})`;
-    }
-    const avatarUrl =
-      (usuario as any)?.avatarUrl ||
-      (msg.usuarioId && user?.id === msg.usuarioId ? (user as any)?.avatarUrl || (user as any)?.avatar : null) ||
-      (user as any)?.avatarUrl ||
-      (user as any)?.avatar ||
-      null;
-    const hora = msg.dataEnvio ? new Date(msg.dataEnvio).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
-    const conteudo = parseMensagem(msg.mensagem);
-    return { displayName, hora, conteudo, avatarUrl };
-  };
-
-  const loadingGeral = mensagensGeralQuery.isLoading || enviarMensagem.isPending;
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <span className="text-muted-foreground">Carregando...</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container py-6">
-          <div className="flex items-center justify-between mb-6">
-            <Button
-              asChild
-              variant="ghost"
-              className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/80 px-3 py-2 text-sm hover:border-border hover:bg-card"
-            >
-              <Link href="/">
-                <ArrowLeft className="w-4 h-4" />
-                <span>Voltar</span>
-              </Link>
-            </Button>
-            <h1 className="text-3xl font-bold gradient-text">Chat da Comunidade</h1>
-            <div className="w-20" />
-          </div>
-          <p className="text-muted-foreground">Interaja com a comunidade.</p>
-        </div>
-      </div>
-
-      <section className="py-12">
-        <div className="container">
-          <div className="card-elegant flex flex-col min-h-[28rem] md:min-h-[36rem]">
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-              {loadingGeral ? (
-                <p className="text-sm text-muted-foreground">Carregando chat...</p>
-              ) : null}
-              {!loadingGeral && mensagensGeral.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhuma mensagem ainda.</p>
-              ) : null}
-              {mensagensGeral.map((msg) => {
-                const info = renderMensagem(msg);
-                return (
-                  <div key={msg.id} className="flex gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-cyan-600 flex items-center justify-center text-white font-bold flex-shrink-0 overflow-hidden">
-                      {info.avatarUrl ? (
-                        <img src={info.avatarUrl} alt={info.displayName} className="w-full h-full object-cover" />
-                      ) : (
-                        info.displayName[0]
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-sm">{info.displayName}</span>
-                        <span className="text-xs text-muted-foreground">{info.hora}</span>
-                      </div>
-                      {info.conteudo.text ? <p className="text-sm text-muted-foreground mb-2">{info.conteudo.text}</p> : null}
-                      {info.conteudo.attachmentUrl ? (
-                        <div className="rounded-md border border-border p-2 max-w-sm bg-card/50">
-                          {info.conteudo.mimeType?.startsWith("image/") ? (
-                            <img
-                              src={info.conteudo.attachmentUrl}
-                              alt={info.conteudo.fileName || "Anexo"}
-                              className="rounded-md object-cover max-h-64 w-full"
-                            />
-                          ) : null}
-                          <a
-                            href={info.conteudo.attachmentUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-primary hover:underline flex items-center gap-1 mt-1"
-                          >
-                            <Paperclip className="w-3 h-3" />
-                            {info.conteudo.fileName || "Baixar anexo"}
-                          </a>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex flex-col gap-2 border-t border-border pt-4">
-              {preview ? (
-                <div className="flex items-center gap-3 rounded-md border border-border p-2 bg-card/50">
-                  <img src={preview} alt="Pré-visualização" className="h-12 w-12 rounded object-cover" />
-                  <span className="text-sm text-muted-foreground truncate flex-1">{arquivo?.name}</span>
-                  <Button variant="ghost" size="icon" onClick={() => { setArquivo(null); setPreview(null); }}>
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : null}
-
-              <div className="flex gap-2">
-                <label className="inline-flex items-center px-3 rounded-md border border-border bg-card text-sm text-muted-foreground cursor-pointer hover:text-foreground">
-                  <Paperclip className="w-4 h-4 mr-2" />
-                  Anexar
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setArquivo(file);
-                        setPreview(URL.createObjectURL(file));
-                      } else {
-                        setArquivo(null);
-                        setPreview(null);
-                      }
-                    }}
-                  />
-                </label>
-                <div className="relative">
-                  <Button
-                    variant="ghost"
-                    type="button"
-                    onClick={() => setShowEmojis(open => !open)}
-                    className="h-14 px-3"
-                    aria-label="Inserir emoji"
-                  >
-                    <Smile className="w-5 h-5" />
-                  </Button>
-                  {showEmojis ? (
-                    <div className="absolute bottom-16 left-0 md:left-auto md:right-0 z-20 w-64 rounded-xl border border-border bg-card/95 backdrop-blur p-3 shadow-lg grid grid-cols-8 gap-2 text-xl">
-                      {emojis.map(emoji => (
-                        <button
-                          key={emoji}
-                          type="button"
-                          className="hover:bg-muted rounded-md p-1"
-                          onClick={() => {
-                            setMensagemGeral(prev => `${prev}${emoji}`);
-                            setShowEmojis(false);
-                          }}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-                <Input
-                  placeholder="Digite sua mensagem..."
-                  value={mensagemGeral}
-                  onChange={e => setMensagemGeral(e.target.value)}
-                  className="flex-1 h-14 text-base"
-                />
-                <Button className="btn-primary" onClick={handleEnviarMensagem} disabled={enviarMensagem.isPending}>
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-12 border-t border-border">
-        <div className="container">
-          <div className="card-elegant">
-            <MessageCircle className="w-8 h-8 text-purple-400 mb-4" />
-            <h3 className="text-lg font-bold mb-2">Chat Geral</h3>
-            <p className="text-sm text-muted-foreground">
-              Converse com outros jogadores da comunidade, compartilhe estrategias e faca amizades.
-            </p>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}

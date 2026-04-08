@@ -19,10 +19,39 @@ type RankingItem = {
 export default function Ranking() {
   const { user } = useAuth();
   const [tipo, setTipo] = useState<RankingTipo>("geral");
+  const [displayPref, setDisplayPref] = useState<"real" | "hago" | "both">(() => {
+    if (typeof window === "undefined") return "both";
+    const stored = localStorage.getItem("dg-display-pref");
+    return stored === "real" || stored === "hago" || stored === "both" ? stored : "both";
+  });
+  const [hagoNickLocal, setHagoNickLocal] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("dg-hago-nickname") || "";
+  });
   const rankingQuery = trpc.rankings.getByTipo.useQuery({ tipo, limite: 500 }, { refetchOnWindowFocus: false });
 
   const rankingData = (rankingQuery.data ?? []) as RankingItem[];
   const currentUserId = (user as { id?: number } | null | undefined)?.id;
+
+  useMemo(() => {
+    const sync = () => {
+      if (typeof window === "undefined") return;
+      const pref = localStorage.getItem("dg-display-pref");
+      const nick = localStorage.getItem("dg-hago-nickname") || "";
+      if (pref === "real" || pref === "hago" || pref === "both") setDisplayPref(pref);
+      setHagoNickLocal(nick);
+    };
+    sync();
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", sync);
+      window.addEventListener("focus", sync);
+      return () => {
+        window.removeEventListener("storage", sync);
+        window.removeEventListener("focus", sync);
+      };
+    }
+    return;
+  }, []);
 
   const currentUserInfo = useMemo(() => {
     if (!currentUserId) return null;
@@ -51,7 +80,13 @@ export default function Ranking() {
           {data.map((player, index) => {
             const usuario = player.usuario;
             const baseName = usuario?.name || usuario?.email || `Jogador ${player.usuarioId}`;
-            const displayName = usuario?.nickname ? `${baseName} (${usuario.nickname})` : baseName;
+            const nick = (usuario?.nickname || hagoNickLocal || "").trim();
+            const displayName =
+              displayPref === "hago" && nick
+                ? nick
+                : displayPref === "both" && nick
+                  ? `${baseName} (${nick})`
+                  : baseName;
             const campeonatosCampeao = player.campeonatosCampeao ?? [];
             const lastTitle =
               campeonatosCampeao.length === 0
