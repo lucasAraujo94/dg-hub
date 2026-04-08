@@ -494,42 +494,40 @@ export default function Campeonatos() {
                           key={`${roundIndex}-${matchIndex}`}
                           className="rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/10 to-cyan-500/10 p-3 space-y-2 shadow-inner"
                         >
-                          <p className="text-[11px] text-muted-foreground">Selecione o vencedor desta partida</p>
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 min-w-0 text-center sm:text-left">
-                            <span className="text-sm font-medium truncate" title={match.jogador1}>
-                              {exibirApelido(match.jogador1)}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-white/10 sm:self-center">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Partida {matchIndex + 1}
+                            </h4>
+                            <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
                               vs
                             </span>
-                            <span className="text-sm font-medium truncate sm:text-right" title={match.jogador2}>
-                              {exibirApelido(match.jogador2)}
-                            </span>
                           </div>
-                          {isAdmin ? (
-                            <div className="flex flex-col sm:flex-row gap-2">
-                              <Button
-                                size="sm"
-                                variant={match.vencedor === match.jogador1 ? "default" : "outline"}
-                                className="flex-1"
-                                onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1)}
-                              >
-                                {exibirApelido(match.jogador1)}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant={match.vencedor === match.jogador2 ? "default" : "outline"}
-                                className="flex-1"
-                                onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2)}
-                              >
-                                {exibirApelido(match.jogador2)}
-                              </Button>
-                            </div>
-                          ) : match.vencedor ? (
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              size="sm"
+                              variant={match.vencedor === match.jogador1 ? "default" : "outline"}
+                              className="justify-between"
+                              onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1)}
+                            >
+                              <span className="truncate">{exibirApelido(match.jogador1)}</span>
+                              {match.vencedor === match.jogador1 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={match.vencedor === match.jogador2 ? "default" : "outline"}
+                              className="justify-between"
+                              onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2)}
+                            >
+                              <span className="truncate">{exibirApelido(match.jogador2)}</span>
+                              {match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
+                            </Button>
+                          </div>
+                          {!isAdmin && match.vencedor ? (
                             <p className="text-xs text-muted-foreground">Vencedor: {exibirApelido(match.vencedor)}</p>
-                          ) : (
+                          ) : null}
+                          {!isAdmin && !match.vencedor ? (
                             <p className="text-[11px] text-muted-foreground">Aguardando resultado</p>
-                          )}
+                          ) : null}
                         </div>
                       ))}
                     </div>
