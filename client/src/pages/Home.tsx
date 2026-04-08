@@ -172,6 +172,15 @@ export default function Home() {
     ];
   }, [user]);
 
+  const displayName = useMemo(() => {
+    const pref = typeof window !== "undefined" ? localStorage.getItem("dg-display-pref") || "both" : "both";
+    const hago = typeof window !== "undefined" ? localStorage.getItem("dg-hago-nickname") || user?.nickname || "" : user?.nickname || "";
+    const real = user?.name || user?.email || "jogador";
+    if (pref === "hago" && hago) return hago;
+    if (pref === "both" && hago) return `${real} (${hago})`;
+    return real;
+  }, [user]);
+
   const dataSnapshot = {
     polls: pollResultsQuery.data,
     campeonatos: campeonatosQuery.data,
@@ -808,6 +817,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
