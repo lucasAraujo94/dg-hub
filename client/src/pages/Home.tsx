@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+﻿import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
@@ -270,14 +270,14 @@ export default function Home() {
           position: idx + 1,
           name,
           points: `${r.pontuacao} pontos`,
-          badge: "🏅",
+          badge: "ðŸ…",
         };
       });
     }
     return [
-      { position: 1, name: "Anna", points: "Campeã - Ludo", badge: "🏅" },
-      { position: 2, name: "Lucas", points: "Campeão - Golpeie e Esquiva", badge: "🏅" },
-      { position: 3, name: "Reeh", points: "Campeão - Vermelhinha", badge: "🏅" },
+      { position: 1, name: "Anna", points: "CampeÃ£ - Ludo", badge: "ðŸ…" },
+      { position: 2, name: "Lucas", points: "CampeÃ£o - Golpeie e Esquiva", badge: "ðŸ…" },
+      { position: 3, name: "Reeh", points: "CampeÃ£o - Vermelhinha", badge: "ðŸ…" },
     ];
   }, [rankingTopQuery.data]);
 
@@ -319,7 +319,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 text-sm w-full md:w-auto ms-auto justify-end text-left md:text-right">
               <div className="flex flex-col items-start md:items-end">
                 <span className="text-muted-foreground">
-                  Olá, {user?.nickname ? `${user.name ?? user.email ?? "jogador"} (${user.nickname})` : user?.name ?? "jogador"}
+                  OlÃ¡, {user?.nickname ? `${user.name ?? user.email ?? "jogador"} (${user.nickname})` : user?.name ?? "jogador"}
                 </span>
                 <span className="text-[11px] text-muted-foreground flex items-center gap-1 flex-wrap">
                   Sessao expira em {formatSessionTime(remainingSessionMs)}
@@ -357,7 +357,7 @@ export default function Home() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-white text-xs font-bold shadow-lg">
                 DG
               </div>
-              <span className="text-sm font-semibold text-white/80">Navegação</span>
+              <span className="text-sm font-semibold text-white/80">NavegaÃ§Ã£o</span>
             </div>
             <Button
               variant="ghost"
@@ -478,10 +478,12 @@ export default function Home() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {campeonatosQuery.data?.map(c => {
-                        const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
-                        const status = (c as any).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
-                        const faseLabel =
-                          status === "futuro" ? "Fase de inscricoes" : status === "finalizado" ? "Finalizado" : "Em andamento";
+        const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
+        const rawStatus = (c as any).status ?? "futuro";
+        const started = dataInicio ? dataInicio.getTime() <= Date.now() : false;
+        const status = rawStatus === "finalizado" || rawStatus === "cancelado" ? rawStatus : started ? "ativo" : "futuro";
+        const faseLabel =
+          status === "futuro" ? "Fase de inscricoes" : status === "finalizado" ? "Finalizado" : "Em andamento";
                         return (
                           <div key={c.id} className="p-3 rounded-xl border border-white/10 bg-white/5">
                             <div className="flex items-center justify-between mb-1">
@@ -523,7 +525,7 @@ export default function Home() {
                             {poll.question || "Proximo campeonato: escolha o modo"}
                           </h2>
                           <p className="text-sm text-emerald-100/80">
-                            Vote no jogo que quer ver no próximo torneio. 1 voto por jogador logado.
+                            Vote no jogo que quer ver no prÃ³ximo torneio. 1 voto por jogador logado.
                           </p>
                           <div className="grid grid-cols-1 gap-2">
                             {poll.options?.map(opt => {
@@ -563,7 +565,7 @@ export default function Home() {
                               </div>
                             ) : null}
                             <div className="mt-2 text-xs text-emerald-100/70">
-                              A enquete é atualizada em tempo real após cada voto.
+                              A enquete Ã© atualizada em tempo real apÃ³s cada voto.
                             </div>
                           </div>
                         </div>
@@ -608,7 +610,7 @@ export default function Home() {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Opções (1 por linha, mínimo 2 e máximo 6)</p>
+                <p className="text-sm text-muted-foreground mb-1">OpÃ§Ãµes (1 por linha, mÃ­nimo 2 e mÃ¡ximo 6)</p>
                 <textarea
                   className="w-full rounded-md bg-black/30 border border-emerald-400/40 px-3 py-2 text-sm text-white min-h-[120px]"
                   value={pollOptionsText}
@@ -624,12 +626,12 @@ export default function Home() {
                     .map(opt => opt.trim())
                     .filter(Boolean);
                   if (options.length < 2 || options.length > 6) {
-                    toast.error("Informe entre 2 e 6 opções");
+                    toast.error("Informe entre 2 e 6 opÃ§Ãµes");
                     return;
                   }
                   const year = (pollClosesAt.split("T")[0] || "").split("-")[0];
                   if (year && year.length > 4) {
-                    toast.error("O ano deve ter no máximo 4 dígitos");
+                    toast.error("O ano deve ter no mÃ¡ximo 4 dÃ­gitos");
                     return;
                   }
                   pollCreateMutation.mutate({
@@ -679,7 +681,7 @@ export default function Home() {
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
                 <Button asChild size="sm">
-                  <Link href="/campeonatos">Abrir página</Link>
+                  <Link href="/campeonatos">Abrir pÃ¡gina</Link>
                 </Button>
               </div>
               <div className="rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-3">
@@ -713,12 +715,12 @@ export default function Home() {
                 ) : null}
                 {(campeonatosQuery.data ?? []).map(camp => {
                   const dataInicio = camp.dataInicio ? new Date(camp.dataInicio) : null;
-                  const status = (camp as any).status ?? (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
+                  const status = (() => { const rawStatus = (camp as any).status ?? "futuro"; const started = dataInicio ? dataInicio.getTime() <= Date.now() : false; return rawStatus === "cancelado" || rawStatus === "finalizado" ? rawStatus : started ? "ativo" : "futuro"; })();
                   const inscricoesEncerradas = (() => {
                     if (status === "cancelado" || status === "finalizado") return true;
                     if (!dataInicio) return false;
                     const diff = dataInicio.getTime() - Date.now();
-                    if (diff <= 0) return true; // já começou
+                    if (diff <= 0) return true; // jÃ¡ comeÃ§ou
                     return diff < 24 * 60 * 60 * 1000; // menos de 24h
                   })();
                   const faseLabel =
@@ -744,7 +746,7 @@ export default function Home() {
                         {(camp as { descricao?: string | null }).descricao ?? "Campeonato ativo"}
                       </p>
                       <div className="flex items-center justify-between mt-1 text-sm">
-                        <span>Prêmio</span>
+                        <span>PrÃªmio</span>
                         <span className="font-medium text-yellow-400">R$ {(camp as any).premioValor}</span>
                       </div>
                       <Button
@@ -772,7 +774,7 @@ export default function Home() {
                 </Button>
               </div>
               <Card className="p-5 border-border/70 bg-card/60">
-                <p className="text-sm text-muted-foreground">Veja e edite seus dados, conquistas e histórico de campeonatos.</p>
+                <p className="text-sm text-muted-foreground">Veja e edite seus dados, conquistas e histÃ³rico de campeonatos.</p>
               </Card>
             </section>
           )}
@@ -789,7 +791,7 @@ export default function Home() {
               </div>
               <Card className="p-5 border-border/70 bg-card/60">
                 <p className="text-sm text-muted-foreground">
-                  Converse com a comunidade e acompanhe transmissões em tempo real.
+                  Converse com a comunidade e acompanhe transmissÃµes em tempo real.
                 </p>
               </Card>
             </section>
@@ -799,6 +801,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
