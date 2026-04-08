@@ -20,6 +20,7 @@ export default function Chat() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recordTimeoutRef = useRef<number | null>(null);
   const [isRecording, setIsRecording] = useState(false);
 
   const [displayPref, setDisplayPref] = useState<{ pref: DisplayPref; hago: string }>(() => {
@@ -160,6 +161,13 @@ export default function Chat() {
     setShowEmojis(false);
   };
 
+  const clearRecordTimeout = () => {
+    if (recordTimeoutRef.current) {
+      clearTimeout(recordTimeoutRef.current);
+      recordTimeoutRef.current = null;
+    }
+  };
+
   const startRecording = async () => {
     try {
       if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
@@ -199,6 +207,13 @@ export default function Chat() {
       recorder.start();
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
+      clearRecordTimeout();
+      recordTimeoutRef.current = window.setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+          mediaRecorderRef.current.stop();
+          toast.info("Limite de 1 minuto de audio atingido.");
+        }
+      }, 60_000);
     } catch (err) {
       console.error(err);
       setIsRecording(false);
@@ -219,6 +234,7 @@ export default function Chat() {
     if (rec && rec.state !== "inactive") {
       rec.stop();
       setIsRecording(false);
+      clearRecordTimeout();
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
