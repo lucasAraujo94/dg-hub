@@ -531,13 +531,14 @@ export default function Home() {
                         </p>
                         <div className="space-y-3">
                           {poll.options?.map(opt => {
+                            const label = opt.includes("(") ? opt.replace(/\s*\([^)]*\)$/, "") : opt;
                             const count = poll.counts?.[opt] ?? 0;
                             const total = (poll.options ?? []).reduce((sum, o) => sum + (poll.counts?.[o] ?? 0), 0);
                             const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                             return (
                               <div key={opt} className="space-y-1">
                                 <div className="flex justify-between text-xs text-emerald-100/80">
-                                  <span>{opt}</span>
+                                  <span>{label}</span>
                                   <span>{pct}% ({count} votos)</span>
                                 </div>
                                 <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
@@ -553,7 +554,7 @@ export default function Home() {
                                   onClick={() => pollVoteMutation.mutate({ pollId: poll.pollId, escolha: opt })}
                                   disabled={pollVoteMutation.isPending}
                                 >
-                                  <span className="font-semibold">{opt}</span>
+                                  <span className="font-semibold">{label}</span>
                                   <span className="text-xs text-emerald-100/80">{count} votos</span>
                                 </Button>
                               </div>
