@@ -103,7 +103,7 @@ export default function Admin() {
 
   const handleCriarCampeonato = async () => {
     if (!nomeCampeonato || !dataInicio || !premioValor || !jogoCampeonato) {
-      toast.error("Informe nome, jogo, data e premio");
+      toast.error("Informe nome, jogo, data e prêmio");
       return;
     }
     const parsedDate = new Date(dataInicio);
@@ -250,7 +250,7 @@ export default function Admin() {
                       <Input type="datetime-local" value={dataInicio} onChange={e => setDataInicio(clampDateYear(e.target.value))} />
                     </div>
                     <div>
-                      <label className="text-sm font-semibold mb-2 block">Valor do Premio (R$)</label>
+                      <label className="text-sm font-semibold mb-2 block">Valor do Prêmio (R$)</label>
                       <Input value={premioValor} onChange={e => setPremioValor(e.target.value)} placeholder="Ex: 500" />
                     </div>
                   </div>
