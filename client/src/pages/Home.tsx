@@ -370,7 +370,7 @@ export default function Home() {
             {[
               { key: "overview", label: "Home", icon: HomeIcon },
               { key: "campeonatos", label: "Campeonatos", href: "/campeonatos", icon: Trophy },
-              { key: "rankings", label: "Rankings", icon: Star },
+              { key: "rankings", label: "Rankings", href: "/ranking", icon: Star },
               { key: "perfil", label: "Perfil", href: "/perfil", icon: User },
               { key: "chat", label: "Chat", href: "/chat", icon: MessageCircle },
               ...(user?.role === "admin" ? [{ key: "admin", label: "Admin", href: "/admin", icon: ShieldCheck }] : []),
@@ -753,30 +753,6 @@ export default function Home() {
                     </Card>
                   );
                 }) ?? <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado.</p>}
-              </div>
-            </section>
-          )}
-
-          {activeSection === "rankings" && (
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
-                <Button asChild size="sm">
-                  <Link href="/ranking">Ver ranking completo</Link>
-                </Button>
-              </div>
-              <div className="space-y-3">
-                {lastWinners.map(player => (
-                  <Card key={player.name} className="p-4 border-border/70 bg-card/60 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-white font-semibold">
-                      <TrendingUp className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 text-center">
-                      <p className="font-semibold">{player.name}</p>
-                      <p className="text-xs text-muted-foreground">{player.points}</p>
-                    </div>
-                  </Card>
-                ))}
               </div>
             </section>
           )}
