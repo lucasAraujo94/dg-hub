@@ -523,10 +523,10 @@ export default function Home() {
                           Enquete
                         </div>
                         <h2 className="text-3xl md:text-4xl font-semibold leading-tight text-white">
-                          {poll.question || "Proximo campeonato: escolha o modo"}
+                          {poll.question || "Próximo campeonato: escolha o modo"}
                         </h2>
                         <p className="text-sm text-emerald-100/80">
-                          Vote no jogo que quer ver no proximo torneio. 1 voto por jogador logado.
+                          Vote no jogo que quer ver no próximo torneio. 1 voto por jogador logado.
                         </p>
                         <div className="space-y-3">
                           {(() => {
@@ -595,7 +595,7 @@ export default function Home() {
                           <p className="text-xs text-emerald-100/80">Enviando voto...</p>
                         ) : null}
                         <div className="text-xs text-emerald-100/70">
-                          A enquete e atualizada em tempo real apos cada voto.
+                          A enquete é atualizada em tempo real após cada voto.
                         </div>
                       </div>
                     </div>
@@ -829,7 +829,6 @@ export default function Home() {
     </div>
   );
 }
-
 
 
 
