@@ -335,7 +335,7 @@ export default function Chat() {
                     <Smile className="h-4 w-4" />
                   </Button>
                   {showEmojis ? (
-                    <div className="absolute right-0 z-10 mt-2 grid grid-cols-5 gap-1 rounded-md border border-border bg-card p-2 text-lg">
+                    <div className="absolute right-0 sm:right-0 left-0 sm:left-auto z-10 mt-2 grid grid-cols-6 sm:grid-cols-6 gap-1 rounded-md border border-border bg-card p-2 text-lg w-full sm:w-auto">
                       {emojis.map(em => (
                         <button
                           key={em}
