@@ -525,7 +525,7 @@ export default function Home() {
                             Enquete
                           </div>
                           <h2 className="text-3xl md:text-4xl font-semibold leading-tight text-white">
-                            {poll.question || "Proximo campeonato: escolha o modo"}
+                            {poll.question || "Próximo campeonato: escolha o modo"}
                           </h2>
                           <p className="text-sm text-emerald-100/80">
                             Vote no jogo que quer ver no prÃ³ximo torneio. 1 voto por jogador logado.
@@ -804,6 +804,8 @@ export default function Home() {
     </div>
   );
 }
+
+
 
 
 
