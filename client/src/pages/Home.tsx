@@ -316,9 +316,9 @@ export default function Home() {
               <span className="text-lg font-bold gradient-text">DG Hub</span>
             </div>
           </div>
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 text-sm w-full md:w-auto ms-auto justify-end text-left md:text-right">
-              <div className="flex flex-col items-start md:items-end max-w-[240px]">
-              <span className="text-muted-foreground break-words">Ola, {displayName}</span>
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 text-sm w-full md:w-auto ms-auto justify-end text-left md:text-right">
+            <div className="flex flex-col items-start md:items-end max-w-[240px]">
+              <span className="text-muted-foreground break-words">Olá, {displayName}</span>
               <span className="text-[11px] text-muted-foreground flex items-center gap-1 flex-wrap">
                 Sessao expira em {formatSessionTime(remainingSessionMs)}
                 {isSessionPaused ? (
@@ -330,9 +330,9 @@ export default function Home() {
               </span>
             </div>
             <Button onClick={logout} variant="outline" size="sm" className="w-full md:w-auto">
-                Sair
-              </Button>
-            </div>
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 

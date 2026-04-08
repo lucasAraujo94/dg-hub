@@ -186,7 +186,7 @@ export default function Ranking() {
             <h1 className="text-3xl font-bold gradient-text">Ranking de Campeoes</h1>
             <div className="w-20" />
           </div>
-          <p className="text-muted-foreground">Acompanhe a classificacao como em uma tabela de campeonato.</p>
+          <p className="text-muted-foreground">Acompanhe a classificacao como em uma tabela de campeonato. Cada campeonato conquistado vale 100 pontos.</p>
         </div>
       </div>
 
