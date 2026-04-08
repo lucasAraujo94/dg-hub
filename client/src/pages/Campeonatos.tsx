@@ -23,8 +23,21 @@ type Match = { jogador1: string; jogador2: string; vencedor?: string };
 export default function Campeonatos() {
   const { user, isAuthenticated } = useAuth();
   const isAdmin = user?.role === "admin";
-  const nomeUsuario = user?.name ? `${user.name}${(user as any).nickname ? ` (${(user as any).nickname})` : ""}` : "Convidado";
   const usuarioId = (user as { id?: number } | null | undefined)?.id;
+
+  const [displayPref, setDisplayPref] = useState<"real" | "hago">(() => {
+    if (typeof window === "undefined") return "real";
+    const stored = localStorage.getItem("dg-display-pref");
+    return stored === "hago" ? "hago" : "real";
+  });
+  const [hagoNickLocal, setHagoNickLocal] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("dg-hago-nickname") || "";
+  });
+
+  const nomeUsuarioBase = user?.name || user?.email || "Convidado";
+  const nomeUsuarioNick = (user as any)?.nickname || hagoNickLocal || "";
+  const nomeUsuario = displayPref === "hago" && nomeUsuarioNick ? nomeUsuarioNick : nomeUsuarioBase;
 
   const [rounds, setRounds] = useState<Match[][]>([]);
   const [sorteando, setSorteando] = useState(false);
@@ -42,19 +55,37 @@ export default function Campeonatos() {
     { enabled: Boolean(selectedCampId), refetchOnWindowFocus: false }
   );
 
-const exibirApelido = (valor: string) => {
-  const t = (valor || "").trim();
-  const onlyParens = t.match(/^\((.+)\)$/);
-  if (onlyParens && onlyParens[1]) return onlyParens[1].trim();
-  const parts = t.match(/^(.+?)\s*\(([^)]+)\)$/);
-  if (parts) {
-    const before = parts[1].trim();
-    const inside = parts[2].trim();
-    if (inside && inside !== before) return inside;
-    return before;
-  }
-  return t;
-};
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncPrefs = () => {
+      const pref = localStorage.getItem("dg-display-pref");
+      const nick = localStorage.getItem("dg-hago-nickname") || "";
+      if (pref === "hago" || pref === "real") setDisplayPref(pref);
+      setHagoNickLocal(nick);
+    };
+    syncPrefs();
+    window.addEventListener("storage", syncPrefs);
+    return () => window.removeEventListener("storage", syncPrefs);
+  }, []);
+
+  const resolveDisplayName = (usuario?: { name?: string | null; email?: string | null; nickname?: string | null }) => {
+    const baseName = usuario?.name || usuario?.email || "Jogador";
+    const nick = (usuario?.nickname || "").trim();
+    if (displayPref === "hago" && nick) return nick;
+    return baseName;
+  };
+
+  const exibirApelido = (valor: string, display: "real" | "hago") => {
+    const t = (valor || "").trim();
+    const parts = t.match(/^(.+?)\s*\(([^)]+)\)$/);
+    if (parts) {
+      const before = parts[1].trim();
+      const inside = parts[2].trim();
+      if (display === "hago" && inside) return inside;
+      return before;
+    }
+    return t;
+  };
 
   const inscricaoMutation = trpc.campeonatos.inscrever.useMutation({
     onSuccess: async () => {
@@ -112,12 +143,10 @@ const exibirApelido = (valor: string) => {
     if (!inscritosQuery.data) return [];
     return inscritosQuery.data.map(item => {
       const usuario = (item as { usuario?: { id?: number | null; name?: string | null; email?: string | null; nickname?: string | null } }).usuario;
-      const baseName = usuario?.name || usuario?.email || `Jogador ${item.usuarioId}`;
-      const nick = usuario?.nickname;
-      const name = nick ? `${baseName} (${nick})` : baseName;
+      const name = resolveDisplayName(usuario) || `Jogador ${item.usuarioId}`;
       return { name, email: usuario?.email ?? undefined, id: usuario?.id ?? null };
     });
-  }, [inscritosQuery.data]);
+  }, [inscritosQuery.data, displayPref]);
 
   const inscritosNomes = useMemo(() => participantes.map(i => i.name), [participantes]);
   const inscritosIds = useMemo(() => participantes.map(i => i.id).filter(Boolean) as number[], [participantes]);
@@ -516,7 +545,7 @@ const exibirApelido = (valor: string) => {
                               className="justify-between"
                               onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1)}
                             >
-                              <span className="truncate">{exibirApelido(match.jogador1)}</span>
+                              <span className="truncate">{exibirApelido(match.jogador1, displayPref)}</span>
                               {match.vencedor === match.jogador1 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                             </Button>
                             <Button
@@ -525,12 +554,12 @@ const exibirApelido = (valor: string) => {
                               className="justify-between"
                               onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2)}
                             >
-                              <span className="truncate">{exibirApelido(match.jogador2)}</span>
+                              <span className="truncate">{exibirApelido(match.jogador2, displayPref)}</span>
                               {match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                             </Button>
                           </div>
                           {!isAdmin && match.vencedor ? (
-                            <p className="text-xs text-muted-foreground">Vencedor: {exibirApelido(match.vencedor)}</p>
+                            <p className="text-xs text-muted-foreground">Vencedor: {exibirApelido(match.vencedor, displayPref)}</p>
                           ) : null}
                           {!isAdmin && !match.vencedor ? (
                             <p className="text-[11px] text-muted-foreground">Aguardando resultado</p>

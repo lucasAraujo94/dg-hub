@@ -64,8 +64,34 @@ export default function Home() {
   const pollResultsQuery = trpc.poll.results.useQuery(undefined, { refetchOnWindowFocus: false });
   const pollResults = pollResultsQuery.data?.polls ?? [];
 
+  const [votedPolls, setVotedPolls] = useState<Set<number>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const raw = localStorage.getItem("dg-poll-voted") || "[]";
+      const arr = JSON.parse(raw) as number[];
+      return new Set(arr);
+    } catch {
+      return new Set();
+    }
+  });
+
+  const markVoted = (pollId: number) => {
+    setVotedPolls(prev => {
+      const next = new Set(prev);
+      next.add(pollId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("dg-poll-voted", JSON.stringify(Array.from(next)));
+      }
+      return next;
+    });
+  };
+
   const pollVoteMutation = trpc.poll.vote.useMutation({
-    onSuccess: () => pollResultsQuery.refetch(),
+    onSuccess: (_, variables) => {
+      if (variables?.pollId) markVoted(variables.pollId);
+      pollResultsQuery.refetch();
+      toast.success("Voto registrado");
+    },
     onError: err => toast.error(err.message || "Falha ao registrar voto"),
   });
 
@@ -354,7 +380,7 @@ export default function Home() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-white text-xs font-bold shadow-lg">
                 DG
               </div>
-              <span className="text-sm font-semibold text-white/80">NavegaÃ§Ã£o</span>
+              <span className="text-sm font-semibold text-white/80">Navegação</span>
             </div>
             <Button
               variant="ghost"
@@ -575,8 +601,14 @@ export default function Home() {
                                     key={`${item.primary}-btn`}
                                     variant="outline"
                                     className="w-full justify-between border-emerald-400/40 text-white hover:border-emerald-400 hover:text-white/90"
-                                    onClick={() => pollVoteMutation.mutate({ pollId: poll.pollId, escolha: item.primary })}
-                                    disabled={pollVoteMutation.isPending}
+                                    onClick={() => {
+                                      if (votedPolls.has(poll.pollId)) {
+                                        toast.info("Voce ja votou nesta enquete. Apenas 1 voto por jogador.");
+                                        return;
+                                      }
+                                      pollVoteMutation.mutate({ pollId: poll.pollId, escolha: item.primary });
+                                    }}
+                                    disabled={pollVoteMutation.isPending || votedPolls.has(poll.pollId)}
                                   >
                                     <span className="font-semibold">{item.label}</span>
                                     <span className="text-xs text-emerald-100/80">{item.count} votos</span>
