@@ -287,11 +287,6 @@ export const appRouter = router({
           url = `data:${input.mimeType};base64,${input.dataBase64}`;
         }
 
-        // Protege a coluna (varchar 2048) contra URLs enormes
-        if (!url || url.length > 1900) {
-          throw new Error("Falha ao salvar avatar: URL muito grande. Tente uma imagem menor ou tente novamente.");
-        }
-
         const updated = await setUserAvatar(ctx.user.id, url);
         return { url: updated.avatarUrl ?? url, avatarUrl: updated.avatarUrl ?? url, id: updated.id };
       }),
