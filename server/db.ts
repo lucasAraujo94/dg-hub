@@ -476,36 +476,54 @@ export async function atualizarRanking(usuarioId: number, tipo: "geral" | "seman
 }
 
 export async function getRankingPorTipo(tipo: "geral" | "semanal" | "mensal", limite: number = 10) {
-  const ranking = await prisma.ranking.findMany({
-    where: { tipoRanking: tipo },
-    orderBy: { pontuacao: "desc" },
-    take: limite,
-    include: {
-      usuario: {
-        select: {
-          id: true,
-          name: true,
-          nickname: true,
-          email: true,
-          avatarUrl: true,
-        },
+  // Busca ranking existente e todos os usuários para garantir que todos apareçam (mesmo com 0 pontos)
+  const [rankingRows, usuarios, campeonatosVencidos] = await Promise.all([
+    prisma.ranking.findMany({
+      where: { tipoRanking: tipo },
+      select: { usuarioId: true, pontuacao: true },
+    }),
+    prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        nickname: true,
+        email: true,
+        avatarUrl: true,
       },
-    },
+    }),
+    prisma.campeonato.findMany({
+      where: { campeaoId: { not: null } },
+      select: { id: true, nome: true, jogo: true, campeaoId: true },
+    }),
+  ]);
+
+  const rankingMap = new Map<number, number>();
+  rankingRows.forEach(row => rankingMap.set(row.usuarioId, Number(row.pontuacao)));
+
+  const campeaoMap = new Map<number, Array<{ id: number; nome: string; jogo: string }>>();
+  campeonatosVencidos.forEach(camp => {
+    if (!camp.campeaoId) return;
+    const list = campeaoMap.get(camp.campeaoId) ?? [];
+    list.push({ id: camp.id, nome: camp.nome, jogo: camp.jogo });
+    campeaoMap.set(camp.campeaoId, list);
   });
 
-  const userIds = ranking.map(r => r.usuarioId);
-  if (userIds.length === 0) return ranking;
-
-  const campeonatosVencidos = await prisma.campeonato.findMany({
-    where: { campeaoId: { in: userIds } },
-    select: { id: true, nome: true, jogo: true, campeaoId: true },
+  const entries = usuarios.map(user => {
+    const campeaoWins = campeaoMap.get(user.id) ?? [];
+    // Se nÃ£o existir linha na tabela de ranking, assume 0 + (100 * titulos ganhos)
+    const pontosBase = rankingMap.get(user.id) ?? 0;
+    const pontos = pontosBase > 0 ? pontosBase : campeaoWins.length * 100;
+    return {
+      usuarioId: user.id,
+      pontuacao: pontos,
+      usuario: user,
+      campeonatosCampeao: campeaoWins,
+      wins: campeaoWins.length,
+    };
   });
 
-  return ranking.map(r => ({
-    ...r,
-    campeonatosCampeao: campeonatosVencidos.filter(c => c.campeaoId === r.usuarioId),
-    wins: campeonatosVencidos.filter(c => c.campeaoId === r.usuarioId).length,
-  }));
+  const ordenado = entries.sort((a, b) => b.pontuacao - a.pontuacao || (a.usuarioId - b.usuarioId));
+  return limite > 0 ? ordenado.slice(0, limite) : ordenado;
 }
 
 // Estatísticas
