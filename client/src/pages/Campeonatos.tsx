@@ -463,11 +463,11 @@ export default function Campeonatos() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chaveamento</p>
-              <h2 className="text-xl font-semibold">Visualizacao em tempo real</h2>
+              <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
             </div>
             {rounds.length > 0 ? (
               <span className="text-sm text-muted-foreground">
-                {rounds[0].length} partidas iniciais {"\u2022"} seed fixo para todos
+                {rounds[0].length} partida{rounds[0].length === 1 ? "" : "s"} inicial{rounds[0].length === 1 ? "" : "is"} • seed fixo para todos
               </span>
             ) : null}
           </div>
@@ -486,7 +486,7 @@ export default function Campeonatos() {
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold">Round {roundIndex + 1}</h3>
-                      <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Eliminacao</span>
+                      <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Eliminação</span>
                     </div>
                     <div className="space-y-3">
                       {round.map((match, matchIndex) => (
@@ -495,19 +495,19 @@ export default function Campeonatos() {
                           className="rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/10 to-cyan-500/10 p-3 space-y-2 shadow-inner"
                         >
                           <p className="text-[11px] text-muted-foreground">Selecione o vencedor desta partida</p>
-                          <div className="flex items-center justify-between gap-2 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 min-w-0 text-center sm:text-left">
                             <span className="text-sm font-medium truncate" title={match.jogador1}>
                               {exibirApelido(match.jogador1)}
                             </span>
-                            <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+                            <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-white/10 sm:self-center">
                               vs
                             </span>
-                            <span className="text-sm font-medium truncate text-right" title={match.jogador2}>
+                            <span className="text-sm font-medium truncate sm:text-right" title={match.jogador2}>
                               {exibirApelido(match.jogador2)}
                             </span>
                           </div>
                           {isAdmin ? (
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <Button
                                 size="sm"
                                 variant={match.vencedor === match.jogador1 ? "default" : "outline"}
