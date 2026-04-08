@@ -503,6 +503,7 @@ export default function Campeonatos() {
                               vs
                             </span>
                           </div>
+                          <p className="text-[11px] text-muted-foreground">Toque no nome para marcar o vencedor.</p>
                           <div className="flex flex-col gap-2">
                             <Button
                               size="sm"

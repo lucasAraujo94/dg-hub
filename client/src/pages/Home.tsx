@@ -518,73 +518,58 @@ export default function Home() {
                       className="relative rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/15 via-transparent to-cyan-500/20" />
-                      <div className="relative grid md:grid-cols-2">
-                        <div className="p-6 md:p-8 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-white/10">
-                          <div className="text-[11px] uppercase tracking-[0.28em] text-emerald-200/80 flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
-                            Enquete
-                          </div>
-                          <h2 className="text-3xl md:text-4xl font-semibold leading-tight text-white">
-                            {poll.question || "Próximo campeonato: escolha o modo"}
-                          </h2>
-                          <p className="text-sm text-emerald-100/80">
-                            Vote no jogo que quer ver no próximo torneio. 1 voto por jogador logado.
-                          </p>
-                          <div className="grid grid-cols-1 gap-2">
-                            {poll.options?.map(opt => {
-                              const count = poll.counts?.[opt] ?? 0;
-                              return (
+                      <div className="relative p-6 md:p-8 flex flex-col gap-4 border border-white/10 rounded-3xl bg-black/40">
+                        <div className="text-[11px] uppercase tracking-[0.28em] text-emerald-200/80 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                          Enquete
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-semibold leading-tight text-white">
+                          {poll.question || "Próximo campeonato: escolha o modo"}
+                        </h2>
+                        <p className="text-sm text-emerald-100/80">
+                          Vote no jogo que quer ver no próximo torneio. 1 voto por jogador logado.
+                        </p>
+                        <div className="space-y-3">
+                          {poll.options?.map(opt => {
+                            const count = poll.counts?.[opt] ?? 0;
+                            const total = (poll.options ?? []).reduce((sum, o) => sum + (poll.counts?.[o] ?? 0), 0);
+                            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                            return (
+                              <div key={opt} className="space-y-1">
+                                <div className="flex justify-between text-xs text-emerald-100/80">
+                                  <span>{opt}</span>
+                                  <span>{pct}% ({count} votos)</span>
+                                </div>
+                                <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400"
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
                                 <Button
-                                  key={opt}
+                                  key={`${opt}-btn`}
                                   variant="outline"
-                                  className="justify-between border-emerald-400/40 text-white hover:border-emerald-400 hover:text-white/90"
+                                  className="w-full justify-between border-emerald-400/40 text-white hover:border-emerald-400 hover:text-white/90"
                                   onClick={() => pollVoteMutation.mutate({ pollId: poll.pollId, escolha: opt })}
                                   disabled={pollVoteMutation.isPending}
                                 >
                                   <span className="font-semibold">{opt}</span>
                                   <span className="text-xs text-emerald-100/80">{count} votos</span>
                                 </Button>
-                              );
-                            })}
-                          </div>
-                          {pollVoteMutation.isPending ? (
-                            <p className="text-xs text-emerald-100/80">Enviando voto...</p>
-                          ) : null}
-                        </div>
-                        <div className="relative p-6 md:p-8 flex flex-col justify-center gap-4 bg-gradient-to-br from-black/50 via-black/40 to-black/60">
-                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,197,94,0.12),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(59,130,246,0.12),transparent_35%)]" />
-                          <div className="relative space-y-3 text-white">
-                            <p className="text-sm uppercase tracking-[0.2em] text-emerald-100/70">Parcial</p>
-                            <div className="space-y-3 text-sm text-emerald-50/80">
-                              {poll.options?.map(opt => {
-                                const count = poll.counts?.[opt] ?? 0;
-                                const total = (poll.options ?? []).reduce((sum, o) => sum + (poll.counts?.[o] ?? 0), 0);
-                                const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                                return (
-                                  <div key={opt} className="space-y-1">
-                                    <div className="flex justify-between text-xs text-emerald-100/80">
-                                      <span>{opt}</span>
-                                      <span>{pct}% ({count} votos)</span>
-                                    </div>
-                                    <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                                      <div
-                                        className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400"
-                                        style={{ width: `${pct}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                            {poll.closesAt ? (
-                              <div className="text-xs text-emerald-100/70">
-                                Fecha em: {new Date(poll.closesAt).toLocaleString("pt-BR")}
                               </div>
-                            ) : null}
-                            <div className="mt-2 text-xs text-emerald-100/70">
-                              A enquete é atualizada em tempo real após cada voto.
-                            </div>
+                            );
+                          })}
+                        </div>
+                        {poll.closesAt ? (
+                          <div className="text-xs text-emerald-100/70">
+                            Fecha em: {new Date(poll.closesAt).toLocaleString("pt-BR")}
                           </div>
+                        ) : null}
+                        {pollVoteMutation.isPending ? (
+                          <p className="text-xs text-emerald-100/80">Enviando voto...</p>
+                        ) : null}
+                        <div className="text-xs text-emerald-100/70">
+                          A enquete é atualizada em tempo real após cada voto.
                         </div>
                       </div>
                     </div>
