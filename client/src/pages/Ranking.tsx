@@ -19,10 +19,10 @@ type RankingItem = {
 export default function Ranking() {
   const { user } = useAuth();
   const [tipo, setTipo] = useState<RankingTipo>("geral");
-  const [displayPref, setDisplayPref] = useState<"real" | "hago" | "both">(() => {
-    if (typeof window === "undefined") return "both";
+  const [displayPref, setDisplayPref] = useState<"real" | "hago">(() => {
+    if (typeof window === "undefined") return "real";
     const stored = localStorage.getItem("dg-display-pref");
-    return stored === "real" || stored === "hago" || stored === "both" ? stored : "both";
+    return stored === "real" || stored === "hago" ? stored : "real";
   });
   const [hagoNickLocal, setHagoNickLocal] = useState<string>(() => {
     if (typeof window === "undefined") return "";
@@ -38,7 +38,7 @@ export default function Ranking() {
       if (typeof window === "undefined") return;
       const pref = localStorage.getItem("dg-display-pref");
       const nick = localStorage.getItem("dg-hago-nickname") || "";
-      if (pref === "real" || pref === "hago" || pref === "both") setDisplayPref(pref);
+      if (pref === "real" || pref === "hago") setDisplayPref(pref);
       setHagoNickLocal(nick);
     };
     sync();
@@ -81,12 +81,7 @@ export default function Ranking() {
             const usuario = player.usuario;
             const baseName = usuario?.name || usuario?.email || `Jogador ${player.usuarioId}`;
             const nick = (usuario?.nickname || hagoNickLocal || "").trim();
-            const displayName =
-              displayPref === "hago" && nick
-                ? nick
-                : displayPref === "both" && nick
-                  ? `${baseName} (${nick})`
-                  : baseName;
+            const displayName = displayPref === "hago" && nick ? nick : baseName;
             const campeonatosCampeao = player.campeonatosCampeao ?? [];
             const lastTitle =
               campeonatosCampeao.length === 0

@@ -67,7 +67,7 @@ export default function Perfil() {
   const [photoPosY, setPhotoPosY] = useState(50);
   const [savedAvatarUrl, setSavedAvatarUrl] = useState<string | null>(null);
   const [hagoNickname, setHagoNickname] = useState<string>("");
-  const [displayPreference, setDisplayPreference] = useState<"real" | "hago" | "both">("both");
+  const [displayPreference, setDisplayPreference] = useState<"real" | "hago">("real");
   const [hideEmail, setHideEmail] = useState(false);
   const [showValorModal, setShowValorModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -194,7 +194,7 @@ export default function Perfil() {
       const savedPref = localStorage.getItem("dg-display-pref");
       const savedHideEmail = localStorage.getItem("dg-hide-email");
       if (savedNick) setHagoNickname(savedNick);
-      if (savedPref === "real" || savedPref === "hago" || savedPref === "both") {
+      if (savedPref === "real" || savedPref === "hago") {
         setDisplayPreference(savedPref);
       }
       if (savedHideEmail === "true") {
@@ -345,7 +345,6 @@ export default function Perfil() {
   const displayName = (() => {
     const nick = hagoNickname.trim();
     if (displayPreference === "hago" && nick) return nick;
-    if (displayPreference === "both" && nick) return `${baseName} (${nick})`;
     return baseName;
   })();
 
@@ -531,10 +530,6 @@ export default function Perfil() {
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="hago" id="pref-hago" />
                       <Label htmlFor="pref-hago">Apelido do Hago</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="both" id="pref-both" />
-                      <Label htmlFor="pref-both">Nome de cadastro (Apelido do Hago)</Label>
                     </div>
                   </RadioGroup>
                 </div>

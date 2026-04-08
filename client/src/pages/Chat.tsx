@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { writeLastSeenChatAt } from "@/lib/chatNotifications";
 
-type DisplayPref = "real" | "hago" | "both";
+type DisplayPref = "real" | "hago";
 
 export default function Chat() {
   const { user, loading } = useAuth({ redirectOnUnauthenticated: true, redirectPath: "#/login" });
@@ -22,14 +22,14 @@ export default function Chat() {
   const [isRecording, setIsRecording] = useState(false);
 
   const [displayPref, setDisplayPref] = useState<{ pref: DisplayPref; hago: string }>(() => {
-    if (typeof window === "undefined") return { pref: "both", hago: "" };
+    if (typeof window === "undefined") return { pref: "real", hago: "" };
     try {
-      const pref = localStorage.getItem("dg-display-pref") || "both";
+      const pref = localStorage.getItem("dg-display-pref") || "real";
       const hago = localStorage.getItem("dg-hago-nickname") || "";
-      const safePref = pref === "real" || pref === "hago" || pref === "both" ? (pref as DisplayPref) : "both";
+      const safePref = pref === "real" || pref === "hago" ? (pref as DisplayPref) : "real";
       return { pref: safePref, hago };
     } catch {
-      return { pref: "both", hago: "" };
+      return { pref: "real", hago: "" };
     }
   });
 
@@ -37,9 +37,9 @@ export default function Chat() {
     const syncPref = () => {
       if (typeof window === "undefined") return;
       try {
-        const pref = localStorage.getItem("dg-display-pref") || "both";
+        const pref = localStorage.getItem("dg-display-pref") || "real";
         const hago = localStorage.getItem("dg-hago-nickname") || "";
-        const safePref = pref === "real" || pref === "hago" || pref === "both" ? (pref as DisplayPref) : "both";
+        const safePref = pref === "real" || pref === "hago" ? (pref as DisplayPref) : "real";
         setDisplayPref({ pref: safePref, hago });
       } catch {
         /* ignore */
@@ -143,7 +143,6 @@ export default function Chat() {
     const base = u.name || u.email || "Jogador";
     const nick = u.nickname || displayPref.hago || "";
     if (displayPref.pref === "hago" && nick) return nick;
-    if (displayPref.pref === "both" && nick) return `${base} (${nick})`;
     return base;
   };
 
