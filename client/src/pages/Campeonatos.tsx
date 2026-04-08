@@ -42,13 +42,19 @@ export default function Campeonatos() {
     { enabled: Boolean(selectedCampId), refetchOnWindowFocus: false }
   );
 
-  const exibirApelido = (nomeComApelido: string) => {
-    const match = nomeComApelido.match(/\(([^)]+)\)/);
-    if (match && match[1]) {
-      return `(${match[1]})`;
-    }
-    return nomeComApelido;
-  };
+const exibirApelido = (valor: string) => {
+  const t = (valor || "").trim();
+  const onlyParens = t.match(/^\((.+)\)$/);
+  if (onlyParens && onlyParens[1]) return onlyParens[1].trim();
+  const parts = t.match(/^(.+?)\s*\(([^)]+)\)$/);
+  if (parts) {
+    const before = parts[1].trim();
+    const inside = parts[2].trim();
+    if (inside && inside !== before) return inside;
+    return before;
+  }
+  return t;
+};
 
   const inscricaoMutation = trpc.campeonatos.inscrever.useMutation({
     onSuccess: async () => {
@@ -464,7 +470,6 @@ export default function Campeonatos() {
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chaveamento</p>
               <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
-              <p className="text-[11px] text-muted-foreground mt-1">Toque no nome para marcar o vencedor.</p>
             </div>
             {rounds.length > 0 ? (
               <span className="text-sm text-muted-foreground">
