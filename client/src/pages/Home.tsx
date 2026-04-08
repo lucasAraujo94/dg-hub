@@ -173,17 +173,16 @@ export default function Home() {
   }, [user]);
 
   const displayName = useMemo(() => {
-    let pref: "real" | "hago" | "both" = "both";
+    let pref: "real" | "hago" = "real";
     let storedNick = "";
     if (typeof window !== "undefined") {
       const p = localStorage.getItem("dg-display-pref");
-      if (p === "real" || p === "hago" || p === "both") pref = p;
+      if (p === "real" || p === "hago") pref = p;
       storedNick = localStorage.getItem("dg-hago-nickname") || "";
     }
     const hago = (storedNick || user?.nickname || "").trim();
     const real = user?.name || user?.email || "jogador";
     if (pref === "hago" && hago) return hago;
-    if (pref === "both" && hago) return `${real} (${hago})`;
     return real;
   }, [user]);
 
@@ -530,36 +529,62 @@ export default function Home() {
                           Vote no jogo que quer ver no próximo torneio. 1 voto por jogador logado.
                         </p>
                         <div className="space-y-3">
-                          {poll.options?.map(opt => {
-                            const label = opt.includes("(") ? opt.replace(/\s*\([^)]*\)$/, "") : opt;
-                            const count = poll.counts?.[opt] ?? 0;
-                            const total = (poll.options ?? []).reduce((sum, o) => sum + (poll.counts?.[o] ?? 0), 0);
-                            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                            return (
-                              <div key={opt} className="space-y-1">
-                                <div className="flex justify-between text-xs text-emerald-100/80">
-                                  <span>{label}</span>
-                                  <span>{pct}% ({count} votos)</span>
+                          {(() => {
+                            const cleanLabel = (opt: string) => {
+                              const t = (opt || "").trim();
+                              const m = t.match(/^(.+?)\s*\(([^)]+)\)$/);
+                              if (m) {
+                                const before = m[1].trim();
+                                const inside = m[2].trim();
+                                if (inside && inside !== before) return inside;
+                                return before;
+                              }
+                              return t;
+                            };
+                            const aggregated = (poll.options ?? []).reduce<
+                              { label: string; count: number; primary: string }[]
+                            >((acc, opt) => {
+                              const label = cleanLabel(opt);
+                              const count = poll.counts?.[opt] ?? 0;
+                              const existing = acc.find(o => o.label === label);
+                              if (existing) {
+                                existing.count += count;
+                              } else {
+                                acc.push({ label, count, primary: opt });
+                              }
+                              return acc;
+                            }, []);
+                            const total = aggregated.reduce((sum, item) => sum + item.count, 0);
+                            return aggregated.map(item => {
+                              const pct = total > 0 ? Math.round((item.count / total) * 100) : 0;
+                              return (
+                                <div key={item.label} className="space-y-1">
+                                  <div className="flex justify-between text-xs text-emerald-100/80">
+                                    <span>{item.label}</span>
+                                    <span>
+                                      {pct}% ({item.count} votos)
+                                    </span>
+                                  </div>
+                                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                                    <div
+                                      className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400"
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                  <Button
+                                    key={`${item.primary}-btn`}
+                                    variant="outline"
+                                    className="w-full justify-between border-emerald-400/40 text-white hover:border-emerald-400 hover:text-white/90"
+                                    onClick={() => pollVoteMutation.mutate({ pollId: poll.pollId, escolha: item.primary })}
+                                    disabled={pollVoteMutation.isPending}
+                                  >
+                                    <span className="font-semibold">{item.label}</span>
+                                    <span className="text-xs text-emerald-100/80">{item.count} votos</span>
+                                  </Button>
                                 </div>
-                                <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                                  <div
-                                    className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400"
-                                    style={{ width: `${pct}%` }}
-                                  />
-                                </div>
-                                <Button
-                                  key={`${opt}-btn`}
-                                  variant="outline"
-                                  className="w-full justify-between border-emerald-400/40 text-white hover:border-emerald-400 hover:text-white/90"
-                                  onClick={() => pollVoteMutation.mutate({ pollId: poll.pollId, escolha: opt })}
-                                  disabled={pollVoteMutation.isPending}
-                                >
-                                  <span className="font-semibold">{label}</span>
-                                  <span className="text-xs text-emerald-100/80">{count} votos</span>
-                                </Button>
-                              </div>
-                            );
-                          })}
+                              );
+                            });
+                          })()}
                         </div>
                         {poll.closesAt ? (
                           <div className="text-xs text-emerald-100/70">
@@ -804,6 +829,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
