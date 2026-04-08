@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
-import { Send, Paperclip, X, ArrowLeft, Smile, MessageCircle, Mic, Square } from "lucide-react";
+import { Send, Paperclip, X, ArrowLeft, MessageCircle, Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -32,11 +32,6 @@ export default function Chat() {
       return { pref: "both", hago: "" };
     }
   });
-
-  const emojis = useMemo(
-    () => ["😀", "😁", "😂", "🤣", "😅", "😊", "😍", "😘", "🤩", "😎", "🤔", "😴", "😡", "👍", "🙏", "🙌", "🎉", "🔥"],
-    []
-  );
 
   useEffect(() => {
     const syncPref = () => {
@@ -330,25 +325,6 @@ export default function Chat() {
               >
                 {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
-                <div className="relative">
-                  <Button variant="ghost" size="icon" onClick={() => setShowEmojis(s => !s)} title="Emoji">
-                    <Smile className="h-4 w-4" />
-                  </Button>
-                  {showEmojis ? (
-                    <div className="absolute right-0 sm:right-0 left-0 sm:left-auto z-10 mt-2 grid grid-cols-6 sm:grid-cols-6 gap-1 rounded-md border border-border bg-card p-2 text-lg w-full sm:w-auto">
-                      {emojis.map(em => (
-                        <button
-                          key={em}
-                          className="h-8 w-8 flex items-center justify-center rounded hover:bg-white/10"
-                          onClick={() => handleEmoji(em)}
-                          type="button"
-                        >
-                          {em}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
                 <Button onClick={handleEnviarMensagem} disabled={enviarMensagem.isPending}>
                   <Send className="h-4 w-4 mr-1" />
                   Enviar

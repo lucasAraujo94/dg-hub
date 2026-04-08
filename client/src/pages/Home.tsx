@@ -479,9 +479,14 @@ export default function Home() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {campeonatosQuery.data?.map(c => {
         const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
-        const rawStatus = (c as any).status ?? "futuro";
+        const rawStatus = (c as any).status ?? "ativo";
         const started = dataInicio ? dataInicio.getTime() <= Date.now() : false;
-        const status = rawStatus === "finalizado" || rawStatus === "cancelado" ? rawStatus : started ? "ativo" : "futuro";
+        const status =
+          rawStatus === "finalizado" || rawStatus === "cancelado"
+            ? rawStatus
+            : started
+              ? "finalizado"
+              : "ativo";
         const faseLabel =
           status === "futuro" ? "Fase de inscricoes" : status === "finalizado" ? "Finalizado" : "Em andamento";
                         return (
@@ -715,7 +720,7 @@ export default function Home() {
                 ) : null}
                 {(campeonatosQuery.data ?? []).map(camp => {
                   const dataInicio = camp.dataInicio ? new Date(camp.dataInicio) : null;
-                  const status = (() => { const rawStatus = (camp as any).status ?? "futuro"; const started = dataInicio ? dataInicio.getTime() <= Date.now() : false; return rawStatus === "cancelado" || rawStatus === "finalizado" ? rawStatus : started ? "ativo" : "futuro"; })();
+                  const status = (() => { const rawStatus = (camp as any).status ?? "ativo"; const started = dataInicio ? dataInicio.getTime() <= Date.now() : false; return rawStatus === "cancelado" || rawStatus === "finalizado" ? rawStatus : started ? "finalizado" : "ativo"; })();
                   const inscricoesEncerradas = (() => {
                     if (status === "cancelado" || status === "finalizado") return true;
                     if (!dataInicio) return false;
