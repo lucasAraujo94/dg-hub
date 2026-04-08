@@ -186,7 +186,12 @@ export default function Ranking() {
             <h1 className="text-3xl font-bold gradient-text">Ranking de Campeoes</h1>
             <div className="w-20" />
           </div>
-          <p className="text-muted-foreground">Acompanhe a classificacao como em uma tabela de campeonato. Cada campeonato conquistado vale 100 pontos.</p>
+          <p className="text-muted-foreground">
+            Acompanhe a classificação como em uma tabela de campeonato.
+            <span className="inline-block ml-1 px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 text-xs">
+              Cada campeonato conquistado vale 100 pontos
+            </span>
+          </p>
         </div>
       </div>
 

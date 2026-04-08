@@ -320,7 +320,7 @@ export default function Home() {
             <div className="flex flex-col items-start md:items-end max-w-[240px]">
               <span className="text-muted-foreground break-words">Olá, {displayName}</span>
               <span className="text-[11px] text-muted-foreground flex items-center gap-1 flex-wrap">
-                Sessao expira em {formatSessionTime(remainingSessionMs)}
+                Sessão expira em {formatSessionTime(remainingSessionMs)}
                 {isSessionPaused ? (
                   <span className="inline-flex items-center gap-1 text-amber-400">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -555,12 +555,26 @@ export default function Home() {
                           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,197,94,0.12),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(59,130,246,0.12),transparent_35%)]" />
                           <div className="relative space-y-3 text-white">
                             <p className="text-sm uppercase tracking-[0.2em] text-emerald-100/70">Parcial</p>
-                            <div className="space-y-2 text-sm text-emerald-50/80">
-                              {poll.options?.map(opt => (
-                                <p key={opt}>
-                                  {opt}: {poll.counts?.[opt] ?? 0} votos
-                                </p>
-                              ))}
+                            <div className="space-y-3 text-sm text-emerald-50/80">
+                              {poll.options?.map(opt => {
+                                const count = poll.counts?.[opt] ?? 0;
+                                const total = (poll.options ?? []).reduce((sum, o) => sum + (poll.counts?.[o] ?? 0), 0);
+                                const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                                return (
+                                  <div key={opt} className="space-y-1">
+                                    <div className="flex justify-between text-xs text-emerald-100/80">
+                                      <span>{opt}</span>
+                                      <span>{pct}% ({count} votos)</span>
+                                    </div>
+                                    <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                                      <div
+                                        className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400"
+                                        style={{ width: `${pct}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
                             {poll.closesAt ? (
                               <div className="text-xs text-emerald-100/70">
@@ -804,6 +818,7 @@ export default function Home() {
     </div>
   );
 }
+
 
 
 
