@@ -1,4 +1,4 @@
-Ôªøimport { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
@@ -264,7 +264,7 @@ export const appRouter = router({
 
         const allowedMime = ["image/png", "image/jpeg", "image/webp"];
         if (!allowedMime.includes(input.mimeType.toLowerCase())) {
-          throw new Error("Apenas imagens PNG, JPEG ou WEBP s√£o permitidas");
+          throw new Error("Apenas imagens PNG, JPEG ou WEBP s„o permitidas");
         }
         const approxBytes = Math.floor((input.dataBase64.length * 3) / 4); // tamanho estimado
         const MAX_BYTES = 5 * 1024 * 1024; // 5MB
@@ -287,8 +287,8 @@ export const appRouter = router({
           url = `data:${input.mimeType};base64,${input.dataBase64}`;
           }
 
-        await setUserAvatar(ctx.user.id, url);
-        return { url };
+        const updated = await setUserAvatar(ctx.user.id, url);
+        return { url: updated.avatarUrl ?? url, avatarUrl: updated.avatarUrl ?? url, id: updated.id };
       }),
     setPreferences: protectedProcedure
       .input(
@@ -511,7 +511,7 @@ export const appRouter = router({
         if (input.attachment) {
           const allowedMime = ["image/png", "image/jpeg", "image/webp", "image/gif"];
           if (!allowedMime.includes(input.attachment.mimeType.toLowerCase())) {
-            throw new Error("Apenas imagens (png, jpg, webp, gif) s√£o permitidas no chat");
+            throw new Error("Apenas imagens (png, jpg, webp, gif) s„o permitidas no chat");
           }
           const approxBytes = Math.floor((input.attachment.dataBase64.length * 3) / 4);
           const MAX_BYTES = 5 * 1024 * 1024; // 5MB
@@ -603,6 +603,7 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
+
 
 
 
