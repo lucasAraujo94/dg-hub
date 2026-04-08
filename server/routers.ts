@@ -287,9 +287,9 @@ export const appRouter = router({
           url = `data:${input.mimeType};base64,${input.dataBase64}`;
         }
 
-        // Evita data URL absurda em fallback (mesmo com TEXT)
-        if (url.startsWith("data:") && url.length > 500000) {
-          throw new Error("Falha ao salvar avatar: imagem muito grande para fallback. Tente novamente ou use uma imagem menor.");
+        // Evita data URL absurda em fallback (mesmo com TEXT). Reusa approxBytes calculado acima.
+        if (url.startsWith("data:") && approxBytes > MAX_BYTES) {
+          throw new Error("Falha ao salvar avatar: imagem muito grande para fallback (limite ~3MB). Tente novamente ou use uma imagem menor.");
         }
 
         const updated = await setUserAvatar(ctx.user.id, url);
