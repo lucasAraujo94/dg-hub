@@ -55,6 +55,10 @@ export default function Ranking() {
             const campeonatosCampeao = player.campeonatosCampeao ?? [];
             const pos = index + 1;
             const wins = player.wins ?? campeonatosCampeao.length ?? 0;
+            const avatarUrl =
+              (usuario as { avatarUrl?: string | null; avatar?: string | null } | null | undefined)?.avatarUrl ||
+              (usuario as { avatar?: string | null } | null | undefined)?.avatar ||
+              "";
             const tone =
               pos === 1
                 ? "bg-gradient-to-r from-amber-500/25 via-amber-400/10 to-yellow-300/15 border-amber-200/30 shadow-inner shadow-amber-900/30"
@@ -80,9 +84,17 @@ export default function Ranking() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-sm font-bold">
-                      {displayName.slice(0, 2).toUpperCase()}
-                    </div>
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={displayName}
+                        className="h-10 w-10 rounded-full border border-white/15 object-cover bg-white/10"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-sm font-bold">
+                        {displayName.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex flex-col min-w-0">
                       <span className="font-semibold text-foreground break-words">{displayName}</span>
                       <span className="text-[11px] text-muted-foreground truncate">{usuario?.email || ""}</span>
