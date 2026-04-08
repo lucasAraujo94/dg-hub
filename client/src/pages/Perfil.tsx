@@ -251,6 +251,7 @@ export default function Perfil() {
       utils.auth.me.setData(undefined, prev =>
         prev ? { ...prev, nickname: updated.nickname ?? normalizedNick, hideEmail: updated.hideEmail } : prev
       );
+      setHagoNickname(updated.nickname ?? normalizedNick);
       await refresh?.();
       toast.success("Perfil salvo/atualizado");
     } catch (error: any) {
