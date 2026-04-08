@@ -262,14 +262,15 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user) throw new Error("Usuario nao autenticado");
 
-        const allowedMime = ["image/png", "image/jpeg", "image/webp"];
-        if (!allowedMime.includes(input.mimeType.toLowerCase())) {
-          throw new Error("Apenas imagens PNG, JPEG ou WEBP são permitidas");
+        const allowedMime = ["image/png", "image/jpeg", "image/webp", "audio/mpeg", "audio/webm", "audio/ogg", "audio/mp3"];
+        const mime = input.mimeType.toLowerCase();
+        if (!allowedMime.includes(mime)) {
+          throw new Error("Apenas imagens PNG/JPEG/WEBP ou audio MP3/OGG/WEBM são permitidos");
         }
         const approxBytes = Math.floor((input.dataBase64.length * 3) / 4); // tamanho estimado
-        const MAX_BYTES = 3 * 1024 * 1024; // 3MB para evitar payloads gigantes
+        const MAX_BYTES = 5 * 1024 * 1024; // 5MB para evitar payloads gigantes
         if (approxBytes > MAX_BYTES) {
-          throw new Error("Arquivo de avatar muito grande (limite 3MB)");
+          throw new Error("Arquivo de avatar muito grande (limite ~5MB)");
         }
 
         const buffer = Buffer.from(input.dataBase64, "base64");
@@ -514,12 +515,12 @@ export const appRouter = router({
 
         let attachmentUrl: string | undefined;
         if (input.attachment) {
-          const allowedMime = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+          const allowedMime = ["image/png", "image/jpeg", "image/webp", "image/gif", "audio/mpeg", "audio/webm", "audio/ogg", "audio/mp3"];
           if (!allowedMime.includes(input.attachment.mimeType.toLowerCase())) {
             throw new Error("Apenas imagens (png, jpg, webp, gif) são permitidas no chat");
           }
           const approxBytes = Math.floor((input.attachment.dataBase64.length * 3) / 4);
-          const MAX_BYTES = 3 * 1024 * 1024; // 3MB para evitar payloads gigantes
+          const MAX_BYTES = 5 * 1024 * 1024; // 5MB
           if (approxBytes > MAX_BYTES) {
             throw new Error("Anexo muito grande (limite 5MB)");
           }
@@ -608,6 +609,8 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
+
+
 
 
 

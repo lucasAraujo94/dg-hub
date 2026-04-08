@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
-import { Send, Paperclip, X, ArrowLeft, Smile, MessageCircle } from "lucide-react";
+import { Send, Paperclip, X, ArrowLeft, Smile, MessageCircle, Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -17,6 +17,9 @@ export default function Chat() {
   const [preview, setPreview] = useState<string | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
 
   const [displayPref, setDisplayPref] = useState<{ pref: DisplayPref; hago: string }>(() => {
     if (typeof window === "undefined") return { pref: "both", hago: "" };
@@ -162,6 +165,39 @@ export default function Chat() {
     setShowEmojis(false);
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = e => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const file = new File([blob], "gravacao.webm", { type: "audio/webm" });
+        setArquivo(file);
+        const url = URL.createObjectURL(blob);
+        setPreview(url);
+        chunksRef.current = [];
+      };
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível acessar o microfone");
+    }
+  };
+
+  const stopRecording = () => {
+    const rec = mediaRecorderRef.current;
+    if (rec && rec.state !== "inactive") {
+      rec.stop();
+      setIsRecording(false);
+    }
+  };
+
   const renderMensagem = (msg: (typeof mensagensGeral)[number]) => {
     const usuario = (msg as { usuario?: { id?: number; name?: string | null; nickname?: string | null; email?: string | null; avatarUrl?: string | null } }).usuario;
     const parsed = parseMensagem(msg.mensagem);
@@ -185,6 +221,10 @@ export default function Chat() {
             <div className="mt-1">
               {isImage ? (
                 <img src={parsed.attachmentUrl} alt={parsed.fileName || "Anexo"} className="max-h-48 rounded-md border border-white/10" />
+              ) : parsed.mimeType?.startsWith("audio/") ? (
+                <audio controls src={parsed.attachmentUrl} className="w-full">
+                  Seu navegador não suporta áudio.
+                </audio>
               ) : (
                 <a href={parsed.attachmentUrl} target="_blank" rel="noreferrer" className="text-primary text-sm underline">
                   {parsed.fileName || "Ver anexo"}
@@ -238,7 +278,11 @@ export default function Chat() {
           <div className="rounded-xl border border-border/60 bg-card/60 p-3 space-y-3">
             {preview ? (
               <div className="relative inline-block">
-                <img src={preview} alt="Pré-visualização" className="h-24 rounded-md border border-white/10 object-cover" />
+                {arquivo?.type.startsWith("audio/") ? (
+                  <audio controls src={preview} className="w-64 rounded-md border border-white/10 bg-black/30 p-2" />
+                ) : (
+                  <img src={preview} alt="Pré-visualização" className="h-24 rounded-md border border-white/10 object-cover" />
+                )}
                 <Button
                   size="icon"
                   variant="ghost"
@@ -270,11 +314,19 @@ export default function Chat() {
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept="image/*"
+                accept="image/*,audio/*"
                 onChange={handleFileChange}
               />
               <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Anexar imagem">
                 <Paperclip className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={isRecording ? "destructive" : "ghost"}
+                size="icon"
+                onClick={isRecording ? stopRecording : startRecording}
+                title={isRecording ? "Parar gravação" : "Gravar áudio"}
+              >
+                {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
               <div className="relative">
                 <Button variant="ghost" size="icon" onClick={() => setShowEmojis(s => !s)} title="Emoji">
