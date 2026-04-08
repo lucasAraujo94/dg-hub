@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { Send, Paperclip, X, ArrowLeft, MessageCircle, Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ export default function Chat() {
   const [showEmojis, setShowEmojis] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const [isRecording, setIsRecording] = useState(false);
 
@@ -161,26 +162,55 @@ export default function Chat() {
 
   const startRecording = async () => {
     try {
+      if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+        toast.error("Microfone indisponivel no navegador atual");
+        return;
+      }
+      const hasRecorder = typeof MediaRecorder !== "undefined";
+      if (!hasRecorder) {
+        toast.error("Gravacao de audio nao e suportada neste navegador.");
+        return;
+      }
+      const supportedType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm"
+        : MediaRecorder.isTypeSupported("audio/mp4")
+          ? "audio/mp4"
+          : "";
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const recorder = supportedType ? new MediaRecorder(stream, { mimeType: supportedType }) : new MediaRecorder(stream);
+      streamRef.current = stream;
       chunksRef.current = [];
       recorder.ondataavailable = e => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const file = new File([blob], "gravacao.webm", { type: "audio/webm" });
+        const blobType = supportedType || "audio/webm";
+        const blob = new Blob(chunksRef.current, { type: blobType });
+        const file = new File([blob], "gravacao.webm", { type: blobType });
         setArquivo(file);
         const url = URL.createObjectURL(blob);
         setPreview(url);
         chunksRef.current = [];
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
       };
       recorder.start();
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
     } catch (err) {
       console.error(err);
-      toast.error("Não foi possível acessar o microfone");
+      setIsRecording(false);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      const msg =
+        (err as any)?.name === "NotAllowedError"
+          ? "Permissao de microfone negada. Verifique o navegador e tente novamente."
+          : "Nao foi possivel acessar o microfone. Confira permissoes, HTTPS e se o dispositivo esta liberado.";
+      toast.error(msg);
     }
   };
 
@@ -189,6 +219,10 @@ export default function Chat() {
     if (rec && rec.state !== "inactive") {
       rec.stop();
       setIsRecording(false);
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
   };
 
@@ -336,3 +370,4 @@ export default function Chat() {
     </div>
   );
 }
+
