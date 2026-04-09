@@ -24,6 +24,17 @@ export default function Aniversariantes() {
   }, []);
 
   const items = useMemo(() => birthdaysQuery.data ?? [], [birthdaysQuery.data]);
+  const confetti = useMemo(
+    () =>
+      Array.from({ length: 18 }).map((_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        delay: `${Math.random() * 2}s`,
+        duration: `${4 + Math.random() * 3}s`,
+        color: ["#34d399", "#22d3ee", "#a78bfa", "#f472b6", "#facc15"][i % 5],
+      })),
+    []
+  );
 
   const parseBirth = (value: string | Date) => {
     const iso =
@@ -57,8 +68,22 @@ export default function Aniversariantes() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-black text-foreground relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 opacity-30">
+        {confetti.map(item => (
+          <span
+            key={item.id}
+            className="absolute w-2 h-2 rounded-full animate-[fall_6s_linear_infinite]"
+            style={{
+              left: item.left,
+              backgroundColor: item.color,
+              animationDelay: item.delay as string,
+              animationDuration: item.duration as string,
+            }}
+          />
+        ))}
+      </div>
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm relative z-10">
         <div className="container py-6 flex items-center justify-between">
           <Button asChild variant="ghost" className="gap-2">
             <Link href="/">
@@ -75,7 +100,7 @@ export default function Aniversariantes() {
         </div>
       </header>
 
-      <main className="container py-8 space-y-6">
+      <main className="container py-8 space-y-6 relative z-10">
         {birthdaysQuery.isLoading ? (
           <p className="text-center text-muted-foreground">Carregando aniversarios...</p>
         ) : null}
@@ -92,6 +117,7 @@ export default function Aniversariantes() {
                 {String(month).padStart(2, "0")}
               </div>
               <h2 className="text-lg font-semibold">Mes {String(month).padStart(2, "0")}</h2>
+              <span className="text-xs text-muted-foreground">🎉 Celebre quem faz aniversario!</span>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {list.map(item => {
