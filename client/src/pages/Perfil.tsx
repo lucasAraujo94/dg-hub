@@ -201,15 +201,15 @@ export default function Perfil() {
       if (savedHideEmail === "true") {
         setHideEmail(true);
       }
-      const birth = (meQuery.data as any)?.birthDate;
+      const birth = (user as any)?.birthDate;
       if (birth) {
-        const iso = new Date(birth).toISOString().split("T")[0];
+        const iso = new Date(birth as string).toISOString().split("T")[0];
         setBirthDate(iso);
       }
     } catch {
       /* ignore */
     }
-  }, [meQuery.data]);
+  }, [user]);
 
   useEffect(() => {
     if (typeof (user as any)?.hideEmail === "boolean") {
