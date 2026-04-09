@@ -70,8 +70,38 @@ export async function listUsers() {
       createdAt: true,
       lastSignedIn: true,
       hideEmail: true,
+      avatarUrl: true,
+      birthDate: true,
     },
   });
+}
+
+export async function getPublicUserById(userId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      nickname: true,
+      email: true,
+      hideEmail: true,
+      avatarUrl: true,
+      createdAt: true,
+      lastSignedIn: true,
+      birthDate: true,
+    },
+  });
+  if (!user) return null;
+  return {
+    id: user.id,
+    name: user.name,
+    nickname: user.nickname,
+    avatarUrl: user.avatarUrl,
+    createdAt: user.createdAt,
+    lastSignedIn: user.lastSignedIn,
+    birthDate: user.birthDate,
+    email: user.hideEmail ? null : user.email,
+  };
 }
 
 // Poll (enquete)

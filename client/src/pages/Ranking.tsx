@@ -134,10 +134,18 @@ export default function Ranking() {
                         {displayName.slice(0, 2).toUpperCase()}
                       </div>
                     )}
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-semibold text-foreground break-words">{displayName}</span>
-                      <span className="text-[11px] text-muted-foreground truncate">Campeonatos: {wins}</span>
-                    </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-semibold text-foreground break-words">{displayName}</span>
+                    <span className="text-[11px] text-muted-foreground truncate">Campeonatos: {wins}</span>
+                    <Link href={`/perfil/${player.usuarioId}`} className="text-[11px] text-emerald-300 hover:underline">
+                      Ver perfil publico
+                    </Link>
+                  </div>
+                </div>
+                <div className="mt-1">
+                  <Link href={`/perfil/${player.usuarioId}`} className="text-xs text-emerald-300 hover:underline">
+                    Ver perfil publico
+                    </Link>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-center">

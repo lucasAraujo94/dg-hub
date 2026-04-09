@@ -24,6 +24,7 @@ import Admin from "@/pages/Admin";
 import Cadastro from "@/pages/Cadastro";
 import Login from "@/pages/Login";
 import Aniversariantes from "@/pages/Aniversariantes";
+import PerfilPublico from "@/pages/PerfilPublico";
 
 function Router() {
   return (
@@ -36,6 +37,7 @@ function Router() {
       <Route path={"/admin"} component={Admin} />
       <Route path={"/login"} component={Login} />
       <Route path={"/cadastro"} component={Cadastro} />
+      <Route path={"/perfil/:id"} component={PerfilPublico} />
       <Route path={"/aniversariantes"} component={Aniversariantes} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

@@ -36,6 +36,7 @@ import {
   setUserPreferences,
   sortearPartidasCampeonato,
   listUsers,
+  getPublicUserById,
   votarEnquete,
   resultadosEnquete,
   criarEnquete,
@@ -327,6 +328,15 @@ export const appRouter = router({
         return updated;
       }),
     birthdays: publicProcedure.query(async () => listUpcomingBirthdays()),
+    publicById: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const result = await getPublicUserById(input.userId);
+        if (!result) {
+          throw new Error("Usuario nao encontrado");
+        }
+        return result;
+      }),
   }),
 
   poll: router({
