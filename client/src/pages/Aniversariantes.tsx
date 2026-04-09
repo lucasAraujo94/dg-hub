@@ -41,6 +41,17 @@ export default function Aniversariantes() {
     return `${dd}/${mm}`;
   };
 
+  const groupedByMonth = useMemo(() => {
+    const map = new Map<number, typeof items>();
+    items.forEach(item => {
+      const { month } = parseBirth(item.birthDate as any);
+      const list = map.get(month) ?? [];
+      list.push(item);
+      map.set(month, list);
+    });
+    return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
+  }, [items]);
+
   if (loading) {
     return <div className="p-6 text-center text-muted-foreground">Carregando...</div>;
   }
@@ -74,37 +85,46 @@ export default function Aniversariantes() {
             <p className="text-xs text-muted-foreground mt-1">Preencha sua data de nascimento em Perfil para entrar na lista.</p>
           </Card>
         ) : null}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {items.map(item => {
-            const { month, day } = parseBirth(item.birthDate as any);
-            const displayName =
-              displayPref === "hago" && (item.nickname ?? "").trim()
-                ? (item.nickname ?? "").trim()
-                : item.name || item.nickname || "Jogador";
-            return (
-              <Card
-                key={item.id}
-                className={`p-4 flex gap-3 items-center bg-card/70 border ${item.isToday ? "border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.25)]" : "border-border"}`}
-              >
-                {item.avatarUrl ? (
-                  <img src={item.avatarUrl} alt={displayName} className="h-12 w-12 rounded-full object-cover border border-white/10" />
-                ) : (
-                  <div className="h-12 w-12 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-sm font-bold">
-                    {displayName.slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.isToday ? "Hoje" : `${item.daysUntil} dia${item.daysUntil === 1 ? "" : "s"}`}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Data: {formatDate(item.birthDate as any)}</p>
-                </div>
-                <Cake className={`w-5 h-5 ${item.isToday ? "text-emerald-300" : "text-muted-foreground"}`} />
-              </Card>
-            );
-          })}
-        </div>
+        {groupedByMonth.map(([month, list]) => (
+          <section key={month} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-sm text-emerald-200">
+                {String(month).padStart(2, "0")}
+              </div>
+              <h2 className="text-lg font-semibold">Mes {String(month).padStart(2, "0")}</h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {list.map(item => {
+                const displayName =
+                  displayPref === "hago" && (item.nickname ?? "").trim()
+                    ? (item.nickname ?? "").trim()
+                    : item.name || item.nickname || "Jogador";
+                return (
+                  <Card
+                    key={item.id}
+                    className={`p-4 flex gap-3 items-center bg-card/70 border ${item.isToday ? "border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.25)]" : "border-border"}`}
+                  >
+                    {item.avatarUrl ? (
+                      <img src={item.avatarUrl} alt={displayName} className="h-12 w-12 rounded-full object-cover border border-white/10" />
+                    ) : (
+                      <div className="h-12 w-12 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-sm font-bold">
+                        {displayName.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">{displayName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.isToday ? "Hoje" : `${item.daysUntil} dia${item.daysUntil === 1 ? "" : "s"}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Data: {formatDate(item.birthDate as any)}</p>
+                    </div>
+                    <Cake className={`w-5 h-5 ${item.isToday ? "text-emerald-300" : "text-muted-foreground"}`} />
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </main>
     </div>
   );

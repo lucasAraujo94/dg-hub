@@ -401,7 +401,16 @@ export default function Home() {
               { key: "overview", label: "Home", icon: HomeIcon },
               { key: "campeonatos", label: "Campeonatos", href: "/campeonatos", icon: Trophy },
               { key: "rankings", label: "Rankings", href: "/ranking", icon: Star },
-              { key: "aniversariantes", label: "Aniversariantes", href: "/aniversariantes", icon: Cake },
+              {
+                key: "aniversariantes",
+                label: "Aniversariantes",
+                href: "/aniversariantes",
+                icon: Cake,
+                showDot:
+                  !user ||
+                  !("birthDate" in (user as any)) ||
+                  !(user as any).birthDate,
+              },
               { key: "perfil", label: "Perfil", href: "/perfil", icon: User },
               { key: "chat", label: "Chat", href: "/chat", icon: MessageCircle },
               ...(user?.role === "admin" ? [{ key: "admin", label: "Admin", href: "/admin", icon: ShieldCheck }] : []),
@@ -424,6 +433,9 @@ export default function Home() {
                         className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_0_2px_rgba(0,0,0,0.6)] animate-pulse"
                         aria-label="Novas mensagens no chat"
                       />
+                    ) : null}
+                    {item.showDot ? (
+                      <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_0_2px_rgba(0,0,0,0.6)]" />
                     ) : null}
                   </div>
                   <span className={`${menuCollapsed ? "hidden md:hidden" : "md:inline"} text-sm font-medium`}>
