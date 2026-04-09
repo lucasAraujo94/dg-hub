@@ -1,6 +1,6 @@
 ﻿import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Medal, Flame, Award } from "lucide-react";
+import { TrendingUp, Medal, Flame, Award, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
@@ -12,7 +12,7 @@ type RankingItem = {
   pontuacao: number;
   wins?: number;
   tipoRanking?: string;
-  usuario?: { name?: string | null; email?: string | null; nickname?: string | null };
+  usuario?: { name?: string | null; email?: string | null; nickname?: string | null; role?: string | null };
   campeonatosCampeao?: Array<{ id: number; nome: string; jogo: string }>;
 };
 
@@ -82,6 +82,7 @@ export default function Ranking() {
             const baseName = usuario?.name || usuario?.email || `Jogador ${player.usuarioId}`;
             const nick = (usuario?.nickname || hagoNickLocal || "").trim();
             const displayName = displayPref === "hago" && nick ? nick : baseName;
+            const isAdmin = usuario?.role === "admin";
             const campeonatosCampeao = player.campeonatosCampeao ?? [];
             const lastTitle =
               campeonatosCampeao.length === 0
@@ -134,18 +135,21 @@ export default function Ranking() {
                         {displayName.slice(0, 2).toUpperCase()}
                       </div>
                     )}
-                  <div className="flex flex-col min-w-0">
-                    <span className="font-semibold text-foreground break-words">{displayName}</span>
-                    <span className="text-[11px] text-muted-foreground truncate">Campeonatos: {wins}</span>
-                    <Link href={`/perfil/${player.usuarioId}`} className="text-[11px] text-emerald-300 hover:underline">
-                      Ver perfil publico
-                    </Link>
-                  </div>
-                </div>
-                <div className="mt-1">
-                  <Link href={`/perfil/${player.usuarioId}`} className="text-xs text-emerald-300 hover:underline">
-                    Ver perfil publico
-                    </Link>
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-semibold text-foreground break-words flex items-center gap-2">
+                        {displayName}
+                        {isAdmin ? (
+                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-200 border border-emerald-500/30">
+                            <ShieldCheck className="w-3 h-3" />
+                            Admin
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground truncate">Campeonatos: {wins}</span>
+                      <Link href={`/perfil/${player.usuarioId}`} className="text-[11px] text-emerald-300 hover:underline">
+                        Ver perfil publico
+                      </Link>
+                    </div>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-center">

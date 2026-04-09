@@ -77,21 +77,28 @@ export async function listUsers() {
 }
 
 export async function getPublicUserById(userId: number) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      nickname: true,
-      email: true,
-      hideEmail: true,
-      avatarUrl: true,
-      createdAt: true,
-      lastSignedIn: true,
-      birthDate: true,
-    },
-  });
+  const [user, rankingGeral] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        nickname: true,
+        avatarUrl: true,
+        createdAt: true,
+        lastSignedIn: true,
+        birthDate: true,
+        role: true,
+      },
+    }),
+    getRankingPorTipo("geral", 0),
+  ]);
   if (!user) return null;
+
+  const rankingEntry = rankingGeral.find(entry => entry.usuarioId === userId);
+  const wins = rankingEntry?.wins ?? rankingEntry?.campeonatosCampeao?.length ?? 0;
+  const campeonatosCampeao = rankingEntry?.campeonatosCampeao ?? [];
+
   return {
     id: user.id,
     name: user.name,
@@ -100,7 +107,13 @@ export async function getPublicUserById(userId: number) {
     createdAt: user.createdAt,
     lastSignedIn: user.lastSignedIn,
     birthDate: user.birthDate,
-    email: user.hideEmail ? null : user.email,
+    role: user.role,
+    ranking: {
+      posicao: rankingEntry ? rankingGeral.findIndex(item => item.usuarioId === userId) + 1 : null,
+      pontos: rankingEntry?.pontuacao ?? 0,
+      wins,
+      campeonatos: campeonatosCampeao,
+    },
   };
 }
 
@@ -558,6 +571,7 @@ export async function getRankingPorTipo(tipo: "geral" | "semanal" | "mensal", li
         nickname: true,
         email: true,
         avatarUrl: true,
+        role: true,
       },
     }),
     prisma.campeonato.findMany({

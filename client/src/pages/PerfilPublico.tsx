@@ -1,10 +1,9 @@
 import { useEffect } from "react";
-import { useRoute } from "wouter";
+import { Link, useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Mail } from "lucide-react";
-import { Link } from "wouter";
+import { ArrowLeft, Award, Trophy, Medal, ShieldCheck } from "lucide-react";
 
 export default function PerfilPublico() {
   const [match, params] = useRoute("/perfil/:id");
@@ -37,9 +36,9 @@ export default function PerfilPublico() {
   if (profileQuery.error || !profileQuery.data) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-muted-foreground">
-        <p>Não foi possível carregar o perfil.</p>
+        <p>Nao foi possivel carregar o perfil.</p>
         <Button asChild variant="ghost">
-          <Link href="/perfil">Voltar</Link>
+          <Link href="/ranking">Voltar</Link>
         </Button>
       </div>
     );
@@ -47,6 +46,9 @@ export default function PerfilPublico() {
 
   const data = profileQuery.data;
   const displayName = data.nickname?.trim() || data.name || "Jogador";
+  const ranking = data.ranking;
+  const campeonatos = ranking?.campeonatos ?? [];
+  const isAdmin = data.role === "admin";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -80,15 +82,15 @@ export default function PerfilPublico() {
             </div>
           )}
           <div className="flex-1 space-y-2 min-w-0 text-center sm:text-left">
-            <p className="text-lg font-semibold break-words">{displayName}</p>
-            {data.email ? (
-              <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                {data.email}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">Email ocultado</p>
-            )}
+            <p className="text-lg font-semibold break-words flex items-center justify-center sm:justify-start gap-2">
+              {displayName}
+              {isAdmin ? (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-200 border border-emerald-500/30">
+                  <ShieldCheck className="w-3 h-3" />
+                  Admin
+                </span>
+              ) : null}
+            </p>
             {data.birthDate ? (
               <p className="text-sm text-muted-foreground">
                 Aniversário: {new Date(data.birthDate).toLocaleDateString("pt-BR")}
@@ -101,10 +103,59 @@ export default function PerfilPublico() {
             ) : null}
             {data.lastSignedIn ? (
               <p className="text-xs text-muted-foreground">
-                Último acesso {new Date(data.lastSignedIn).toLocaleString("pt-BR")}
+                Ultimo acesso {new Date(data.lastSignedIn).toLocaleString("pt-BR")}
               </p>
             ) : null}
           </div>
+        </Card>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground mb-1">Posicao</p>
+              <p className="text-2xl font-bold">#{ranking?.posicao ?? "-"}</p>
+            </div>
+            <Award className="w-8 h-8 text-amber-300" />
+          </Card>
+          <Card className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground mb-1">Pontos</p>
+              <p className="text-2xl font-bold">{ranking?.pontos ?? 0}</p>
+            </div>
+            <Trophy className="w-8 h-8 text-emerald-300" />
+          </Card>
+          <Card className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground mb-1">Titulos</p>
+              <p className="text-2xl font-bold">{ranking?.wins ?? 0}</p>
+            </div>
+            <Medal className="w-8 h-8 text-cyan-300" />
+          </Card>
+        </div>
+
+        <Card className="p-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold">Campeonatos conquistados</p>
+            <span className="text-xs text-muted-foreground">{campeonatos.length} titulos</span>
+          </div>
+          {campeonatos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum titulo conquistado ainda.</p>
+          ) : (
+            <ul className="space-y-2">
+              {campeonatos.map(camp => (
+                <li
+                  key={camp.id}
+                  className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+                >
+                  <div>
+                    <p className="font-medium">{camp.nome}</p>
+                    <p className="text-xs text-muted-foreground">{camp.jogo}</p>
+                  </div>
+                  <span className="text-[11px] text-emerald-300">Campeao</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
       </main>
     </div>

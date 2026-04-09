@@ -237,6 +237,13 @@ export default function Home() {
     const list =
       (campeonatosQuery.data ?? []).map(camp => {
         const dataInicio = camp.dataInicio ? new Date(camp.dataInicio) : null;
+        const premioRaw = (camp as { premioValor?: unknown }).premioValor;
+        const premio =
+          typeof premioRaw === "number"
+            ? premioRaw
+            : premioRaw && typeof (premioRaw as any).toNumber === "function"
+              ? (premioRaw as any).toNumber()
+              : Number(premioRaw ?? 0);
         const status =
           (camp as { status?: string }).status ??
           (dataInicio && dataInicio.getTime() > Date.now() ? "futuro" : "ativo");
@@ -250,7 +257,7 @@ export default function Home() {
           id: camp.id,
           nome: camp.nome,
           inicio: dataInicio ? dataInicio.toLocaleString("pt-BR") : "Data a definir",
-          premio: (camp as { premioValor?: number }).premioValor ?? 0,
+          premio,
           fase,
           status,
         };

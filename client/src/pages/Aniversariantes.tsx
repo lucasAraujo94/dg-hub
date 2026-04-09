@@ -102,7 +102,7 @@ export default function Aniversariantes() {
 
       <main className="container py-8 space-y-6 relative z-10">
         {birthdaysQuery.isLoading ? (
-          <p className="text-center text-muted-foreground">Carregando aniversarios...</p>
+          <p className="text-center text-muted-foreground">Carregando aniversários...</p>
         ) : null}
         {!birthdaysQuery.isLoading && items.length === 0 ? (
           <Card className="p-6 text-center bg-card/60 border-dashed border-muted">
@@ -119,7 +119,7 @@ export default function Aniversariantes() {
               <h2 className="text-lg font-semibold">
                 {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"][month - 1]}
               </h2>
-              <span className="text-xs text-muted-foreground">🎉 Celebre quem faz aniversario!</span>
+              <span className="text-xs text-muted-foreground">🎉 Celebre quem faz aniversário!</span>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {list.map(item => {
