@@ -164,6 +164,67 @@ export default function Ranking() {
           })}
         </tbody>
       </table>
+      <div className="md:hidden divide-y divide-border/40 pt-3">
+        {data.map((player, index) => {
+          const usuario = player.usuario;
+          const baseName = usuario?.name || usuario?.email || `Jogador ${player.usuarioId}`;
+          const nick = (usuario?.nickname || hagoNickLocal || "").trim();
+          const displayName = displayPref === "hago" && nick ? nick : baseName;
+          const campeonatosCampeao = player.campeonatosCampeao ?? [];
+          const lastTitle =
+            campeonatosCampeao.length === 0
+              ? null
+              : campeonatosCampeao.reduce<{ id: number; nome: string; jogo: string } | null>((acc, curr) => {
+                  if (!acc) return curr;
+                  return curr.id > acc.id ? curr : acc;
+                }, null);
+          const pos = index + 1;
+          const wins = player.wins ?? campeonatosCampeao.length ?? 0;
+          const avatarUrl =
+            (usuario as { avatarUrl?: string | null; avatar?: string | null } | null | undefined)?.avatarUrl ||
+            (usuario as { avatar?: string | null } | null | undefined)?.avatar ||
+            "";
+          const badgeColor =
+            pos === 1 ? "text-amber-300" : pos === 2 ? "text-slate-200" : pos === 3 ? "text-orange-200" : "text-muted-foreground";
+
+          return (
+            <div key={`${player.usuarioId}-${pos}`} className="p-4 flex gap-3">
+              <div className="flex flex-col items-center w-14">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/15 text-base font-bold">
+                  {pos}
+                </span>
+                {pos <= 3 ? <Award className={`h-4 w-4 mt-1 ${badgeColor}`} /> : null}
+              </div>
+              <div className="flex-1 space-y-1">
+                <div className="flex items-center gap-3">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={displayName} className="h-12 w-12 rounded-full border border-white/15 object-cover bg-white/10" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-sm font-bold">
+                      {displayName.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground leading-tight break-words">{displayName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pontos: <span className="text-emerald-300 font-semibold">{player.pontuacao}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">Vitorias: {wins}</p>
+                  </div>
+                </div>
+                {lastTitle ? (
+                  <div className="text-xs text-muted-foreground/90">
+                    Ultimo titulo: <span className="font-semibold text-foreground">{lastTitle.nome}</span>{" "}
+                    <span className="text-[11px]">({lastTitle.jogo})</span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Sem titulos ainda</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 
@@ -258,3 +319,4 @@ export default function Ranking() {
     </div>
   );
 }
+

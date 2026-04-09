@@ -76,13 +76,20 @@ export default function Campeonatos() {
   };
 
   const exibirApelido = (valor: string, display: "real" | "hago") => {
-    const t = (valor || "").trim();
-    const parts = t.match(/^(.+?)\s*\(([^)]+)\)$/);
+    const raw = (valor || "").trim();
+    const parts = raw.match(/^(.+?)\s*\(([^)]+)\)$/);
+    let t = raw;
     if (parts) {
       const before = parts[1].trim();
       const inside = parts[2].trim();
-      if (display === "hago" && inside) return inside;
-      return before;
+      t = display === "hago" && inside ? inside : before;
+    }
+    const tokens = t.split(/\s+/);
+    if (tokens.length > 1 && tokens.length % 2 === 0) {
+      const half = tokens.length / 2;
+      const first = tokens.slice(0, half).join(" ").toLowerCase();
+      const second = tokens.slice(half).join(" ").toLowerCase();
+      if (first === second) return tokens.slice(0, half).join(" ");
     }
     return t;
   };
@@ -148,7 +155,10 @@ export default function Campeonatos() {
     });
   }, [inscritosQuery.data, displayPref]);
 
-  const inscritosNomes = useMemo(() => participantes.map(i => i.name), [participantes]);
+  const inscritosNomes = useMemo(() => {
+    const cleaned = participantes.map(i => exibirApelido(i.name, displayPref));
+    return Array.from(new Set(cleaned));
+  }, [participantes, displayPref]);
   const inscritosIds = useMemo(() => participantes.map(i => i.id).filter(Boolean) as number[], [participantes]);
 
   const campeonatos = useMemo(() => {
