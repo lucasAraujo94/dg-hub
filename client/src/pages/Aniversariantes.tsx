@@ -114,7 +114,7 @@ export default function Aniversariantes() {
           <section key={month} className="space-y-3">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-sm text-emerald-200">
-                {String(month).padStart(2, "0")}
+                {String(list[0] ? parseBirth(list[0].birthDate as any).day : 1).padStart(2, "0")}
               </div>
               <h2 className="text-lg font-semibold">
                 {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"][month - 1]}
