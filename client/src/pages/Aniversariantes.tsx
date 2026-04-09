@@ -25,9 +25,20 @@ export default function Aniversariantes() {
 
   const items = useMemo(() => birthdaysQuery.data ?? [], [birthdaysQuery.data]);
 
+  const parseBirth = (value: string | Date) => {
+    const iso =
+      typeof value === "string"
+        ? value.split("T")[0] || value
+        : value.toISOString().split("T")[0];
+    const [y, m, d] = iso.split("-").map(Number);
+    return { year: y, month: m, day: d, iso };
+  };
+
   const formatDate = (value: string | Date) => {
-    const d = new Date(value);
-    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    const { month, day } = parseBirth(value);
+    const dd = String(day).padStart(2, "0");
+    const mm = String(month).padStart(2, "0");
+    return `${dd}/${mm}`;
   };
 
   if (loading) {
@@ -65,6 +76,7 @@ export default function Aniversariantes() {
         ) : null}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {items.map(item => {
+            const { month, day } = parseBirth(item.birthDate as any);
             const displayName =
               displayPref === "hago" && (item.nickname ?? "").trim()
                 ? (item.nickname ?? "").trim()
