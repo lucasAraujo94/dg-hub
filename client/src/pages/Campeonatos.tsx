@@ -210,6 +210,17 @@ export default function Campeonatos() {
     return mapped.filter(camp => camp.status === filtroStatus);
   }, [campeonatosQuery.data, filtroStatus]);
 
+  useEffect(() => {
+    if (!campeonatos.length) {
+      setSelectedCampId(null);
+      return;
+    }
+    const exists = campeonatos.some(c => c.id === selectedCampId);
+    if (!exists) {
+      setSelectedCampId(campeonatos[0]?.id ?? null);
+    }
+  }, [campeonatos, selectedCampId]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ativo":
@@ -500,6 +511,64 @@ export default function Campeonatos() {
               </Button>
             ) : null}
           </div>
+        </div>
+      </section>
+
+      <section className="py-8 border-t border-border bg-card/40">
+        <div className="container space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Campeonatos disponiveis</p>
+              <h2 className="text-xl font-semibold">Escolha um campeonato</h2>
+            </div>
+          </div>
+          {campeonatos.length === 0 ? (
+            <div className="card-elegant p-4 text-sm text-muted-foreground">Nenhum campeonato encontrado para este filtro.</div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {campeonatos.map(c => {
+                const selecionado = selectedCampId === c.id;
+                return (
+                  <div
+                    key={c.id}
+                    className={`rounded-2xl border p-4 space-y-3 bg-white/5 backdrop-blur ${
+                      selecionado ? "border-emerald-400/60 shadow-[0_0_25px_rgba(16,185,129,0.25)]" : "border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-white truncate">{c.nome}</h3>
+                      <span className={`text-xs px-2 py-1 rounded-full border ${getStatusColor(c.status)}`}>{getStatusLabel(c.status)}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Jogo: {c.jogo}</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                      <span>Inicio: {c.inicio}</span>
+                      <span>Premio: R$ {c.premio}</span>
+                      <span>Participantes: {c.participantes}</span>
+                      <span>Fase: {c.fase}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        className="flex-1"
+                        onClick={() => setSelectedCampId(c.id)}
+                        disabled={selecionado}
+                      >
+                        {selecionado ? "Selecionado" : "Ver chaveamento"}
+                      </Button>
+                      <Button
+                        variant="default"
+                        className="flex-1"
+                        disabled={c.inscricoesEncerradas}
+                        onClick={() => registrarInscricao(c.id)}
+                      >
+                        {c.inscricoesEncerradas ? "Inscricoes fechadas" : "Inscrever-se"}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
