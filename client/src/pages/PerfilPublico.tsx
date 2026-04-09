@@ -91,11 +91,6 @@ export default function PerfilPublico() {
                 </span>
               ) : null}
             </p>
-            {data.birthDate ? (
-              <p className="text-sm text-muted-foreground">
-                Aniversário: {new Date(data.birthDate).toLocaleDateString("pt-BR")}
-              </p>
-            ) : null}
             {data.createdAt ? (
               <p className="text-xs text-muted-foreground">
                 Membro desde {new Date(data.createdAt).toLocaleDateString("pt-BR")}

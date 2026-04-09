@@ -87,7 +87,6 @@ export async function getPublicUserById(userId: number) {
         avatarUrl: true,
         createdAt: true,
         lastSignedIn: true,
-        birthDate: true,
         role: true,
       },
     }),
@@ -106,7 +105,6 @@ export async function getPublicUserById(userId: number) {
     avatarUrl: user.avatarUrl,
     createdAt: user.createdAt,
     lastSignedIn: user.lastSignedIn,
-    birthDate: user.birthDate,
     role: user.role,
     ranking: {
       posicao: rankingEntry ? rankingGeral.findIndex(item => item.usuarioId === userId) + 1 : null,
