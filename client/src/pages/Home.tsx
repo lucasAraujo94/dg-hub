@@ -13,6 +13,7 @@ import {
   User,
   MessageCircle,
   ShieldCheck,
+  Cake,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -400,6 +401,7 @@ export default function Home() {
               { key: "overview", label: "Home", icon: HomeIcon },
               { key: "campeonatos", label: "Campeonatos", href: "/campeonatos", icon: Trophy },
               { key: "rankings", label: "Rankings", href: "/ranking", icon: Star },
+              { key: "aniversariantes", label: "Aniversariantes", href: "/aniversariantes", icon: Cake },
               { key: "perfil", label: "Perfil", href: "/perfil", icon: User },
               { key: "chat", label: "Chat", href: "/chat", icon: MessageCircle },
               ...(user?.role === "admin" ? [{ key: "admin", label: "Admin", href: "/admin", icon: ShieldCheck }] : []),

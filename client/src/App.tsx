@@ -23,6 +23,7 @@ import Chat from "@/pages/Chat";
 import Admin from "@/pages/Admin";
 import Cadastro from "@/pages/Cadastro";
 import Login from "@/pages/Login";
+import Aniversariantes from "@/pages/Aniversariantes";
 
 function Router() {
   return (
@@ -35,6 +36,7 @@ function Router() {
       <Route path={"/admin"} component={Admin} />
       <Route path={"/login"} component={Login} />
       <Route path={"/cadastro"} component={Cadastro} />
+      <Route path={"/aniversariantes"} component={Aniversariantes} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

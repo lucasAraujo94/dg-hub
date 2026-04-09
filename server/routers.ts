@@ -43,6 +43,7 @@ import {
   updateCampeonato,
   deleteCampeonato,
   definirCampeaoCampeonato,
+  listUpcomingBirthdays,
 } from "./db";
 import { sdk } from "./_core/sdk";
 import bcrypt from "bcryptjs";
@@ -301,16 +302,31 @@ export const appRouter = router({
         z.object({
           nickname: z.string().max(100).nullable().optional(),
           hideEmail: z.boolean().optional(),
+          birthDate: z.string().min(10).nullable().optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user) throw new Error("Usuario nao autenticado");
+        let birthDate: Date | null | undefined = undefined;
+        if (input.birthDate !== undefined) {
+          if (input.birthDate === null || input.birthDate === "") {
+            birthDate = null;
+          } else {
+            const parsed = new Date(`${input.birthDate}T00:00:00Z`);
+            if (Number.isNaN(parsed.getTime())) {
+              throw new Error("Data de nascimento invalida");
+            }
+            birthDate = parsed;
+          }
+        }
         const updated = await setUserPreferences(ctx.user.id, {
           nickname: input.nickname ?? undefined,
           hideEmail: input.hideEmail ?? undefined,
+          birthDate,
         });
         return updated;
       }),
+    birthdays: publicProcedure.query(async () => listUpcomingBirthdays()),
   }),
 
   poll: router({

@@ -18,6 +18,7 @@ model User {
   passwordHash String?   @db.VarChar(255)
   role         String    @default("user") @db.VarChar(10)
   avatarUrl    String?   @db.Text
+  birthDate    DateTime? @db.Date
   hideEmail    Boolean   @default(false)
   saldoPremio  Decimal   @default(0) @db.Decimal(10, 2)
   createdAt    DateTime  @default(now())

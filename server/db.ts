@@ -227,15 +227,17 @@ export async function setUserAvatar(userId: number, avatarUrl: string) {
 
 export async function setUserPreferences(
   userId: number,
-  prefs: { nickname?: string | null; hideEmail?: boolean }
+  prefs: { nickname?: string | null; hideEmail?: boolean; birthDate?: Date | null }
 ) {
   const normalizedNickname =
     prefs.nickname !== undefined ? (prefs.nickname?.trim() || null) : undefined;
+  const birthDate = prefs.birthDate ?? undefined;
   return prisma.user.update({
     where: { id: userId },
     data: {
       nickname: normalizedNickname,
       hideEmail: prefs.hideEmail ?? undefined,
+      birthDate,
     },
     select: {
       id: true,
@@ -246,6 +248,7 @@ export async function setUserPreferences(
       role: true,
       avatarUrl: true,
       openId: true,
+      birthDate: true,
     },
   });
 }
@@ -272,6 +275,42 @@ export async function createLocalUser(params: {
   });
 
   return user;
+}
+
+export async function listUpcomingBirthdays() {
+  const users = await prisma.user.findMany({
+    where: { birthDate: { not: null } },
+    select: { id: true, name: true, nickname: true, avatarUrl: true, birthDate: true },
+  });
+  const today = new Date();
+  const todayStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  const toStart = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+
+  const enriched = users
+    .filter(u => u.birthDate)
+    .map(u => {
+      const birth = u.birthDate as Date;
+      const next = new Date(Date.UTC(today.getUTCFullYear(), birth.getUTCMonth(), birth.getUTCDate()));
+      if (next < todayStart) {
+        next.setUTCFullYear(next.getUTCFullYear() + 1);
+      }
+      const diffMs = toStart(next).getTime() - todayStart.getTime();
+      const daysUntil = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      return {
+        id: u.id,
+        name: u.name,
+        nickname: u.nickname,
+        avatarUrl: u.avatarUrl,
+        birthDate: birth,
+        month: birth.getUTCMonth() + 1,
+        day: birth.getUTCDate(),
+        daysUntil,
+        isToday: daysUntil === 0,
+      };
+    })
+    .sort((a, b) => a.daysUntil - b.daysUntil);
+
+  return enriched;
 }
 
 // Campeonatos

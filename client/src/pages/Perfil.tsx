@@ -67,6 +67,7 @@ export default function Perfil() {
   const [photoPosY, setPhotoPosY] = useState(50);
   const [savedAvatarUrl, setSavedAvatarUrl] = useState<string | null>(null);
   const [hagoNickname, setHagoNickname] = useState<string>("");
+  const [birthDate, setBirthDate] = useState<string>("");
   const [displayPreference, setDisplayPreference] = useState<"real" | "hago">("real");
   const [hideEmail, setHideEmail] = useState(false);
   const [showValorModal, setShowValorModal] = useState(false);
@@ -200,10 +201,15 @@ export default function Perfil() {
       if (savedHideEmail === "true") {
         setHideEmail(true);
       }
+      const birth = (meQuery.data as any)?.birthDate;
+      if (birth) {
+        const iso = new Date(birth).toISOString().split("T")[0];
+        setBirthDate(iso);
+      }
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [meQuery.data]);
 
   useEffect(() => {
     if (typeof (user as any)?.hideEmail === "boolean") {
@@ -252,10 +258,15 @@ export default function Perfil() {
 
   const handleSalvarPerfil = async () => {
     const normalizedNick = hagoNickname.trim();
+    if (!birthDate) {
+      toast.error("Informe a data de nascimento para salvar o perfil");
+      return;
+    }
     try {
       localStorage.setItem("dg-hago-nickname", normalizedNick);
       localStorage.setItem("dg-display-pref", displayPreference);
       localStorage.setItem("dg-hide-email", hideEmail ? "true" : "false");
+      localStorage.setItem("dg-birth-date", birthDate);
     } catch {
       /* ignore */
     }
@@ -263,11 +274,15 @@ export default function Perfil() {
       const updated = await setPreferencesMutation.mutateAsync({
         nickname: normalizedNick || null,
         hideEmail,
+        birthDate,
       });
       utils.auth.me.setData(undefined, prev =>
-        prev ? { ...prev, nickname: updated.nickname ?? normalizedNick, hideEmail: updated.hideEmail } : prev
+        prev
+          ? { ...prev, nickname: updated.nickname ?? normalizedNick, hideEmail: updated.hideEmail, birthDate: updated.birthDate ?? birthDate }
+          : prev
       );
       setHagoNickname(updated.nickname ?? normalizedNick);
+      setBirthDate(updated.birthDate ? new Date(updated.birthDate).toISOString().split("T")[0] : birthDate);
       await refresh?.();
       toast.success("Perfil salvo/atualizado");
     } catch (error: any) {
@@ -520,6 +535,15 @@ export default function Perfil() {
                   value={hagoNickname}
                   onChange={e => setHagoNickname(e.target.value)}
                 />
+                <div className="space-y-1">
+                  <Label className="text-sm">Data de nascimento (obrigatoria)</Label>
+                  <Input
+                    type="date"
+                    value={birthDate}
+                    onChange={e => setBirthDate(e.target.value)}
+                    required
+                  />
+                </div>
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Como exibir seu nome:</p>
                   <RadioGroup value={displayPreference} onValueChange={val => setDisplayPreference(val as any)}>
