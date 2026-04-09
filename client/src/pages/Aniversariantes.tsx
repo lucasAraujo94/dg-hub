@@ -116,7 +116,9 @@ export default function Aniversariantes() {
               <div className="h-8 w-8 rounded-full bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-sm text-emerald-200">
                 {String(month).padStart(2, "0")}
               </div>
-              <h2 className="text-lg font-semibold">Mes {String(month).padStart(2, "0")}</h2>
+              <h2 className="text-lg font-semibold">
+                {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"][month - 1]}
+              </h2>
               <span className="text-xs text-muted-foreground">🎉 Celebre quem faz aniversario!</span>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
