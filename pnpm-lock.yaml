@@ -17,6 +17,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.693.0
         version: 3.1025.0
+      '@capacitor/browser':
+        specifier: 6.0.6
+        version: 6.0.6(@capacitor/core@6.2.1)
       '@capacitor/core':
         specifier: ^6.2.0
         version: 6.2.1
@@ -554,6 +557,11 @@ packages:
     resolution: {integrity: sha512-8gd4CIiQO5LAIlPIfd5mCuodBRxMMdZZEdj8qG8m+dQ1sQ2xyemVpzHmRK8qSCHorsBUCg3D62j2cp6bEBAkdw==}
     peerDependencies:
       '@capacitor/core': ^6.2.0
+
+  '@capacitor/browser@6.0.6':
+    resolution: {integrity: sha512-VHOPkMR+JqKz2mf5YncnnOWvFdVYFTTLnPW+JRcsP1LobXmA0gtchER35PQ7XXqXU16eeacrehX+XF+rC6wmQw==}
+    peerDependencies:
+      '@capacitor/core': ^6.0.0
 
   '@capacitor/cli@6.2.1':
     resolution: {integrity: sha512-JKl0FpFge8PgQNInw12kcKieQ4BmOyazQ4JGJOfEpVXlgrX1yPhSZTPjngupzTCiK3I7q7iGG5kjun0fDqgSCA==}
@@ -5232,6 +5240,10 @@ snapshots:
       vite: 7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)
 
   '@capacitor/android@6.2.1(@capacitor/core@6.2.1)':
+    dependencies:
+      '@capacitor/core': 6.2.1
+
+  '@capacitor/browser@6.0.6(@capacitor/core@6.2.1)':
     dependencies:
       '@capacitor/core': 6.2.1
 
