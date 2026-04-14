@@ -13,7 +13,7 @@ const normalizePath = (value: string) => {
 };
 
 // Redirect fixo para evitar divergência entre authorize e token exchange
-const GOOGLE_REDIRECT_URI = "https://app.dggames.online/auth/google/callback";
+const GOOGLE_REDIRECT_URI = "dghub://auth/google/callback";
 
 const getRedirectUri = () => GOOGLE_REDIRECT_URI;
 
@@ -67,3 +67,4 @@ export const getLoginUrl = (source: string = "unspecified") => {
   // Fallback: force Google login screen (no tokens without client config)
   return "https://accounts.google.com/ServiceLogin?prompt=select_account";
 };
+

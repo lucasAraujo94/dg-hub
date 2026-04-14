@@ -18,6 +18,7 @@ import { Link } from "wouter";
 import { Mail, MessageCircle, ShieldCheck, Trophy } from "lucide-react";
 import { z } from "zod";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { Browser } from "@capacitor/browser";
 
 const loginSchema = z.object({
   email: z.string().email("E-mail invalido"),
@@ -36,14 +37,15 @@ export default function Login() {
   }, [isAuthenticated]);
 
   const oauthUrl = getLoginUrl();
-  const handleOauth = useCallback(() => {
+  const handleOauth = useCallback(async () => {
     if (!hasOAuthProvider) {
       toast.error("Configure VITE_GOOGLE_CLIENT_ID ou VITE_OAUTH_PORTAL_URL para ativar o login.");
       return;
     }
-    // tenta abrir em nova guia primeiro (ajuda em webviews)
-    const opened = window.open(oauthUrl, "_blank", "noopener,noreferrer");
-    if (!opened) {
+    try {
+      await Browser.open({ url: oauthUrl }); // abre no navegador padrão (Custom Tab)
+    } catch (error) {
+      console.warn("[OAuth] Browser.open falhou, redirecionando via window.location", error);
       window.location.href = oauthUrl;
     }
   }, [oauthUrl]);
@@ -225,3 +227,8 @@ export default function Login() {
     </div>
   );
 }
+
+
+
+
+
