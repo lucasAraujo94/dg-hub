@@ -2,5 +2,10 @@ services:
   - type: web
     name: dg-hub
     env: node
-    buildCommand: corepack enable && corepack prepare pnpm@10.4.1 --activate && rm -rf dist .vite && pnpm install --frozen-lockfile && pnpm run build
+    buildCommand: >
+      corepack enable || true;
+      npm install -g pnpm@10.4.1;
+      rm -rf dist .vite;
+      pnpm install --frozen-lockfile;
+      pnpm run build
     startCommand: pnpm start
