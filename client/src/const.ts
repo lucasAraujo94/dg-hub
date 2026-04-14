@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 export {
   COOKIE_NAME,
   ONE_YEAR_MS,
@@ -9,13 +10,15 @@ export {
 const normalizePath = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return "";
-  return `/${trimmed.replace(/^\/+/, "").replace(/\/+$/, "")}`;
+  return `/${trimmed.replace(/^\/+/,'').replace(/\/+$/, "")}`;
 };
 
-// Redirect fixo para evitar divergência entre authorize e token exchange
-const GOOGLE_REDIRECT_URI = "dghub://auth/google/callback";
-
-const getRedirectUri = () => GOOGLE_REDIRECT_URI;
+// Usa deep link no app nativo e HTTPS no web/PWA
+const getRedirectUri = () => {
+  const isNative = Capacitor?.isNativePlatform?.() ?? false;
+  if (isNative) return "dghub://auth/google/callback";
+  return "https://app.dggames.online/auth/google/callback";
+};
 
 // Generate login URL at runtime so redirect URI is consistent
 export const hasGoogleClientId = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
@@ -67,4 +70,3 @@ export const getLoginUrl = (source: string = "unspecified") => {
   // Fallback: force Google login screen (no tokens without client config)
   return "https://accounts.google.com/ServiceLogin?prompt=select_account";
 };
-
