@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import {
   Loader2,
   Menu,
+  Download,
   TrendingUp,
   Zap,
   Home as HomeIcon,
@@ -362,6 +363,12 @@ export default function Home() {
                 ) : null}
               </span>
             </div>
+            <Button asChild variant="secondary" size="sm" className="w-full md:w-auto">
+              <a href="/apk/dg-hub.apk" download className="inline-flex items-center gap-2">
+                <Download className="w-4 h-4" />
+                Baixar APK
+              </a>
+            </Button>
             <Button onClick={logout} variant="outline" size="sm" className="w-full md:w-auto">
               Sair
             </Button>
