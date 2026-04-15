@@ -7,17 +7,22 @@ export {
   NOT_ADMIN_ERR_MSG,
 } from "@shared/const";
 
+export const isNativeApp = Capacitor?.isNativePlatform?.() ?? false;
+export const APP_ORIGIN = "https://app.dggames.online";
+
 const normalizePath = (value: string) => {
   const trimmed = value.trim();
   if (!trimmed) return "";
   return `/${trimmed.replace(/^\/+/,'').replace(/\/+$/, "")}`;
 };
 
-// Usa deep link no app nativo e HTTPS no web/PWA
 const getRedirectUri = () => {
-  const isNative = Capacitor?.isNativePlatform?.() ?? false;
-  if (isNative) return "dghub://auth/google/callback";
-  return "https://app.dggames.online/auth/google/callback";
+  return `${APP_ORIGIN}/auth/google/callback`;
+};
+
+export const getApiBaseUrl = () => {
+  if (isNativeApp) return APP_ORIGIN;
+  return "";
 };
 
 // Generate login URL at runtime so redirect URI is consistent
@@ -25,7 +30,10 @@ export const hasGoogleClientId = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 export const hasOAuthProvider =
   hasGoogleClientId || Boolean(import.meta.env.VITE_OAUTH_PORTAL_URL);
 
-export const getLoginUrl = (source: string = "unspecified") => {
+export const getLoginUrl = (
+  source: string = "unspecified",
+  options?: { nativeNonce?: string }
+) => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
   const appId = import.meta.env.VITE_APP_ID || "dev";
   const redirectUri = getRedirectUri();
@@ -36,6 +44,7 @@ export const getLoginUrl = (source: string = "unspecified") => {
   const statePayload = {
     redirectUri,
     returnTo: (typeof window !== "undefined" ? window.location.pathname : "/") || "/",
+    nativeNonce: options?.nativeNonce,
   };
   const state = btoa(JSON.stringify(statePayload));
 

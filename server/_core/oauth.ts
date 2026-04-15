@@ -8,12 +8,20 @@ import { sdk } from "./sdk";
 type OAuthState = {
   redirectUri: string;
   returnTo?: string;
+  nativeNonce?: string;
+};
+
+type NativeSessionEntry = {
+  sessionToken: string;
+  expiresAt: number;
 };
 
 let oauthCallbackHits = 0;
 const processedCodes = new Map<string, number>(); // code -> timestamp
+const nativeSessions = new Map<string, NativeSessionEntry>();
 
 const CLEAN_REDIRECT = "/";
+const NATIVE_SESSION_TTL_MS = 5 * 60 * 1000;
 const sanitizeReturnTo = (value?: string) => {
   if (!value) return CLEAN_REDIRECT;
   // Remove query/fragment to avoid reentrar no callback
@@ -45,10 +53,19 @@ function decodeState(state: string): OAuthState {
     return {
       redirectUri: decoded.redirectUri,
       returnTo: decoded.returnTo ?? "/",
+      nativeNonce: decoded.nativeNonce,
     };
   } catch {
     const redirectUri = Buffer.from(state, "base64").toString("utf-8");
     return { redirectUri, returnTo: "/" };
+  }
+}
+
+function cleanupExpiredNativeSessions(now = Date.now()) {
+  for (const [nonce, entry] of nativeSessions) {
+    if (entry.expiresAt <= now) {
+      nativeSessions.delete(nonce);
+    }
   }
 }
 
@@ -136,6 +153,38 @@ async function handleOAuthCallback(req: Request, res: Response) {
     const cookieOptions = getSessionCookieOptions(req);
     res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: 10 * 60 * 1000 });
 
+    if (decodedState.nativeNonce) {
+      cleanupExpiredNativeSessions();
+      nativeSessions.set(decodedState.nativeNonce, {
+        sessionToken,
+        expiresAt: Date.now() + NATIVE_SESSION_TTL_MS,
+      });
+      res
+        .status(200)
+        .type("html")
+        .send(`<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login concluido</title>
+    <style>
+      body { font-family: Arial, sans-serif; background: #0b1020; color: #f3f6ff; display: flex; min-height: 100vh; align-items: center; justify-content: center; margin: 0; }
+      main { max-width: 26rem; padding: 2rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 1rem; background: rgba(255,255,255,0.05); text-align: center; }
+      h1 { margin-top: 0; font-size: 1.4rem; }
+      p { color: #c8d1ea; line-height: 1.5; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Login concluido</h1>
+      <p>Volte para o app DG Hub para continuar.</p>
+    </main>
+  </body>
+</html>`);
+      return;
+    }
+
     const target = sanitizeReturnTo(decodedState.returnTo);
     res.redirect(302, target);
   } catch (error) {
@@ -160,4 +209,24 @@ async function handleOAuthCallback(req: Request, res: Response) {
 export function registerOAuthRoutes(app: Express) {
   app.get("/api/oauth/callback", handleOAuthCallback);
   app.get("/auth/google/callback", handleOAuthCallback);
+  app.get("/api/oauth/native-session", (req, res) => {
+    cleanupExpiredNativeSessions();
+    const nonce = getQueryParam(req, "nonce");
+    if (!nonce) {
+      res.status(400).json({ error: "nonce is required" });
+      return;
+    }
+
+    const entry = nativeSessions.get(nonce);
+    if (!entry) {
+      res.status(202).json({ ready: false });
+      return;
+    }
+
+    nativeSessions.delete(nonce);
+    res.status(200).json({
+      ready: true,
+      sessionToken: entry.sessionToken,
+    });
+  });
 }

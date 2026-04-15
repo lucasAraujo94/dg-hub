@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
-import { getLoginUrl, hasGoogleClientId, hasOAuthProvider } from "@/const";
+import { APP_ORIGIN, getLoginUrl, hasOAuthProvider, isNativeApp } from "@/const";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -19,6 +19,13 @@ import { Mail, MessageCircle, ShieldCheck, Trophy } from "lucide-react";
 import { z } from "zod";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Browser } from "@capacitor/browser";
+import {
+  clearPendingOAuthNonce,
+  createOAuthNonce,
+  getPendingOAuthNonce,
+  setNativeSessionToken,
+  setPendingOAuthNonce,
+} from "@/lib/nativeAuth";
 
 const loginSchema = z.object({
   email: z.string().email("E-mail invalido"),
@@ -29,6 +36,9 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const { isAuthenticated } = useAuth();
+  const utils = trpc.useUtils();
+  const [isNativeOauthPending, setIsNativeOauthPending] = useState(false);
+  const pollingRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -36,19 +46,131 @@ export default function Login() {
     }
   }, [isAuthenticated]);
 
-  const oauthUrl = getLoginUrl();
+  const showNativeBrowserHint = isNativeApp && hasOAuthProvider;
+
+  const stopNativeOauthPolling = useCallback(() => {
+    if (pollingRef.current !== null) {
+      window.clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  }, []);
+
+  const completeNativeOauth = useCallback(
+    async (nonce: string) => {
+      const response = await fetch(
+        `${APP_ORIGIN}/api/oauth/native-session?nonce=${encodeURIComponent(nonce)}`,
+        { credentials: "include" }
+      );
+
+      if (response.status === 404 || response.status === 202) {
+        return false;
+      }
+
+      if (!response.ok) {
+        throw new Error("Falha ao finalizar login no app.");
+      }
+
+      const payload = (await response.json()) as {
+        sessionToken: string;
+      };
+      if (!payload.sessionToken) {
+        throw new Error("Sessao do app nao retornada pelo servidor.");
+      }
+
+      setNativeSessionToken(payload.sessionToken);
+      clearPendingOAuthNonce();
+      stopNativeOauthPolling();
+      setIsNativeOauthPending(false);
+      await Browser.close().catch(() => undefined);
+      await utils.auth.me.invalidate();
+      window.location.href = "#/";
+      return true;
+    },
+    [stopNativeOauthPolling, utils.auth.me]
+  );
+
+  const startNativeOauthPolling = useCallback(
+    (nonce: string) => {
+      stopNativeOauthPolling();
+      setIsNativeOauthPending(true);
+
+      const poll = async () => {
+        try {
+          await completeNativeOauth(nonce);
+        } catch (error) {
+          stopNativeOauthPolling();
+          clearPendingOAuthNonce();
+          setIsNativeOauthPending(false);
+          toast.error(error instanceof Error ? error.message : "Falha ao concluir login com Google.");
+        }
+      };
+
+      void poll();
+      pollingRef.current = window.setInterval(() => {
+        void poll();
+      }, 1500);
+    },
+    [completeNativeOauth, stopNativeOauthPolling]
+  );
+
+  useEffect(() => {
+    if (!isNativeApp) return;
+
+    const pendingNonce = getPendingOAuthNonce();
+    if (pendingNonce) {
+      startNativeOauthPolling(pendingNonce);
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      const nonce = getPendingOAuthNonce();
+      if (nonce) {
+        startNativeOauthPolling(nonce);
+      }
+    };
+
+    const handleFocus = () => {
+      const nonce = getPendingOAuthNonce();
+      if (nonce) {
+        startNativeOauthPolling(nonce);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
+      stopNativeOauthPolling();
+    };
+  }, [startNativeOauthPolling, stopNativeOauthPolling]);
+
   const handleOauth = useCallback(async () => {
     if (!hasOAuthProvider) {
       toast.error("Configure VITE_GOOGLE_CLIENT_ID ou VITE_OAUTH_PORTAL_URL para ativar o login.");
       return;
     }
+
+    const nativeNonce = isNativeApp ? createOAuthNonce() : undefined;
+    const oauthUrl = getLoginUrl(isNativeApp ? "native-app" : "web", { nativeNonce });
+
     try {
-      await Browser.open({ url: oauthUrl }); // abre no navegador padr�o (Custom Tab)
+      if (nativeNonce) {
+        setPendingOAuthNonce(nativeNonce);
+        startNativeOauthPolling(nativeNonce);
+      }
+      await Browser.open({ url: oauthUrl }); // abre no navegador padrão (Custom Tab)
     } catch (error) {
+      if (isNativeApp) {
+        clearPendingOAuthNonce();
+        stopNativeOauthPolling();
+        setIsNativeOauthPending(false);
+      }
       console.warn("[OAuth] Browser.open falhou, redirecionando via window.location", error);
       window.location.href = oauthUrl;
     }
-  }, [oauthUrl]);
+  }, [startNativeOauthPolling, stopNativeOauthPolling]);
 
   const loginMutation = trpc.auth.loginLocal.useMutation({
     onSuccess: () => {
@@ -94,7 +216,7 @@ export default function Login() {
             </Button>
             <Button variant="outline" asChild className="text-sm gap-2 rounded-full">
               <Link href="/">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">←</span>
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">â†</span>
                 <span>Voltar</span>
               </Link>
             </Button>
@@ -102,8 +224,8 @@ export default function Login() {
         </header>
 
         <div className="flex flex-1 items-center justify-center">
-          <div className="grid w-full max-w-4xl gap-8 rounded-3xl border border-white/5 bg-white/5 p-6 backdrop-blur-xl shadow-[0_20px_80px_-40px_rgba(0,0,0,0.65)] lg:grid-cols-2">
-            <div className="space-y-4">
+          <div className="grid w-full max-w-4xl gap-8 rounded-3xl border border-white/5 bg-white/5 p-4 backdrop-blur-xl shadow-[0_20px_80px_-40px_rgba(0,0,0,0.65)] sm:p-6 lg:grid-cols-2">
+            <div className="hidden space-y-4 lg:block">
               <p className="text-xs uppercase tracking-[0.32em] text-emerald-200/80">Bem-vindo</p>
               <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
                 Conecte-se ao{" "}
@@ -125,21 +247,21 @@ export default function Login() {
                 <div className="flex items-start gap-2">
                   <ShieldCheck className="w-4 h-4 text-primary mt-0.5" />
                   <div>
-                    <p className="font-semibold text-foreground">Sessão protegida</p>
-                    <p>Login OAuth com cookies seguros e expiração curta.</p>
+                    <p className="font-semibold text-foreground">SessÃ£o protegida</p>
+                    <p>Login OAuth com cookies seguros e expiraÃ§Ã£o curta.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <MessageCircle className="w-4 h-4 text-cyan-300 mt-0.5" />
                   <div>
                     <p className="font-semibold text-foreground">Chat integrado</p>
-                    <p>Participe das conversas e mantenha seu perfil visível.</p>
+                    <p>Participe das conversas e mantenha seu perfil visÃ­vel.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
                   <Mail className="w-4 h-4 text-amber-300 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-foreground">Perfil único</p>
+                    <p className="font-semibold text-foreground">Perfil Ãºnico</p>
                     <p>Foto e apelido sincronizados em todo o app.</p>
                   </div>
                 </div>
@@ -155,6 +277,11 @@ export default function Login() {
                 </div>
 
                 <div className="mb-4 flex flex-col gap-3">
+                  {showNativeBrowserHint ? (
+                    <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                      O login com Google abre no navegador do aparelho e volta para o app ao terminar.
+                    </div>
+                  ) : null}
                   <div className="grid gap-2">
                     <Button
                       type="button"
@@ -165,6 +292,17 @@ export default function Login() {
                       <Mail className="h-4 w-4" />
                       Entrar com Google
                     </Button>
+                    {showNativeBrowserHint ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full"
+                        onClick={handleOauth}
+                        disabled={isNativeOauthPending}
+                      >
+                        {isNativeOauthPending ? "Aguardando conclusao..." : "Continuar no navegador"}
+                      </Button>
+                    ) : null}
                   </div>
                   <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                     <div className="h-px flex-1 bg-border" />
@@ -205,7 +343,7 @@ export default function Login() {
 
                     <div className="flex flex-col gap-3 text-sm">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Não compartilhe sua senha.</span>
+                        <span>NÃ£o compartilhe sua senha.</span>
                         <a className="text-primary underline-offset-4 hover:underline">Precisa de ajuda?</a>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -227,6 +365,7 @@ export default function Login() {
     </div>
   );
 }
+
 
 
 

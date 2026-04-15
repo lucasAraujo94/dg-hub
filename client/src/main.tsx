@@ -5,7 +5,8 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
-import { getLoginUrl } from "./const";
+import { getApiBaseUrl, getLoginUrl } from "./const";
+import { getNativeSessionToken } from "./lib/nativeAuth";
 import "./index.css";
 const queryClient = new QueryClient();
 
@@ -38,12 +39,18 @@ queryClient.getMutationCache().subscribe(event => {
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      url: `${getApiBaseUrl()}/api/trpc`,
       transformer: superjson,
       fetch(input, init) {
+        const nativeToken = getNativeSessionToken();
+        const headers = new Headers(init?.headers ?? {});
+        if (nativeToken) {
+          headers.set("Authorization", `Bearer ${nativeToken}`);
+        }
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
+          headers,
         });
       },
     }),

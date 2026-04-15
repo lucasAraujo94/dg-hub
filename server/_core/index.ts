@@ -39,9 +39,29 @@ async function findAvailablePort(startPort: number = 3000, host: string = "0.0.0
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  const allowedCorsOrigins = new Set([
+    "http://localhost",
+    "https://localhost",
+    "capacitor://localhost",
+    "https://app.dggames.online",
+  ]);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "5mb" }));
   app.use(express.urlencoded({ limit: "5mb", extended: true }));
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && allowedCorsOrigins.has(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Vary", "Origin");
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+      res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+    }
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
+    }
+    next();
+  });
   // Security headers básicos (usar proxy para HSTS/CSP avançado)
   app.use((_, res, next) => {
     res.setHeader("X-Frame-Options", "SAMEORIGIN");
