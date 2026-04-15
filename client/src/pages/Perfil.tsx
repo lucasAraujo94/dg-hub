@@ -101,6 +101,15 @@ export default function Perfil() {
     };
   }, [rankingPerfilQuery.data, user?.id]);
   const utils = trpc.useUtils();
+  useEffect(() => {
+    if (!solicitarSaqueMutation.isSuccess) return;
+    setValorSaque("");
+    setWalletAddress("");
+    solicitacoesQuery.refetch().catch(() => undefined);
+    utils.auth.me.invalidate().catch(() => undefined);
+    refresh?.();
+  }, [refresh, solicitarSaqueMutation.isSuccess, solicitacoesQuery, utils.auth.me]);
+
   const setAvatarMutation = trpc.profile.setAvatar.useMutation({
     onSuccess: async data => {
       const nextUrl = (data as any).avatarUrl || data.url;
@@ -589,17 +598,24 @@ export default function Perfil() {
                   className="bg-black/20 border-yellow-500/30"
                 />
                 <Input
-                  placeholder="Em breve"
-                  value="Em breve"
-                  disabled
-                  className="bg-black/20 border-yellow-500/30 cursor-not-allowed text-muted-foreground"
-                  readOnly
+                  placeholder="Sua chave PIX"
+                  value={walletAddress}
+                  onChange={e => setWalletAddress(e.target.value)}
+                  className="bg-black/20 border-yellow-500/30"
                 />
               </div>
 
-              <Button className="btn-secondary w-full" disabled>
-                Em breve
+              <Button
+                className="btn-secondary w-full"
+                onClick={handleSolicitarSaque}
+                disabled={solicitarSaqueMutation.isPending}
+              >
+                {solicitarSaqueMutation.isPending ? "Enviando..." : "Solicitar saque via PIX"}
               </Button>
+
+              <p className="text-xs text-muted-foreground">
+                Ao solicitar, o valor sai do saldo disponivel e fica reservado ate a analise do admin. Se o saque for rejeitado, o saldo retorna automaticamente.
+              </p>
 
               <div className="space-y-2">
                 <p className="text-sm font-semibold">Solicitações recentes</p>
@@ -688,8 +704,6 @@ export default function Perfil() {
     </div>
   );
 }
-
-
 
 
 

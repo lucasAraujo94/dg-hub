@@ -767,14 +767,49 @@ export async function broadcastTournamentAnnouncement(params: { titulo?: string;
 
 // Saques
 export async function criarSolicitacaoSaque(usuarioId: number, valor: number, walletProvider: string, walletAddress: string) {
-  return prisma.solicitacaoSaque.create({
-    data: {
-      usuarioId,
-      valor,
-      walletProvider,
-      walletAddress,
-      status: "solicitado",
-    },
+  if (valor <= 0) {
+    throw new Error("Valor do saque deve ser positivo");
+  }
+
+  return prisma.$transaction(async tx => {
+    const user = await tx.user.findUnique({
+      where: { id: usuarioId },
+      select: { id: true, saldoPremio: true },
+    });
+
+    if (!user) {
+      throw new Error("Usuario nao encontrado");
+    }
+
+    const saldoAtual = Number(user.saldoPremio);
+    if (saldoAtual < valor) {
+      throw new Error("Saldo insuficiente para solicitar o saque");
+    }
+
+    await tx.user.update({
+      where: { id: usuarioId },
+      data: { saldoPremio: { decrement: valor } },
+    });
+
+    const saque = await tx.solicitacaoSaque.create({
+      data: {
+        usuarioId,
+        valor,
+        walletProvider,
+        walletAddress,
+        status: "solicitado",
+      },
+    });
+
+    await tx.notificacao.create({
+      data: {
+        usuarioId,
+        tipo: "saque_solicitado",
+        mensagem: `Solicitacao de saque recebida: R$ ${valor.toFixed(2)}`,
+      },
+    });
+
+    return saque;
   });
 }
 
@@ -782,6 +817,151 @@ export async function getSolicitacoesSaque(usuarioId: number) {
   return prisma.solicitacaoSaque.findMany({
     where: { usuarioId },
     orderBy: { dataSolicitacao: "desc" },
+  });
+}
+
+export async function getAllSolicitacoesSaque() {
+  return prisma.solicitacaoSaque.findMany({
+    orderBy: { dataSolicitacao: "desc" },
+    include: {
+      usuario: {
+        select: {
+          id: true,
+          name: true,
+          nickname: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+    },
+  });
+}
+
+export async function aprovarSolicitacaoSaque(solicitacaoId: number) {
+  return prisma.$transaction(async tx => {
+    const saque = await tx.solicitacaoSaque.findUnique({
+      where: { id: solicitacaoId },
+      select: {
+        id: true,
+        usuarioId: true,
+        status: true,
+        valor: true,
+      },
+    });
+
+    if (!saque) {
+      throw new Error("Solicitacao de saque nao encontrada");
+    }
+    if (saque.status === "pago") {
+      throw new Error("Solicitacao ja foi paga");
+    }
+    if (saque.status === "rejeitado") {
+      throw new Error("Solicitacao rejeitada nao pode ser aprovada");
+    }
+    if (saque.status === "aprovado") {
+      return saque;
+    }
+
+    const updated = await tx.solicitacaoSaque.update({
+      where: { id: solicitacaoId },
+      data: { status: "aprovado" },
+    });
+
+    await tx.notificacao.create({
+      data: {
+        usuarioId: saque.usuarioId,
+        tipo: "saque_aprovado",
+        mensagem: `Seu saque de R$ ${Number(saque.valor).toFixed(2)} foi aprovado e aguarda pagamento.`,
+      },
+    });
+
+    return updated;
+  });
+}
+
+export async function rejeitarSolicitacaoSaque(solicitacaoId: number) {
+  return prisma.$transaction(async tx => {
+    const saque = await tx.solicitacaoSaque.findUnique({
+      where: { id: solicitacaoId },
+      select: {
+        id: true,
+        usuarioId: true,
+        status: true,
+        valor: true,
+      },
+    });
+
+    if (!saque) {
+      throw new Error("Solicitacao de saque nao encontrada");
+    }
+    if (saque.status === "rejeitado") {
+      return saque;
+    }
+    if (saque.status === "pago") {
+      throw new Error("Saque pago nao pode ser rejeitado");
+    }
+
+    await tx.user.update({
+      where: { id: saque.usuarioId },
+      data: { saldoPremio: { increment: Number(saque.valor) } },
+    });
+
+    const updated = await tx.solicitacaoSaque.update({
+      where: { id: solicitacaoId },
+      data: { status: "rejeitado" },
+    });
+
+    await tx.notificacao.create({
+      data: {
+        usuarioId: saque.usuarioId,
+        tipo: "saque_rejeitado",
+        mensagem: `Seu saque de R$ ${Number(saque.valor).toFixed(2)} foi rejeitado e o saldo foi devolvido.`,
+      },
+    });
+
+    return updated;
+  });
+}
+
+export async function marcarSolicitacaoSaqueComoPaga(solicitacaoId: number) {
+  return prisma.$transaction(async tx => {
+    const saque = await tx.solicitacaoSaque.findUnique({
+      where: { id: solicitacaoId },
+      select: {
+        id: true,
+        usuarioId: true,
+        status: true,
+        valor: true,
+      },
+    });
+
+    if (!saque) {
+      throw new Error("Solicitacao de saque nao encontrada");
+    }
+    if (saque.status === "rejeitado") {
+      throw new Error("Saque rejeitado nao pode ser marcado como pago");
+    }
+    if (saque.status === "pago") {
+      return saque;
+    }
+
+    const updated = await tx.solicitacaoSaque.update({
+      where: { id: solicitacaoId },
+      data: {
+        status: "pago",
+        dataPagamento: new Date(),
+      },
+    });
+
+    await tx.notificacao.create({
+      data: {
+        usuarioId: saque.usuarioId,
+        tipo: "saque_pago",
+        mensagem: `Seu saque de R$ ${Number(saque.valor).toFixed(2)} foi marcado como pago.`,
+      },
+    });
+
+    return updated;
   });
 }
 

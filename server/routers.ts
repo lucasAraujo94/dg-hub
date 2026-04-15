@@ -24,7 +24,11 @@ import {
   getNotificacoes,
   criarNotificacao,
   getSolicitacoesSaque,
+  getAllSolicitacoesSaque,
   criarSolicitacaoSaque,
+  aprovarSolicitacaoSaque,
+  rejeitarSolicitacaoSaque,
+  marcarSolicitacaoSaqueComoPaga,
   getPartidasCampeonato,
   registrarResultado,
   atualizarRanking,
@@ -163,6 +167,7 @@ export const appRouter = router({
 
   admin: router({
     listUsers: adminProcedure.query(() => listUsers()),
+    listSaques: adminProcedure.query(() => getAllSolicitacoesSaque()),
     inscreverUsuarioCampeonato: adminProcedure
       .input(z.object({ usuarioId: z.number(), campeonatoId: z.number() }))
       .mutation(async ({ input }) => {
@@ -732,6 +737,15 @@ export const appRouter = router({
         if (!ctx.user) throw new Error("Usuario nao autenticado");
         return criarSolicitacaoSaque(ctx.user.id, input.valor, input.walletProvider, input.walletAddress);
       }),
+    aprovar: adminProcedure
+      .input(z.object({ solicitacaoId: z.number() }))
+      .mutation(async ({ input }) => aprovarSolicitacaoSaque(input.solicitacaoId)),
+    rejeitar: adminProcedure
+      .input(z.object({ solicitacaoId: z.number() }))
+      .mutation(async ({ input }) => rejeitarSolicitacaoSaque(input.solicitacaoId)),
+    marcarPago: adminProcedure
+      .input(z.object({ solicitacaoId: z.number() }))
+      .mutation(async ({ input }) => marcarSolicitacaoSaqueComoPaga(input.solicitacaoId)),
   }),
 
   // Partidas (Admin)
@@ -759,7 +773,6 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
-
 
 
 

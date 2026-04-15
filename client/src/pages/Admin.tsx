@@ -33,6 +33,10 @@ export default function Admin() {
   const [depositoDescricao, setDepositoDescricao] = useState("");
   const [pixPaymentId, setPixPaymentId] = useState<number | null>(null);
   const depositoRef = useRef<HTMLDivElement | null>(null);
+  const saquesQuery = trpc.admin.listSaques.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    enabled: user?.role === "admin",
+  });
 
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, {
     enabled: user?.role === "admin",
@@ -104,6 +108,29 @@ export default function Admin() {
         query.state.data && !query.state.data.creditedAt && query.state.data.status !== "approved" ? 5000 : false,
     }
   );
+  const aprovarSaqueMutation = trpc.saques.aprovar.useMutation({
+    onSuccess: () => {
+      toast.success("Saque aprovado");
+      saquesQuery.refetch();
+      usuariosQuery.refetch();
+    },
+    onError: error => toast.error(error.message || "Falha ao aprovar saque"),
+  });
+  const rejeitarSaqueMutation = trpc.saques.rejeitar.useMutation({
+    onSuccess: () => {
+      toast.success("Saque rejeitado e saldo devolvido");
+      saquesQuery.refetch();
+      usuariosQuery.refetch();
+    },
+    onError: error => toast.error(error.message || "Falha ao rejeitar saque"),
+  });
+  const marcarSaquePagoMutation = trpc.saques.marcarPago.useMutation({
+    onSuccess: () => {
+      toast.success("Saque marcado como pago");
+      saquesQuery.refetch();
+    },
+    onError: error => toast.error(error.message || "Falha ao marcar saque como pago"),
+  });
 
   if (user?.role !== "admin") {
     return (
@@ -271,10 +298,11 @@ export default function Admin() {
       <section className="py-12">
         <div className="container">
           <Tabs defaultValue="campeonatos" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="campeonatos">Campeonatos</TabsTrigger>
               <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
               <TabsTrigger value="depositos">Depositos</TabsTrigger>
+              <TabsTrigger value="saques">Saques</TabsTrigger>
             </TabsList>
 
             {/* Campeonatos */}
@@ -540,6 +568,71 @@ export default function Admin() {
                     )}
                   </div>
                 ) : null}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="saques" className="space-y-6">
+              <div className="card-elegant">
+                <h2 className="text-xl font-bold mb-2">Solicitacoes de Saque</h2>
+                <p className="text-sm text-muted-foreground mb-4">Aprove, rejeite com estorno automatico ou marque como pago apos transferencia manual.</p>
+                {saquesQuery.isLoading ? <p className="text-sm text-muted-foreground">Carregando saques...</p> : null}
+                {saquesQuery.error ? <p className="text-sm text-red-400">Erro: {saquesQuery.error.message}</p> : null}
+                {!saquesQuery.isLoading && (saquesQuery.data?.length ?? 0) === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhuma solicitacao de saque registrada.</p>
+                ) : null}
+                <div className="space-y-3">
+                  {saquesQuery.data?.map(item => {
+                    const status = (item as { status?: string }).status ?? "solicitado";
+                    const canApprove = status === "solicitado";
+                    const canReject = status === "solicitado" || status === "aprovado";
+                    const canPay = status === "solicitado" || status === "aprovado";
+                    return (
+                      <div key={item.id} className="rounded-lg border border-border/60 bg-card/60 p-4 space-y-3">
+                        <div className="flex flex-col gap-1">
+                          <p className="font-semibold">
+                            {(item as any).usuario?.name || (item as any).usuario?.email || `Usuario #${item.usuarioId}`}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Valor: R$ {Number(item.valor).toFixed(2)} - status: {status}
+                          </p>
+                          <p className="text-xs text-muted-foreground break-all">
+                            Chave {item.walletProvider}: {item.walletAddress}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Solicitado em {new Date(item.dataSolicitacao).toLocaleString("pt-BR")}
+                            {item.dataPagamento ? ` - pago em ${new Date(item.dataPagamento).toLocaleString("pt-BR")}` : ""}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!canApprove || aprovarSaqueMutation.isPending}
+                            onClick={() => aprovarSaqueMutation.mutate({ solicitacaoId: item.id })}
+                          >
+                            Aprovar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={!canReject || rejeitarSaqueMutation.isPending}
+                            onClick={() => rejeitarSaqueMutation.mutate({ solicitacaoId: item.id })}
+                          >
+                            Rejeitar
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="btn-primary"
+                            disabled={!canPay || marcarSaquePagoMutation.isPending}
+                            onClick={() => marcarSaquePagoMutation.mutate({ solicitacaoId: item.id })}
+                          >
+                            Marcar pago
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </TabsContent>
 
