@@ -51,17 +51,6 @@ export function useAuth(options?: UseAuthOptions) {
     retry: false,
     refetchOnWindowFocus: false,
     initialData: cachedUser ?? undefined,
-    onError: error => {
-      const isUnauthorized = error instanceof TRPCClientError && error.message === UNAUTHED_ERR_MSG;
-      if (isUnauthorized && typeof window !== "undefined") {
-        try {
-          localStorage.removeItem("manus-runtime-user-info");
-          clearNativeSessionToken();
-        } catch {
-          /* ignore */
-        }
-      }
-    },
   });
 
   const logoutMutation = trpc.auth.logout.useMutation({
@@ -99,6 +88,18 @@ export function useAuth(options?: UseAuthOptions) {
     }),
     [userSafe, meQuery.error, meQuery.isLoading, logoutMutation.error, logoutMutation.isPending]
   );
+
+  useEffect(() => {
+    const error = meQuery.error;
+    const isUnauthorized = error instanceof TRPCClientError && error.message === UNAUTHED_ERR_MSG;
+    if (!isUnauthorized || typeof window === "undefined") return;
+    try {
+      localStorage.removeItem("manus-runtime-user-info");
+      clearNativeSessionToken();
+    } catch {
+      /* ignore */
+    }
+  }, [meQuery.error]);
 
   useEffect(() => {
     if (!meQuery.data) return;

@@ -9,12 +9,15 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { prisma } from "./prisma";
-import axios from "axios";
 import { ENV } from "./env";
-import crypto from "crypto";
+import axios from "axios";
+import {
+  creditPixPaymentIfNeeded,
+  getPixPaymentByExternalReference,
+  getPixPaymentByProviderPaymentId,
+  syncPixPaymentRecord,
+} from "../db";
 
-// Default to development to enable Vite middleware when NODE_ENV is unset (Windows-friendly)
 process.env.NODE_ENV ??= "development";
 
 function isPortAvailable(port: number, host: string = "0.0.0.0"): Promise<boolean> {
@@ -36,6 +39,23 @@ async function findAvailablePort(startPort: number = 3000, host: string = "0.0.0
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
+function mapMercadoPagoPix(payment: any) {
+  const transactionData = payment?.point_of_interaction?.transaction_data ?? {};
+  return {
+    providerPaymentId: String(payment?.id ?? ""),
+    externalReference: payment?.external_reference ? String(payment.external_reference) : null,
+    status: String(payment?.status ?? "pending"),
+    valor: Number(payment?.transaction_amount ?? 0),
+    qrCode: transactionData?.qr_code ?? null,
+    qrCodeBase64: transactionData?.qr_code_base64 ?? null,
+    ticketUrl: transactionData?.ticket_url ?? null,
+    metadataJson: payment?.metadata ? JSON.stringify(payment.metadata) : null,
+    rawResponseJson: JSON.stringify(payment),
+    approvedAt: payment?.date_approved ? new Date(payment.date_approved) : null,
+    expiresAt: payment?.date_of_expiration ? new Date(payment.date_of_expiration) : null,
+  };
+}
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
@@ -45,9 +65,10 @@ async function startServer() {
     "capacitor://localhost",
     "https://app.dggames.online",
   ]);
-  // Configure body parser with larger size limit for file uploads
+
   app.use(express.json({ limit: "5mb" }));
   app.use(express.urlencoded({ limit: "5mb", extended: true }));
+
   app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (origin && allowedCorsOrigins.has(origin)) {
@@ -62,7 +83,7 @@ async function startServer() {
     }
     next();
   });
-  // Security headers básicos (usar proxy para HSTS/CSP avançado)
+
   app.use((_, res, next) => {
     res.setHeader("X-Frame-Options", "SAMEORIGIN");
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -70,21 +91,21 @@ async function startServer() {
     res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
     next();
   });
-  // Força HTTPS quando atrás de proxy que define X-Forwarded-Proto
+
   app.enable("trust proxy");
   app.use((req, res, next) => {
     if (req.secure || req.headers["x-forwarded-proto"] === "https") return next();
-    // Em dev (sem https), apenas segue
     if (process.env.NODE_ENV !== "production") return next();
     const host = req.headers.host ?? "";
     return res.redirect(301, `https://${host}${req.originalUrl}`);
   });
-  // Static uploads (local fallback for avatares)
+
   const uploadsDir = path.join(process.cwd(), "uploads");
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
   app.use("/uploads", express.static(uploadsDir));
+
   app.get("/api/health", (_req, res) => {
     res.status(200).json({
       ok: true,
@@ -92,85 +113,61 @@ async function startServer() {
       now: new Date().toISOString(),
     });
   });
-  // OAuth callback under /api/oauth/callback
+
   registerOAuthRoutes(app);
-  // Webhook Mercado Pago PIX
+
   app.post("/api/mp/webhook", async (req, res) => {
     try {
-      const type = (req.body as any)?.type;
-      const paymentId = (req.body as any)?.data?.id;
-      if (type !== "payment" || !paymentId) {
+      const type = String((req.body as any)?.type ?? req.query.type ?? req.query.topic ?? "");
+      const paymentIdRaw =
+        (req.body as any)?.data?.id ??
+        (req.body as any)?.id ??
+        req.query["data.id"] ??
+        req.query.id;
+      const paymentId = paymentIdRaw ? String(paymentIdRaw) : "";
+
+      if (type && type !== "payment") {
         return res.status(200).send("ignored");
+      }
+      if (!paymentId) {
+        return res.status(200).send("missing payment id");
       }
       if (!ENV.mpAccessToken) {
         return res.status(500).send("mp token missing");
       }
 
-       // Validação opcional de assinatura do webhook (Mercado Pago)
-      const signatureHeader = (req.headers["x-signature"] as string | undefined) ?? "";
-      const requestId = req.headers["x-request-id"] as string | undefined;
-      if (ENV.mpWebhookSecret) {
-        if (!signatureHeader || !requestId) {
-          return res.status(401).send("missing signature");
-        }
-        const parts = Object.fromEntries(
-          signatureHeader
-            .split(",")
-            .map(s => s.split("="))
-            .filter(arr => arr.length === 2)
-            .map(([k, v]) => [k.trim(), v.trim()])
-        );
-        const ts = parts["ts"];
-        const v1 = parts["v1"];
-        if (!ts || !v1) {
-          return res.status(401).send("invalid signature format");
-        }
-        const expected = crypto.createHmac("sha256", ENV.mpWebhookSecret).update(`${paymentId}${ts}`).digest("hex");
-        if (expected !== v1) {
-          return res.status(401).send("invalid signature");
-        }
-      }
-
       const paymentResp = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
         headers: { Authorization: `Bearer ${ENV.mpAccessToken}` },
       });
-      const payment = paymentResp.data as any;
-      if (payment?.status !== "approved") {
-        return res.status(200).send("pending");
-      }
-      const userId = payment?.metadata?.userId;
-      if (!userId) {
-        return res.status(200).send("no user");
-      }
 
-      // evita credito duplicado usando notificacao como log
-      const already = await prisma.notificacao.findFirst({
-        where: { usuarioId: Number(userId), tipo: "deposito", mensagem: String(paymentId) },
-      });
-      if (already) {
-        return res.status(200).send("already");
+      const paymentData = mapMercadoPagoPix(paymentResp.data);
+      const localRecord =
+        (paymentData.providerPaymentId ? await getPixPaymentByProviderPaymentId(paymentData.providerPaymentId) : null) ??
+        (paymentData.externalReference ? await getPixPaymentByExternalReference(paymentData.externalReference) : null);
+
+      if (!localRecord) {
+        return res.status(200).send("payment not tracked");
       }
 
-      await prisma.user.update({
-        where: { id: Number(userId) },
-        data: { saldoPremio: { increment: Number(payment.transaction_amount) || 0 } },
+      const synced = await syncPixPaymentRecord(paymentData);
+      if (paymentData.status !== "approved") {
+        return res.status(200).send(synced?.status ?? "pending");
+      }
+
+      const result = await creditPixPaymentIfNeeded({
+        pixPaymentId: localRecord.id,
+        usuarioId: localRecord.usuarioId,
+        valor: paymentData.valor,
+        providerPaymentId: paymentData.providerPaymentId,
       });
 
-      await prisma.notificacao.create({
-        data: {
-          usuarioId: Number(userId),
-          tipo: "deposito",
-          mensagem: String(paymentId),
-        },
-      });
-
-      return res.status(200).send("ok");
+      return res.status(200).send(result.credited ? "credited" : "already");
     } catch (error) {
       console.error("[mp webhook] error", error);
       return res.status(500).send("error");
     }
   });
-  // tRPC API
+
   app.use(
     "/api/trpc",
     createExpressMiddleware({
@@ -178,7 +175,7 @@ async function startServer() {
       createContext,
     })
   );
-  // development mode uses Vite, production mode uses static files
+
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {

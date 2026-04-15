@@ -62,7 +62,7 @@ function decodeState(state: string): OAuthState {
 }
 
 function cleanupExpiredNativeSessions(now = Date.now()) {
-  for (const [nonce, entry] of nativeSessions) {
+  for (const [nonce, entry] of Array.from(nativeSessions.entries())) {
     if (entry.expiresAt <= now) {
       nativeSessions.delete(nonce);
     }
@@ -98,7 +98,7 @@ async function handleOAuthCallback(req: Request, res: Response) {
   if (code) {
     const now = Date.now();
     // expira itens com mais de 10 minutos
-    for (const [storedCode, ts] of processedCodes) {
+    for (const [storedCode, ts] of Array.from(processedCodes.entries())) {
       if (now - ts > 10 * 60 * 1000) {
         processedCodes.delete(storedCode);
       }

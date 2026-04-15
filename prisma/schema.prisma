@@ -35,6 +35,7 @@ model User {
   chatMensagens            ChatMensagem[]
   notificacoes             Notificacao[]
   solicitacoesSaque        SolicitacaoSaque[]
+  pixPayments              PixPayment[]
   pollVotes                PollVote[]
   campeonatosCampeao       Campeonato[]      @relation("CampeonatoCampeao")
 
@@ -202,6 +203,32 @@ model SolicitacaoSaque {
   usuario User @relation(fields: [usuarioId], references: [id])
 
   @@map("solicitacoesSaque")
+}
+
+model PixPayment {
+  id                Int       @id @default(autoincrement())
+  usuarioId         Int
+  createdByUserId   Int?
+  provider          String    @default("mercadopago") @db.VarChar(32)
+  externalReference String    @unique @db.VarChar(120)
+  providerPaymentId String?   @unique @db.VarChar(120)
+  status            String    @default("pending") @db.VarChar(32)
+  valor             Decimal   @db.Decimal(10, 2)
+  descricao         String?   @db.Text
+  qrCode            String?   @db.Text
+  qrCodeBase64      String?   @db.Text
+  ticketUrl         String?   @db.Text
+  metadataJson      String?   @db.Text
+  rawResponseJson   String?   @db.Text
+  approvedAt        DateTime?
+  creditedAt        DateTime?
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  usuario           User      @relation(fields: [usuarioId], references: [id])
+
+  @@map("pixPayments")
 }
 
 model PollVote {

@@ -278,7 +278,12 @@ export default function Perfil() {
       });
       utils.auth.me.setData(undefined, prev =>
         prev
-          ? { ...prev, nickname: updated.nickname ?? normalizedNick, hideEmail: updated.hideEmail, birthDate: updated.birthDate ?? birthDate }
+          ? {
+              ...prev,
+              nickname: updated.nickname ?? normalizedNick,
+              hideEmail: updated.hideEmail,
+              birthDate: updated.birthDate ?? prev.birthDate,
+            }
           : prev
       );
       setHagoNickname(updated.nickname ?? normalizedNick);
@@ -683,7 +688,6 @@ export default function Perfil() {
     </div>
   );
 }
-
 
 
 

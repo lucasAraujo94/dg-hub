@@ -6,7 +6,7 @@ import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
 import util from "util";
 import { SignJWT, jwtVerify } from "jose";
-import type { User } from "./prisma";
+import type { User } from "@prisma/client";
 import * as db from "../db";
 import { ENV } from "./env";
 import type {
@@ -474,7 +474,7 @@ class SDKServer {
 
     await db.upsertUser({
       openId: user.openId,
-      role: user.role, // preserve role on each request (e.g., admin)
+      role: user.role === "admin" ? "admin" : "user", // preserve role on each request
       lastSignedIn: signedInAt,
     });
 

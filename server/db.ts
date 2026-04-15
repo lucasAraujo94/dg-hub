@@ -224,7 +224,7 @@ export async function excluirEnquete(pollId: number) {
 
 export async function getUserByEmail(email: string) {
   const normalizedEmail = email.trim().toLowerCase();
-  return prisma.user.findUnique({ where: { email: normalizedEmail } });
+  return prisma.user.findFirst({ where: { email: normalizedEmail } });
 }
 
 export async function setUserRole(params: { openId?: string; email?: string; role: "user" | "admin" }) {
@@ -518,7 +518,13 @@ export async function sortearPartidasCampeonato(campeonatoId: number) {
   // Remove partidas antigas para re-sortear
   await prisma.partida.deleteMany({ where: { campeonatoId } });
 
-  const partidasData: Prisma.PartidaCreateManyInput[] = [];
+  const partidasData: Array<{
+    campeonatoId: number;
+    jogador1Id: number;
+    jogador2Id: number | null;
+    fase: string;
+    status: string;
+  }> = [];
   for (let i = 0; i < shuffled.length; i += 2) {
     const jogador1Id = shuffled[i]?.usuarioId;
     const jogador2Id = shuffled[i + 1]?.usuarioId ?? null;
@@ -779,3 +785,199 @@ export async function getSolicitacoesSaque(usuarioId: number) {
   });
 }
 
+export type PixPaymentRecord = {
+  id: number;
+  usuarioId: number;
+  createdByUserId: number | null;
+  provider: string;
+  externalReference: string;
+  providerPaymentId: string | null;
+  status: string;
+  valor: number | string;
+  descricao: string | null;
+  qrCode: string | null;
+  qrCodeBase64: string | null;
+  ticketUrl: string | null;
+  metadataJson: string | null;
+  rawResponseJson: string | null;
+  approvedAt: Date | null;
+  creditedAt: Date | null;
+  expiresAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type CreatePixPaymentInput = {
+  usuarioId: number;
+  createdByUserId?: number | null;
+  externalReference: string;
+  valor: number;
+  descricao?: string | null;
+  providerPaymentId?: string | null;
+  status?: string;
+  qrCode?: string | null;
+  qrCodeBase64?: string | null;
+  ticketUrl?: string | null;
+  metadataJson?: string | null;
+  rawResponseJson?: string | null;
+  approvedAt?: Date | null;
+  expiresAt?: Date | null;
+};
+
+type SyncPixPaymentInput = {
+  providerPaymentId: string;
+  externalReference?: string | null;
+  status: string;
+  valor?: number | null;
+  qrCode?: string | null;
+  qrCodeBase64?: string | null;
+  ticketUrl?: string | null;
+  metadataJson?: string | null;
+  rawResponseJson?: string | null;
+  approvedAt?: Date | null;
+  expiresAt?: Date | null;
+};
+
+export async function createPixPaymentRecord(input: CreatePixPaymentInput) {
+  const rows = await prisma.$queryRaw<PixPaymentRecord[]>`
+    INSERT INTO "pixPayments" (
+      "usuarioId",
+      "createdByUserId",
+      "externalReference",
+      "providerPaymentId",
+      "status",
+      "valor",
+      "descricao",
+      "qrCode",
+      "qrCodeBase64",
+      "ticketUrl",
+      "metadataJson",
+      "rawResponseJson",
+      "approvedAt",
+      "expiresAt",
+      "updatedAt"
+    )
+    VALUES (
+      ${input.usuarioId},
+      ${input.createdByUserId ?? null},
+      ${input.externalReference},
+      ${input.providerPaymentId ?? null},
+      ${input.status ?? "pending"},
+      ${input.valor.toFixed(2)},
+      ${input.descricao ?? null},
+      ${input.qrCode ?? null},
+      ${input.qrCodeBase64 ?? null},
+      ${input.ticketUrl ?? null},
+      ${input.metadataJson ?? null},
+      ${input.rawResponseJson ?? null},
+      ${input.approvedAt ?? null},
+      ${input.expiresAt ?? null},
+      NOW()
+    )
+    RETURNING *
+  `;
+  return rows[0] ?? null;
+}
+
+export async function getPixPaymentById(id: number) {
+  const rows = await prisma.$queryRaw<PixPaymentRecord[]>`
+    SELECT * FROM "pixPayments"
+    WHERE "id" = ${id}
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
+
+export async function getPixPaymentByExternalReference(externalReference: string) {
+  const rows = await prisma.$queryRaw<PixPaymentRecord[]>`
+    SELECT * FROM "pixPayments"
+    WHERE "externalReference" = ${externalReference}
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
+
+export async function getPixPaymentByProviderPaymentId(providerPaymentId: string) {
+  const rows = await prisma.$queryRaw<PixPaymentRecord[]>`
+    SELECT * FROM "pixPayments"
+    WHERE "providerPaymentId" = ${providerPaymentId}
+    LIMIT 1
+  `;
+  return rows[0] ?? null;
+}
+
+export async function syncPixPaymentRecord(input: SyncPixPaymentInput) {
+  const providerPaymentId = input.providerPaymentId;
+  const externalReference = input.externalReference ?? null;
+  const valor = input.valor == null ? null : input.valor.toFixed(2);
+  const rows = await prisma.$queryRaw<PixPaymentRecord[]>`
+    UPDATE "pixPayments"
+    SET
+      "providerPaymentId" = ${providerPaymentId},
+      "status" = ${input.status},
+      "valor" = COALESCE(${valor}, "valor"),
+      "qrCode" = COALESCE(${input.qrCode ?? null}, "qrCode"),
+      "qrCodeBase64" = COALESCE(${input.qrCodeBase64 ?? null}, "qrCodeBase64"),
+      "ticketUrl" = COALESCE(${input.ticketUrl ?? null}, "ticketUrl"),
+      "metadataJson" = COALESCE(${input.metadataJson ?? null}, "metadataJson"),
+      "rawResponseJson" = COALESCE(${input.rawResponseJson ?? null}, "rawResponseJson"),
+      "approvedAt" = CASE
+        WHEN ${input.approvedAt ?? null} IS NOT NULL THEN ${input.approvedAt ?? null}
+        ELSE "approvedAt"
+      END,
+      "expiresAt" = CASE
+        WHEN ${input.expiresAt ?? null} IS NOT NULL THEN ${input.expiresAt ?? null}
+        ELSE "expiresAt"
+      END,
+      "updatedAt" = NOW()
+    WHERE "providerPaymentId" = ${providerPaymentId}
+       OR (${externalReference} IS NOT NULL AND "externalReference" = ${externalReference})
+    RETURNING *
+  `;
+  return rows[0] ?? null;
+}
+
+export async function creditPixPaymentIfNeeded(params: {
+  pixPaymentId: number;
+  usuarioId: number;
+  valor: number;
+  providerPaymentId: string;
+}) {
+  return prisma.$transaction(async tx => {
+    const lockedRows = await tx.$queryRaw<Array<{ id: number; creditedAt: Date | null }>>`
+      SELECT "id", "creditedAt"
+      FROM "pixPayments"
+      WHERE "id" = ${params.pixPaymentId}
+      FOR UPDATE
+    `;
+    const pixPayment = lockedRows[0];
+    if (!pixPayment || pixPayment.creditedAt) {
+      return { credited: false as const };
+    }
+
+    await tx.$executeRaw`
+      UPDATE "pixPayments"
+      SET
+        "status" = 'approved',
+        "creditedAt" = NOW(),
+        "approvedAt" = COALESCE("approvedAt", NOW()),
+        "updatedAt" = NOW()
+      WHERE "id" = ${params.pixPaymentId}
+    `;
+
+    await tx.user.update({
+      where: { id: params.usuarioId },
+      data: { saldoPremio: { increment: params.valor } },
+    });
+
+    await tx.notificacao.create({
+      data: {
+        usuarioId: params.usuarioId,
+        tipo: "deposito_pix",
+        mensagem: `PIX aprovado (${params.providerPaymentId})`,
+      },
+    });
+
+    return { credited: true as const };
+  });
+}

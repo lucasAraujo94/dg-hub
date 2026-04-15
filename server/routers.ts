@@ -8,6 +8,8 @@ import axios from "axios";
 import fs from "fs/promises";
 import path from "path";
 import {
+  creditPixPaymentIfNeeded,
+  createPixPaymentRecord,
   getCampeonatos,
   getCampeonatoById,
   createCampeonato,
@@ -41,6 +43,8 @@ import {
   resultadosEnquete,
   criarEnquete,
   excluirEnquete,
+  getPixPaymentById,
+  syncPixPaymentRecord,
   updateCampeonato,
   deleteCampeonato,
   definirCampeaoCampeonato,
@@ -49,8 +53,37 @@ import {
 import { sdk } from "./_core/sdk";
 import bcrypt from "bcryptjs";
 import { storagePut } from "./storage";
+import crypto from "crypto";
 
 const { compare, hash } = bcrypt;
+
+const resolvePublicBaseUrl = (req: { headers: Record<string, string | string[] | undefined> }) => {
+  const protoHeader = req.headers["x-forwarded-proto"];
+  const proto = Array.isArray(protoHeader) ? protoHeader[0] : protoHeader;
+  const hostHeader = req.headers["x-forwarded-host"] ?? req.headers.host;
+  const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
+  if (host) {
+    return `${proto === "http" ? "http" : "https"}://${host}`;
+  }
+  return `https://${ENV.appId}`;
+};
+
+const mapMercadoPagoPix = (payment: any) => {
+  const transactionData = payment?.point_of_interaction?.transaction_data ?? {};
+  return {
+    providerPaymentId: String(payment?.id ?? ""),
+    externalReference: payment?.external_reference ? String(payment.external_reference) : null,
+    status: String(payment?.status ?? "pending"),
+    valor: Number(payment?.transaction_amount ?? 0),
+    qrCode: transactionData?.qr_code ?? null,
+    qrCodeBase64: transactionData?.qr_code_base64 ?? null,
+    ticketUrl: transactionData?.ticket_url ?? null,
+    metadataJson: payment?.metadata ? JSON.stringify(payment.metadata) : null,
+    rawResponseJson: JSON.stringify(payment),
+    approvedAt: payment?.date_approved ? new Date(payment.date_approved) : null,
+    expiresAt: payment?.date_of_expiration ? new Date(payment.date_of_expiration) : null,
+  };
+};
 
 export const appRouter = router({
   system: systemRouter,
@@ -220,15 +253,24 @@ export const appRouter = router({
         if (!ENV.mpAccessToken) {
           throw new Error("MP_ACCESS_TOKEN nao configurado");
         }
+        const externalReference = `pix_${input.usuarioId}_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
+        const payerEmail =
+          ctx.user?.email?.trim().toLowerCase() ||
+          `pagamento+${input.usuarioId}@${ENV.appId}`;
+        const notificationUrl = `${resolvePublicBaseUrl(ctx.req)}/api/mp/webhook`;
         const payload = {
           transaction_amount: input.valor,
           description: input.descricao ?? `Deposito PIX - usuario ${input.usuarioId}`,
           payment_method_id: "pix",
+          external_reference: externalReference,
+          notification_url: notificationUrl,
           payer: {
-            email: ctx.user?.email ?? "cliente@example.com",
+            email: payerEmail,
           },
           metadata: {
             userId: input.usuarioId,
+            createdByUserId: ctx.user?.id ?? null,
+            externalReference,
           },
         };
 
@@ -241,13 +283,95 @@ export const appRouter = router({
 
         const data: any = resp.data;
         const pixInfo = data?.point_of_interaction?.transaction_data;
+        const created = await createPixPaymentRecord({
+          usuarioId: input.usuarioId,
+          createdByUserId: ctx.user?.id ?? null,
+          externalReference,
+          providerPaymentId: data?.id ? String(data.id) : null,
+          status: String(data?.status ?? "pending"),
+          valor: Number(data?.transaction_amount ?? input.valor),
+          descricao: input.descricao ?? `Deposito PIX - usuario ${input.usuarioId}`,
+          qrCode: pixInfo?.qr_code ?? null,
+          qrCodeBase64: pixInfo?.qr_code_base64 ?? null,
+          ticketUrl: pixInfo?.ticket_url ?? null,
+          metadataJson: data?.metadata ? JSON.stringify(data.metadata) : null,
+          rawResponseJson: JSON.stringify(data),
+          approvedAt: data?.date_approved ? new Date(data.date_approved) : null,
+          expiresAt: data?.date_of_expiration ? new Date(data.date_of_expiration) : null,
+        });
 
         return {
+          pixPaymentId: created?.id ?? null,
           id: data?.id,
+          externalReference,
           status: data?.status,
           qrCode: pixInfo?.qr_code ?? null,
           qrCodeBase64: pixInfo?.qr_code_base64 ?? null,
           ticketUrl: pixInfo?.ticket_url ?? null,
+        };
+      }),
+    getPixStatus: adminProcedure
+      .input(z.object({ pixPaymentId: z.number() }))
+      .query(async ({ input }) => {
+        let record = await getPixPaymentById(input.pixPaymentId);
+        if (!record) {
+          throw new Error("Pagamento PIX nao encontrado");
+        }
+
+        if (record.providerPaymentId && ENV.mpAccessToken && !record.creditedAt && record.status !== "approved") {
+          try {
+            const paymentResp = await axios.get(`https://api.mercadopago.com/v1/payments/${record.providerPaymentId}`, {
+              headers: { Authorization: `Bearer ${ENV.mpAccessToken}` },
+            });
+            const synced = await syncPixPaymentRecord(mapMercadoPagoPix(paymentResp.data));
+            if (synced) {
+              record = synced;
+            }
+            if (record.status === "approved" && !record.creditedAt && record.providerPaymentId) {
+              await creditPixPaymentIfNeeded({
+                pixPaymentId: record.id,
+                usuarioId: record.usuarioId,
+                valor: Number(record.valor),
+                providerPaymentId: record.providerPaymentId,
+              });
+              const refreshed = await getPixPaymentById(record.id);
+              if (refreshed) {
+                record = refreshed;
+              }
+            }
+          } catch (error) {
+            console.warn("[payments.getPixStatus] refresh failed", error);
+          }
+        }
+
+        if (record.status === "approved" && !record.creditedAt && record.providerPaymentId) {
+          await creditPixPaymentIfNeeded({
+            pixPaymentId: record.id,
+            usuarioId: record.usuarioId,
+            valor: Number(record.valor),
+            providerPaymentId: record.providerPaymentId,
+          });
+          const refreshed = await getPixPaymentById(record.id);
+          if (refreshed) {
+            record = refreshed;
+          }
+        }
+
+        return {
+          id: record.id,
+          usuarioId: record.usuarioId,
+          providerPaymentId: record.providerPaymentId,
+          externalReference: record.externalReference,
+          status: record.status,
+          valor: Number(record.valor),
+          descricao: record.descricao,
+          qrCode: record.qrCode,
+          qrCodeBase64: record.qrCodeBase64,
+          ticketUrl: record.ticketUrl,
+          approvedAt: record.approvedAt,
+          creditedAt: record.creditedAt,
+          expiresAt: record.expiresAt,
+          createdAt: record.createdAt,
         };
       }),
   }),
@@ -635,10 +759,6 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
-
-
-
-
 
 
 

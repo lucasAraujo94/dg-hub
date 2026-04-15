@@ -28,6 +28,10 @@ export default function Admin() {
   const [inscricaoUsuarioId, setInscricaoUsuarioId] = useState("");
   const [inscricaoCampeonatoId, setInscricaoCampeonatoId] = useState("");
   const [sorteioCampeonatoId, setSorteioCampeonatoId] = useState("");
+  const [depositoUsuarioId, setDepositoUsuarioId] = useState("");
+  const [depositoValor, setDepositoValor] = useState("");
+  const [depositoDescricao, setDepositoDescricao] = useState("");
+  const [pixPaymentId, setPixPaymentId] = useState<number | null>(null);
   const depositoRef = useRef<HTMLDivElement | null>(null);
 
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, {
@@ -84,6 +88,22 @@ export default function Admin() {
     onSuccess: () => usuariosQuery.refetch(),
     onError: error => toast.error(error.message || "Falha ao atualizar permissoes"),
   });
+  const criarPixMutation = trpc.payments.criarPix.useMutation({
+    onSuccess: data => {
+      setPixPaymentId(data.pixPaymentId ?? null);
+      toast.success("PIX gerado");
+    },
+    onError: error => toast.error(error.message || "Falha ao gerar PIX"),
+  });
+  const pixStatusQuery = trpc.payments.getPixStatus.useQuery(
+    { pixPaymentId: pixPaymentId ?? 0 },
+    {
+      enabled: Boolean(pixPaymentId),
+      refetchOnWindowFocus: false,
+      refetchInterval: query =>
+        query.state.data && !query.state.data.creditedAt && query.state.data.status !== "approved" ? 5000 : false,
+    }
+  );
 
   if (user?.role !== "admin") {
     return (
@@ -151,6 +171,36 @@ export default function Admin() {
     const role = currentRole === "admin" ? "user" : "admin";
     setRoleMutation.mutate({ openId, email: email ?? undefined, role });
   };
+
+  const handleGerarPix = async () => {
+    if (!depositoUsuarioId || !depositoValor) {
+      toast.error("Informe jogador e valor");
+      return;
+    }
+    const valor = Number(depositoValor);
+    if (Number.isNaN(valor) || valor <= 0) {
+      toast.error("Informe um valor valido");
+      return;
+    }
+    const data = await criarPixMutation.mutateAsync({
+      usuarioId: Number(depositoUsuarioId),
+      valor,
+      descricao: depositoDescricao || undefined,
+    });
+    if (data.pixPaymentId) {
+      setPixPaymentId(data.pixPaymentId);
+    }
+  };
+
+  const pixStatusLabel = (() => {
+    const status = pixStatusQuery.data?.status ?? "";
+    if (status === "approved") return "Aprovado";
+    if (status === "pending") return "Aguardando pagamento";
+    if (status === "cancelled") return "Cancelado";
+    if (status === "rejected") return "Recusado";
+    if (status === "in_process") return "Em processamento";
+    return status || "Nao iniciado";
+  })();
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -414,26 +464,82 @@ export default function Admin() {
             <TabsContent value="depositos" className="space-y-6">
               <div className="card-elegant" ref={depositoRef}>
                 <h2 className="text-xl font-bold mb-2">Depositar via PIX para Jogador</h2>
-                <p className="text-sm text-muted-foreground mb-4">Em breve. Funcionalidade em finalizacao.</p>
-                <div className="opacity-60 pointer-events-none select-none">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="text-sm font-semibold mb-2 block">Jogador</label>
-                      <select className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm" disabled>
-                        <option>Em breve</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-semibold mb-2 block">Valor (R$)</label>
-                      <Input placeholder="Em breve" disabled />
-                    </div>
+                <p className="text-sm text-muted-foreground mb-4">Gere um PIX real, acompanhe o status e aguarde a confirmacao automatica.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Jogador</label>
+                    <select
+                      className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm"
+                      value={depositoUsuarioId}
+                      onChange={e => setDepositoUsuarioId(e.target.value)}
+                    >
+                      <option value="">Selecione um jogador</option>
+                      {usuariosSelect.map(u => (
+                        <option key={u.id} value={u.id}>
+                          {u.name || u.email || u.openId}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="mt-4 flex justify-end">
-                    <Button className="btn-secondary" disabled>
-                      Em breve
-                    </Button>
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Valor (R$)</label>
+                    <Input value={depositoValor} onChange={e => setDepositoValor(e.target.value)} placeholder="Ex: 25.00" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Descricao</label>
+                    <Input value={depositoDescricao} onChange={e => setDepositoDescricao(e.target.value)} placeholder="Premiacao, bonus, deposito..." />
                   </div>
                 </div>
+                <div className="mt-4 flex justify-end">
+                  <Button className="btn-secondary" onClick={handleGerarPix} disabled={criarPixMutation.isPending}>
+                    {criarPixMutation.isPending ? "Gerando..." : "Gerar PIX"}
+                  </Button>
+                </div>
+
+                {pixStatusQuery.data ? (
+                  <div className="mt-6 rounded-xl border border-border/60 bg-card/50 p-4 space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-semibold">Status: {pixStatusLabel}</p>
+                      <p className="text-xs text-muted-foreground">
+                        ID interno {pixStatusQuery.data.id} - pagamento {pixStatusQuery.data.providerPaymentId ?? "aguardando criacao"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Valor: R$ {pixStatusQuery.data.valor.toFixed(2)}
+                      </p>
+                    </div>
+
+                    {pixStatusQuery.data.qrCodeBase64 ? (
+                      <div className="flex flex-col items-start gap-3">
+                        <img
+                          src={`data:image/png;base64,${pixStatusQuery.data.qrCodeBase64}`}
+                          alt="QR Code PIX"
+                          className="w-56 max-w-full rounded-lg border border-border bg-white p-3"
+                        />
+                        <p className="text-xs text-muted-foreground break-all">{pixStatusQuery.data.qrCode}</p>
+                        {pixStatusQuery.data.ticketUrl ? (
+                          <a
+                            href={pixStatusQuery.data.ticketUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm text-primary underline"
+                          >
+                            Abrir comprovante do PIX
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">QR Code ainda nao disponivel.</p>
+                    )}
+
+                    {pixStatusQuery.data.creditedAt ? (
+                      <p className="text-sm text-green-400">
+                        Saldo creditado em {new Date(pixStatusQuery.data.creditedAt).toLocaleString("pt-BR")}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">O saldo sera creditado automaticamente apos o pagamento aprovado.</p>
+                    )}
+                  </div>
+                ) : null}
               </div>
             </TabsContent>
 

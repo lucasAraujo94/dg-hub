@@ -199,7 +199,7 @@ export default function Campeonatos() {
           jogo: (camp as { jogo?: string }).jogo ?? "Jogo",
           status,
           participantes: participantesCount,
-          premio: (camp as { premioValor?: number }).premioValor ?? 0,
+          premio: Number(camp.premioValor ?? 0),
           inicio: dataInicio ? dataInicio.toLocaleString("pt-BR") : "Data a definir",
           fase,
           inscricoesEncerradas,
@@ -667,5 +667,4 @@ export default function Campeonatos() {
     </div>
   );
 }
-
 
