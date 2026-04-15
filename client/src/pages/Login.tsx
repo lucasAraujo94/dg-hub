@@ -46,8 +46,6 @@ export default function Login() {
     }
   }, [isAuthenticated]);
 
-  const showNativeBrowserHint = isNativeApp && hasOAuthProvider;
-
   const stopNativeOauthPolling = useCallback(() => {
     if (pollingRef.current !== null) {
       window.clearInterval(pollingRef.current);
@@ -277,32 +275,17 @@ export default function Login() {
                 </div>
 
                 <div className="mb-4 flex flex-col gap-3">
-                  {showNativeBrowserHint ? (
-                    <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-                      O login com Google abre no navegador do aparelho e volta para o app ao terminar.
-                    </div>
-                  ) : null}
                   <div className="grid gap-2">
                     <Button
                       type="button"
                       onClick={handleOauth}
                       variant="secondary"
                       className="w-full justify-center gap-2 bg-white text-black hover:bg-white/90"
+                      disabled={isNativeOauthPending}
                     >
                       <Mail className="h-4 w-4" />
-                      Entrar com Google
+                      {isNativeOauthPending ? "Aguardando conclusao..." : "Entrar com Google"}
                     </Button>
-                    {showNativeBrowserHint ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        onClick={handleOauth}
-                        disabled={isNativeOauthPending}
-                      >
-                        {isNativeOauthPending ? "Aguardando conclusao..." : "Continuar no navegador"}
-                      </Button>
-                    ) : null}
                   </div>
                   <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
                     <div className="h-px flex-1 bg-border" />
