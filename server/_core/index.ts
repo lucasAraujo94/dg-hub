@@ -85,6 +85,13 @@ async function startServer() {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
   app.use("/uploads", express.static(uploadsDir));
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({
+      ok: true,
+      service: "dg-hub",
+      now: new Date().toISOString(),
+    });
+  });
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // Webhook Mercado Pago PIX

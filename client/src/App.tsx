@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Router as WouterRouter, Route, Switch } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
+import { AppBootGate } from "./components/AppBootGate";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "@/pages/Home";
@@ -51,11 +52,13 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
-          <Toaster />
-          {/* HashRouter resolve for GitHub Pages (evita 404 no refresh) */}
-          <WouterRouter hook={useHashLocation}>
-            <Router />
-          </WouterRouter>
+          <AppBootGate>
+            <Toaster />
+            {/* HashRouter resolve for GitHub Pages (evita 404 no refresh) */}
+            <WouterRouter hook={useHashLocation}>
+              <Router />
+            </WouterRouter>
+          </AppBootGate>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
