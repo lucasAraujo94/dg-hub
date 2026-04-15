@@ -285,6 +285,7 @@ export const appRouter = router({
             headers: {
               Authorization: `Bearer ${ENV.mpAccessToken}`,
               "Content-Type": "application/json",
+              "X-Idempotency-Key": externalReference,
             },
           });
         } catch (error) {
@@ -790,7 +791,6 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
-
 
 
 
