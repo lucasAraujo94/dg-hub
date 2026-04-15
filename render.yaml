@@ -4,8 +4,8 @@ services:
     env: node
     buildCommand: >
       corepack enable || true;
-      npm install -g pnpm@10.4.1;
+      corepack prepare pnpm@10.4.1 --activate;
       rm -rf dist .vite;
       pnpm install --frozen-lockfile;
       pnpm run build
-    startCommand: pnpm start
+    startCommand: node dist/index.cjs
