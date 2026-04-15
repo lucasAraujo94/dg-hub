@@ -5,6 +5,8 @@ const config: CapacitorConfig = {
   appName: "DG Hub",
   webDir: "dist/public",
   server: {
+    url: "https://app.dggames.online",
+    cleartext: false,
     androidScheme: "https",
   },
 };
