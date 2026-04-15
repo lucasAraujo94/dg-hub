@@ -3,7 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
-import { defineConfig, type Plugin, type ViteDevServer } from "vite";
+import { defineConfig, loadEnv, type Plugin, type ViteDevServer } from "vite";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -143,40 +143,52 @@ const plugins = [
   vitePluginManusDebugCollector(),
 ];
 
-export default defineConfig({
-base: "/",
-  plugins,
-  resolve: {
-    dedupe: ["react", "react-dom"],
-    alias: {
-      react: path.resolve(PROJECT_ROOT, "node_modules/react"),
-      "react-dom": path.resolve(PROJECT_ROOT, "node_modules/react-dom"),
-      "@": path.resolve(PROJECT_ROOT, "client", "src"),
-      "@shared": path.resolve(PROJECT_ROOT, "shared"),
-      "@assets": path.resolve(PROJECT_ROOT, "attached_assets"),
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, PROJECT_ROOT, "");
+  const googleClientId = env.VITE_GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_ID || "";
+  const oauthPortalUrl = env.VITE_OAUTH_PORTAL_URL || env.OAUTH_SERVER_URL || "";
+  const appId = env.VITE_APP_ID || env.APP_ID || "";
+
+  return {
+    base: "/",
+    plugins,
+    define: {
+      "import.meta.env.VITE_GOOGLE_CLIENT_ID": JSON.stringify(googleClientId),
+      "import.meta.env.VITE_OAUTH_PORTAL_URL": JSON.stringify(oauthPortalUrl),
+      "import.meta.env.VITE_APP_ID": JSON.stringify(appId),
     },
-  },
-  envDir: path.resolve(PROJECT_ROOT),
-  root: path.resolve(PROJECT_ROOT, "client"),
-  publicDir: path.resolve(PROJECT_ROOT, "client", "public"),
-  build: {
-    outDir: path.resolve(PROJECT_ROOT, "dist/public"),
-    emptyOutDir: true,
-  },
-  server: {
-    host: true,
-    allowedHosts: [
-      ".manuspre.computer",
-      ".manus.computer",
-      ".manus-asia.computer",
-      ".manuscomputer.ai",
-      ".manusvm.computer",
-      "localhost",
-      "127.0.0.1",
-    ],
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
+    resolve: {
+      dedupe: ["react", "react-dom"],
+      alias: {
+        react: path.resolve(PROJECT_ROOT, "node_modules/react"),
+        "react-dom": path.resolve(PROJECT_ROOT, "node_modules/react-dom"),
+        "@": path.resolve(PROJECT_ROOT, "client", "src"),
+        "@shared": path.resolve(PROJECT_ROOT, "shared"),
+        "@assets": path.resolve(PROJECT_ROOT, "attached_assets"),
+      },
     },
-  },
+    envDir: path.resolve(PROJECT_ROOT),
+    root: path.resolve(PROJECT_ROOT, "client"),
+    publicDir: path.resolve(PROJECT_ROOT, "client", "public"),
+    build: {
+      outDir: path.resolve(PROJECT_ROOT, "dist/public"),
+      emptyOutDir: true,
+    },
+    server: {
+      host: true,
+      allowedHosts: [
+        ".manuspre.computer",
+        ".manus.computer",
+        ".manus-asia.computer",
+        ".manuscomputer.ai",
+        ".manusvm.computer",
+        "localhost",
+        "127.0.0.1",
+      ],
+      fs: {
+        strict: true,
+        deny: ["**/.*"],
+      },
+    },
+  };
 });
