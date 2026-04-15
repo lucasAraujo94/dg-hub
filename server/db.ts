@@ -1043,7 +1043,7 @@ export async function createPixPaymentRecord(input: CreatePixPaymentInput) {
       ${input.externalReference},
       ${input.providerPaymentId ?? null},
       ${input.status ?? "pending"},
-      ${input.valor.toFixed(2)},
+      CAST(${input.valor.toFixed(2)} AS DECIMAL(10,2)),
       ${input.descricao ?? null},
       ${input.qrCode ?? null},
       ${input.qrCodeBase64 ?? null},
@@ -1095,7 +1095,7 @@ export async function syncPixPaymentRecord(input: SyncPixPaymentInput) {
     SET
       "providerPaymentId" = ${providerPaymentId},
       "status" = ${input.status},
-      "valor" = COALESCE(${valor}, "valor"),
+      "valor" = COALESCE(CAST(${valor} AS DECIMAL(10,2)), "valor"),
       "qrCode" = COALESCE(${input.qrCode ?? null}, "qrCode"),
       "qrCodeBase64" = COALESCE(${input.qrCodeBase64 ?? null}, "qrCodeBase64"),
       "ticketUrl" = COALESCE(${input.ticketUrl ?? null}, "ticketUrl"),
