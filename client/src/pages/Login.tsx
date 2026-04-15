@@ -1,3 +1,5 @@
+import { useAuth } from "@/_core/hooks/useAuth";
+import { APP_ORIGIN, getLoginUrl, hasOAuthProvider, isNativeApp } from "@/const";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -8,17 +10,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { trpc } from "@/lib/trpc";
-import { APP_ORIGIN, getLoginUrl, hasOAuthProvider, isNativeApp } from "@/const";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { Link } from "wouter";
-import { Mail, MessageCircle, ShieldCheck, Trophy } from "lucide-react";
-import { z } from "zod";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { Browser } from "@capacitor/browser";
 import {
   clearPendingOAuthNonce,
   createOAuthNonce,
@@ -26,6 +17,15 @@ import {
   setNativeSessionToken,
   setPendingOAuthNonce,
 } from "@/lib/nativeAuth";
+import { trpc } from "@/lib/trpc";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Browser } from "@capacitor/browser";
+import { Mail, MessageCircle, ShieldCheck, Trophy } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { Link } from "wouter";
+import { z } from "zod";
 
 const loginSchema = z.object({
   email: z.string().email("E-mail invalido"),
@@ -158,7 +158,7 @@ export default function Login() {
         setPendingOAuthNonce(nativeNonce);
         startNativeOauthPolling(nativeNonce);
       }
-      await Browser.open({ url: oauthUrl }); // abre no navegador padrão (Custom Tab)
+      await Browser.open({ url: oauthUrl }); // abre no navegador padrao (Custom Tab)
     } catch (error) {
       if (isNativeApp) {
         clearPendingOAuthNonce();
@@ -214,7 +214,9 @@ export default function Login() {
             </Button>
             <Button variant="outline" asChild className="text-sm gap-2 rounded-full">
               <Link href="/">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">â†</span>
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">
+                  ←
+                </span>
                 <span>Voltar</span>
               </Link>
             </Button>
@@ -227,39 +229,39 @@ export default function Login() {
               <p className="text-xs uppercase tracking-[0.32em] text-emerald-200/80">Bem-vindo</p>
               <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
                 Conecte-se ao{" "}
-                <span className="text-transparent bg-gradient-to-r from-emerald-300 via-white to-primary bg-clip-text">
+                <span className="bg-gradient-to-r from-emerald-300 via-white to-primary bg-clip-text text-transparent">
                   DG Games
                 </span>
               </h1>
               <p className="text-base text-muted-foreground">
                 Entre para disputar campeonatos, acompanhar chaveamentos em tempo real e conversar com a comunidade.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
+              <div className="grid grid-cols-1 gap-3 text-sm text-muted-foreground sm:grid-cols-2">
                 <div className="flex items-start gap-2">
-                  <Trophy className="w-4 h-4 text-emerald-300 mt-0.5" />
+                  <Trophy className="mt-0.5 h-4 w-4 text-emerald-300" />
                   <div>
                     <p className="font-semibold text-foreground">Campeonatos ao vivo</p>
                     <p>Inscreva-se e receba lembrete 24h antes da partida.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <ShieldCheck className="w-4 h-4 text-primary mt-0.5" />
+                  <ShieldCheck className="mt-0.5 h-4 w-4 text-primary" />
                   <div>
-                    <p className="font-semibold text-foreground">SessÃ£o protegida</p>
-                    <p>Login OAuth com cookies seguros e expiraÃ§Ã£o curta.</p>
+                    <p className="font-semibold text-foreground">Sessão protegida</p>
+                    <p>Login OAuth com cookies seguros e expiração curta.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <MessageCircle className="w-4 h-4 text-cyan-300 mt-0.5" />
+                  <MessageCircle className="mt-0.5 h-4 w-4 text-cyan-300" />
                   <div>
                     <p className="font-semibold text-foreground">Chat integrado</p>
-                    <p>Participe das conversas e mantenha seu perfil visÃ­vel.</p>
+                    <p>Participe das conversas e mantenha seu perfil visível.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Mail className="w-4 h-4 text-amber-300 mt-0.5" />
+                  <Mail className="mt-0.5 h-4 w-4 text-amber-300" />
                   <div>
-                    <p className="font-semibold text-foreground">Perfil Ãºnico</p>
+                    <p className="font-semibold text-foreground">Perfil único</p>
                     <p>Foto e apelido sincronizados em todo o app.</p>
                   </div>
                 </div>
@@ -284,7 +286,7 @@ export default function Login() {
                       disabled={isNativeOauthPending}
                     >
                       <Mail className="h-4 w-4" />
-                      {isNativeOauthPending ? "Aguardando conclusao..." : "Entrar com Google"}
+                      {isNativeOauthPending ? "Aguardando conclusão..." : "Entrar com Google"}
                     </Button>
                   </div>
                   <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
@@ -326,7 +328,7 @@ export default function Login() {
 
                     <div className="flex flex-col gap-3 text-sm">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>NÃ£o compartilhe sua senha.</span>
+                        <span>Não compartilhe sua senha.</span>
                         <a className="text-primary underline-offset-4 hover:underline">Precisa de ajuda?</a>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -348,9 +350,3 @@ export default function Login() {
     </div>
   );
 }
-
-
-
-
-
-

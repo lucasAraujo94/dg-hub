@@ -1,4 +1,4 @@
-﻿import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Medal, Flame, Award, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
@@ -186,7 +186,7 @@ export default function Ranking() {
           <div className="flex items-center justify-between mb-6">
             <Button asChild variant="outline" className="gap-2 rounded-full">
               <Link href="/">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">←</span>
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">?</span>
                 <span>Voltar</span>
               </Link>
             </Button>

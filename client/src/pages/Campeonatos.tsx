@@ -519,7 +519,7 @@ export default function Campeonatos() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Campeonatos disponiveis</p>
-              <h2 className="text-xl font-semibold">Escolha um campeonato</h2>
+              <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
             </div>
           </div>
           {campeonatos.length === 0 ? (
@@ -580,9 +580,7 @@ export default function Campeonatos() {
               <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
             </div>
             {rounds.length > 0 ? (
-              <span className="text-sm text-muted-foreground">
-                {rounds[0].length} partida{rounds[0].length === 1 ? "" : "s"} inicial{rounds[0].length === 1 ? "" : "is"} • seed fixo para todos
-              </span>
+              <span className="text-sm text-muted-foreground">{rounds[0].length} partida{rounds[0].length === 1 ? "" : "s"} inicial{rounds[0].length === 1 ? "" : "is"} • seed fixo para todos</span>
             ) : null}
           </div>
           {rounds.length === 0 ? (

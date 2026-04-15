@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { Send, Paperclip, X, ArrowLeft, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";

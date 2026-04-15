@@ -1,4 +1,4 @@
-﻿import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -92,7 +92,7 @@ export default function Admin() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Acesso negado</h2>
           <p className="text-muted-foreground mb-6">Apenas administradores podem acessar este painel.</p>
-          <p className="text-sm text-muted-foreground">SessÃ£o expira em ~10 min</p>
+          <p className="text-sm text-muted-foreground">Sessão expira em ~10 min</p>
           <Link href="/">
             <Button className="btn-primary w-full">Voltar para Home</Button>
           </Link>

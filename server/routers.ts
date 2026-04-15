@@ -1,4 +1,4 @@
-﻿import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
@@ -267,7 +267,7 @@ export const appRouter = router({
         const allowedMime = ["image/png", "image/jpeg", "image/webp", "audio/mpeg", "audio/webm", "audio/ogg", "audio/mp3"];
         const mime = input.mimeType.toLowerCase();
         if (!allowedMime.includes(mime)) {
-          throw new Error("Apenas imagens PNG/JPEG/WEBP ou audio MP3/OGG/WEBM são permitidos");
+          throw new Error("Apenas imagens PNG/JPEG/WEBP ou áudio MP3/OGG/WEBM são permitidos");
         }
         const approxBytes = Math.floor((input.dataBase64.length * 3) / 4); // tamanho estimado
         const MAX_BYTES = 5 * 1024 * 1024; // 5MB para evitar payloads gigantes

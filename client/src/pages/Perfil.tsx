@@ -47,7 +47,7 @@ export default function Perfil() {
     if (emblemasQuery.data?.length) {
       return emblemasQuery.data.map(item => ({
         nome: (item as { emblema?: { nome?: string | null } }).emblema?.nome ?? `Emblema #${item.emblemaId}`,
-        icon: (item as { emblema?: { iconeUrl?: string | null } }).emblema?.iconeUrl || "🏅",
+        icon: (item as { emblema?: { iconeUrl?: string | null } }).emblema?.iconeUrl || "OK",
         data: item.dataConquista ? new Date(item.dataConquista).toLocaleDateString("pt-BR") : "",
       }));
     }
@@ -149,7 +149,7 @@ export default function Perfil() {
         /* ignore */
       }
     },
-    onError: error => toast.error(error.message || "Falha ao salvar preferÇõÇæes"),
+    onError: error => toast.error(error.message || "Falha ao salvar preferências"),
   });
 
   // Sincroniza avatar inicial
@@ -471,7 +471,7 @@ export default function Perfil() {
                     style={{ objectPosition: `${photoPosX}% ${photoPosY}%` }}
                   />
                 ) : (
-                  <span className="text-4xl">🙂</span>
+                  <span className="text-4xl">OK</span>
                 )}
                 {profilePhotoUrl ? (
                   <div className="absolute bottom-1 right-1 px-2 py-1 rounded-full bg-black/60 text-[10px] text-white border border-white/10">

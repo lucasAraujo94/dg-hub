@@ -1,4 +1,4 @@
-﻿import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
@@ -304,14 +304,14 @@ export default function Home() {
           position: idx + 1,
           name,
           points: `${r.pontuacao} pontos`,
-          badge: "ðŸ…",
+          badge: "TOP",
         };
       });
     }
     return [
-      { position: 1, name: "Anna", points: "CampeÃ£ - Ludo", badge: "ðŸ…" },
-      { position: 2, name: "Lucas", points: "CampeÃ£o - Golpeie e Esquiva", badge: "ðŸ…" },
-      { position: 3, name: "Reeh", points: "CampeÃ£o - Vermelhinha", badge: "ðŸ…" },
+      { position: 1, name: "Anna", points: "Campeã - Ludo", badge: "TOP" },
+      { position: 2, name: "Lucas", points: "Campeão - Golpeie e Esquiva", badge: "TOP" },
+      { position: 3, name: "Reeh", points: "Campeão - Vermelhinha", badge: "TOP" },
     ];
   }, [rankingTopQuery.data]);
 
@@ -698,7 +698,7 @@ export default function Home() {
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">OpÃ§Ãµes (1 por linha, mÃ­nimo 2 e mÃ¡ximo 6)</p>
+                <p className="text-sm text-muted-foreground mb-1">Opções (1 por linha, mínimo 2 e máximo 6)</p>
                 <textarea
                   className="w-full rounded-md bg-black/30 border border-emerald-400/40 px-3 py-2 text-sm text-white min-h-[120px]"
                   value={pollOptionsText}
@@ -714,12 +714,12 @@ export default function Home() {
                     .map(opt => opt.trim())
                     .filter(Boolean);
                   if (options.length < 2 || options.length > 6) {
-                    toast.error("Informe entre 2 e 6 opÃ§Ãµes");
+                    toast.error("Informe entre 2 e 6 opções");
                     return;
                   }
                   const year = (pollClosesAt.split("T")[0] || "").split("-")[0];
                   if (year && year.length > 4) {
-                    toast.error("O ano deve ter no mÃ¡ximo 4 dÃ­gitos");
+                    toast.error("O ano deve ter no máximo 4 dígitos");
                     return;
                   }
                   pollCreateMutation.mutate({
@@ -808,7 +808,7 @@ export default function Home() {
                     if (status === "cancelado" || status === "finalizado") return true;
                     if (!dataInicio) return false;
                     const diff = dataInicio.getTime() - Date.now();
-                    if (diff <= 0) return true; // jÃ¡ comeÃ§ou
+                    if (diff <= 0) return true; // já começou
                     return diff < 24 * 60 * 60 * 1000; // menos de 24h
                   })();
                   const faseLabel =
@@ -834,7 +834,7 @@ export default function Home() {
                         {(camp as { descricao?: string | null }).descricao ?? "Campeonato ativo"}
                       </p>
                       <div className="flex items-center justify-between mt-1 text-sm">
-                        <span>PrÃªmio</span>
+                        <span>Prêmio</span>
                         <span className="font-medium text-yellow-400">R$ {(camp as any).premioValor}</span>
                       </div>
                       <Button
@@ -862,7 +862,7 @@ export default function Home() {
                 </Button>
               </div>
               <Card className="p-5 border-border/70 bg-card/60">
-                <p className="text-sm text-muted-foreground">Veja e edite seus dados, conquistas e histÃ³rico de campeonatos.</p>
+                <p className="text-sm text-muted-foreground">Veja e edite seus dados, conquistas e histórico de campeonatos.</p>
               </Card>
             </section>
           )}
@@ -879,7 +879,7 @@ export default function Home() {
               </div>
               <Card className="p-5 border-border/70 bg-card/60">
                 <p className="text-sm text-muted-foreground">
-                  Converse com a comunidade e acompanhe transmissÃµes em tempo real.
+                  Converse com a comunidade e acompanhe transmissões em tempo real.
                 </p>
               </Card>
             </section>

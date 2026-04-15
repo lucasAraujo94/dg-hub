@@ -591,7 +591,7 @@ export async function getRankingPorTipo(tipo: "geral" | "semanal" | "mensal", li
 
   const entries = usuarios.map(user => {
     const campeaoWins = campeaoMap.get(user.id) ?? [];
-    // Se nÃ£o existir linha na tabela de ranking, assume 0 + (100 * titulos ganhos)
+    // Se não existir linha na tabela de ranking, assume 0 + (100 * títulos ganhos)
     const pontosBase = rankingMap.get(user.id) ?? 0;
     const pontos = pontosBase > 0 ? pontosBase : campeaoWins.length * 100;
     return {
