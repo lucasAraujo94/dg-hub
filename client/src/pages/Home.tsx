@@ -22,7 +22,7 @@ import { Link } from "wouter";
 import { useEffect, useMemo, useRef, useState } from "react";
 import HomeBg from "../assets/dg-games-bg.png";
 import { toast } from "sonner";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, isNativeApp } from "@/const";
 import { readLastSeenChatAt, writeLastSeenChatAt } from "@/lib/chatNotifications";
 
 export default function Home() {
@@ -363,12 +363,14 @@ export default function Home() {
                 ) : null}
               </span>
             </div>
-            <Button asChild variant="secondary" size="sm" className="w-full md:w-auto">
-              <a href="/apk/dg-hub.apk" download className="inline-flex items-center gap-2">
-                <Download className="w-4 h-4" />
-                Baixar APK
-              </a>
-            </Button>
+            {!isNativeApp ? (
+              <Button asChild variant="secondary" size="sm" className="w-full md:w-auto">
+                <a href="/apk/dg-hub.apk" download className="inline-flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Baixar APK
+                </a>
+              </Button>
+            ) : null}
             <Button onClick={logout} variant="outline" size="sm" className="w-full md:w-auto">
               Sair
             </Button>
@@ -889,7 +891,6 @@ export default function Home() {
     </div>
   );
 }
-
 
 
 
