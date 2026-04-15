@@ -786,11 +786,6 @@ export async function criarSolicitacaoSaque(usuarioId: number, valor: number, wa
       throw new Error("Saldo insuficiente para solicitar o saque");
     }
 
-    await tx.user.update({
-      where: { id: usuarioId },
-      data: { saldoPremio: { decrement: valor } },
-    });
-
     const saque = await tx.solicitacaoSaque.create({
       data: {
         usuarioId,
@@ -901,11 +896,6 @@ export async function rejeitarSolicitacaoSaque(solicitacaoId: number) {
       throw new Error("Saque pago nao pode ser rejeitado");
     }
 
-    await tx.user.update({
-      where: { id: saque.usuarioId },
-      data: { saldoPremio: { increment: Number(saque.valor) } },
-    });
-
     const updated = await tx.solicitacaoSaque.update({
       where: { id: solicitacaoId },
       data: { status: "rejeitado" },
@@ -915,7 +905,7 @@ export async function rejeitarSolicitacaoSaque(solicitacaoId: number) {
       data: {
         usuarioId: saque.usuarioId,
         tipo: "saque_rejeitado",
-        mensagem: `Seu saque de R$ ${Number(saque.valor).toFixed(2)} foi rejeitado e o saldo foi devolvido.`,
+        mensagem: `Seu saque de R$ ${Number(saque.valor).toFixed(2)} foi rejeitado.`,
       },
     });
 
@@ -944,6 +934,22 @@ export async function marcarSolicitacaoSaqueComoPaga(solicitacaoId: number) {
     if (saque.status === "pago") {
       return saque;
     }
+
+    const user = await tx.user.findUnique({
+      where: { id: saque.usuarioId },
+      select: { id: true, saldoPremio: true },
+    });
+    if (!user) {
+      throw new Error("Usuario do saque nao encontrado");
+    }
+    if (Number(user.saldoPremio) < Number(saque.valor)) {
+      throw new Error("Saldo insuficiente para concluir o saque");
+    }
+
+    await tx.user.update({
+      where: { id: saque.usuarioId },
+      data: { saldoPremio: { decrement: Number(saque.valor) } },
+    });
 
     const updated = await tx.solicitacaoSaque.update({
       where: { id: solicitacaoId },
