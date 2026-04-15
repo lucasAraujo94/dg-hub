@@ -25,57 +25,20 @@ export const getApiBaseUrl = () => {
   return "";
 };
 
-// Generate login URL at runtime so redirect URI is consistent
-export const hasGoogleClientId = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
-export const hasOAuthProvider =
-  hasGoogleClientId || Boolean(import.meta.env.VITE_OAUTH_PORTAL_URL);
+// OAuth now starts on the backend so frontend build vars do not gate the flow.
+export const hasGoogleClientId = true;
+export const hasOAuthProvider = true;
 
 export const getLoginUrl = (
   source: string = "unspecified",
   options?: { nativeNonce?: string }
 ) => {
-  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
-  const appId = import.meta.env.VITE_APP_ID || "dev";
-  const redirectUri = getRedirectUri();
-  if (!redirectUri) {
-    console.error("[OAuth] redirect_uri empty, aborting authorize", { source });
-    return "";
+  const returnTo = (typeof window !== "undefined" ? window.location.pathname : "/") || "/";
+  const url = new URL(`${APP_ORIGIN}/api/oauth/google/start`);
+  url.searchParams.set("returnTo", returnTo);
+  url.searchParams.set("source", source);
+  if (options?.nativeNonce) {
+    url.searchParams.set("nativeNonce", options.nativeNonce);
   }
-  const statePayload = {
-    redirectUri,
-    returnTo: (typeof window !== "undefined" ? window.location.pathname : "/") || "/",
-    nativeNonce: options?.nativeNonce,
-  };
-  const state = btoa(JSON.stringify(statePayload));
-
-  // Prefer Google when client id is provided
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  if (googleClientId) {
-    const googleAuth = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-    googleAuth.searchParams.set("client_id", googleClientId);
-    googleAuth.searchParams.set("redirect_uri", redirectUri);
-    googleAuth.searchParams.set("response_type", "code");
-    googleAuth.searchParams.set("scope", "openid email profile");
-    googleAuth.searchParams.set("state", state);
-    googleAuth.searchParams.set("prompt", "select_account");
-    console.log("oauth_authorize_redirect_uri:", redirectUri, "source:", source);
-    return googleAuth.toString();
-  }
-
-  // Otherwise, try custom OAuth portal
-  if (oauthPortalUrl) {
-    try {
-      const url = new URL(`${oauthPortalUrl}/app-auth`);
-      url.searchParams.set("appId", appId);
-      url.searchParams.set("redirectUri", redirectUri);
-      url.searchParams.set("state", state);
-      url.searchParams.set("type", "signIn");
-      return url.toString();
-    } catch (error) {
-      console.warn("[Auth] Invalid VITE_OAUTH_PORTAL_URL, falling back to Google login screen:", error);
-    }
-  }
-
-  // Fallback: force Google login screen (no tokens without client config)
-  return "https://accounts.google.com/ServiceLogin?prompt=select_account";
+  return url.toString();
 };

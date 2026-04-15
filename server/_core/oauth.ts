@@ -3,6 +3,7 @@ import axios from "axios";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
+import { ENV } from "./env";
 import { sdk } from "./sdk";
 
 type OAuthState = {
@@ -72,6 +73,36 @@ function cleanupExpiredNativeSessions(now = Date.now()) {
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
+}
+
+function buildGoogleAuthorizeUrl(req: Request) {
+  if (!ENV.googleClientId) {
+    throw new Error("GOOGLE_CLIENT_ID nao configurado");
+  }
+
+  const redirectUri = "https://app.dggames.online/auth/google/callback";
+  const returnTo = sanitizeReturnTo(getQueryParam(req, "returnTo") ?? "/");
+  const nativeNonce = getQueryParam(req, "nativeNonce");
+  const source = getQueryParam(req, "source") ?? "server";
+  const state = Buffer.from(
+    JSON.stringify({
+      redirectUri,
+      returnTo,
+      nativeNonce,
+    }),
+    "utf-8"
+  ).toString("base64");
+
+  const googleAuth = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  googleAuth.searchParams.set("client_id", ENV.googleClientId);
+  googleAuth.searchParams.set("redirect_uri", redirectUri);
+  googleAuth.searchParams.set("response_type", "code");
+  googleAuth.searchParams.set("scope", "openid email profile");
+  googleAuth.searchParams.set("state", state);
+  googleAuth.searchParams.set("prompt", "select_account");
+
+  console.log("[OAuth] authorize redirect", { redirectUri, source, returnTo, native: Boolean(nativeNonce) });
+  return googleAuth.toString();
 }
 
 function describeAxiosError(error: unknown) {
@@ -207,6 +238,17 @@ async function handleOAuthCallback(req: Request, res: Response) {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  app.get("/api/oauth/google/start", (req, res) => {
+    try {
+      const url = buildGoogleAuthorizeUrl(req);
+      res.redirect(302, url);
+    } catch (error) {
+      res.status(500).json({
+        error: "OAuth start failed",
+        detail: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
   app.get("/api/oauth/callback", handleOAuthCallback);
   app.get("/auth/google/callback", handleOAuthCallback);
   app.get("/api/oauth/native-session", (req, res) => {
