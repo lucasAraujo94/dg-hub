@@ -279,12 +279,29 @@ export const appRouter = router({
           },
         };
 
-        const resp = await axios.post("https://api.mercadopago.com/v1/payments", payload, {
-          headers: {
-            Authorization: `Bearer ${ENV.mpAccessToken}`,
-            "Content-Type": "application/json",
-          },
-        });
+        let resp;
+        try {
+          resp = await axios.post("https://api.mercadopago.com/v1/payments", payload, {
+            headers: {
+              Authorization: `Bearer ${ENV.mpAccessToken}`,
+              "Content-Type": "application/json",
+            },
+          });
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            console.error("[payments.criarPix] Mercado Pago create payment failed", {
+              status: error.response?.status,
+              data: error.response?.data,
+              payload,
+            });
+            const detail =
+              typeof error.response?.data === "object" && error.response?.data
+                ? JSON.stringify(error.response.data)
+                : error.response?.data || error.message;
+            throw new Error(`Mercado Pago error: ${detail}`);
+          }
+          throw error;
+        }
 
         const data: any = resp.data;
         const pixInfo = data?.point_of_interaction?.transaction_data;
@@ -773,7 +790,6 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
-
 
 
 
