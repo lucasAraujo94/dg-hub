@@ -114,11 +114,57 @@
 }
 
 @layer base {
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
+
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   body {
     @apply bg-background text-foreground;
+    text-wrap: pretty;
+  }
+
+  img,
+  video,
+  canvas,
+  svg,
+  iframe {
+    max-width: 100%;
+  }
+
+  input,
+  textarea,
+  select {
+    min-width: 0;
+  }
+
+  p,
+  span,
+  a,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  li,
+  dd,
+  dt {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -149,6 +195,7 @@
    */
   .container {
     width: 100%;
+    max-width: 100%;
     margin-left: auto;
     margin-right: auto;
     padding-left: 1rem; /* 16px - mobile padding */
@@ -187,6 +234,7 @@
 
   .card-elegant {
     @apply bg-card border border-border rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 backdrop-blur-sm;
+    overflow: hidden;
   }
 
   .btn-primary {
@@ -226,5 +274,16 @@
       color-mix(in srgb, var(--secondary) 22%, transparent)
     );
     border-color: color-mix(in srgb, var(--primary) 45%, var(--secondary) 35%);
+  }
+
+  .safe-shell {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .safe-stack > * {
+    min-width: 0;
+    max-width: 100%;
   }
 }

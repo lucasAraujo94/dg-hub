@@ -302,7 +302,7 @@ export default function Admin() {
   }, [saquesBusca, saquesStatus, saquesQuery.data]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="safe-shell min-h-screen bg-background text-foreground pb-20">
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container py-4 md:py-6">
           <div className="mb-4 flex flex-col gap-3 md:mb-6 md:flex-row md:items-center md:justify-between">

@@ -329,7 +329,7 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen text-foreground flex flex-col"
+      className="safe-shell min-h-screen text-foreground flex flex-col"
       style={{
         backgroundImage: `linear-gradient(180deg, rgba(5,7,13,0.8), rgba(5,7,13,0.95)), url(${HomeBg})`,
         backgroundSize: "cover",
@@ -382,7 +382,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="flex flex-1">
+      <div className="safe-stack flex flex-1">
         {/* Sidebar */}
         <aside
           className={`border-r border-white/10 bg-black/30 backdrop-blur-xl transition-all duration-50 ease-out
@@ -510,7 +510,7 @@ export default function Home() {
         ) : null}
 
         {/* Main content */}
-        <main className="flex-1 space-y-5 px-4 py-5 md:p-6 md:space-y-6">
+        <main className="safe-stack flex-1 space-y-5 px-4 py-5 md:p-6 md:space-y-6">
           {!activeSection ? (
             <Suspense
               fallback={

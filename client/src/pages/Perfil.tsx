@@ -413,7 +413,7 @@ export default function Perfil() {
   })();
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="safe-shell min-h-screen bg-background text-foreground pb-20">
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container py-4 md:py-6">
