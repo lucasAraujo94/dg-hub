@@ -4,6 +4,7 @@ import { TrendingUp, Medal, Flame, Award, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useState, useMemo } from "react";
+import { RankingPodium } from "@/components/RankingPodium";
 
 type RankingTipo = "geral" | "semanal" | "mensal";
 
@@ -29,8 +30,13 @@ export default function Ranking() {
     return localStorage.getItem("dg-hago-nickname") || "";
   });
   const rankingQuery = trpc.rankings.getByTipo.useQuery({ tipo, limite: 500 }, { refetchOnWindowFocus: false });
+  const podiumQuery = trpc.rankings.getByTipo.useQuery(
+    { tipo: "geral", limite: 3 },
+    { refetchOnWindowFocus: false, enabled: tipo !== "geral" }
+  );
 
   const rankingData = (rankingQuery.data ?? []) as RankingItem[];
+  const podiumData = ((tipo === "geral" ? rankingData.slice(0, 3) : podiumQuery.data ?? []) as RankingItem[]);
   const currentUserId = (user as { id?: number } | null | undefined)?.id;
 
   useMemo(() => {
@@ -264,10 +270,13 @@ export default function Ranking() {
             <div className="card-elegant p-4 text-sm text-muted-foreground">Nenhum jogador no ranking ainda.</div>
           ) : null}
 
+          {podiumData.length > 0 ? (
+            <RankingPodium data={podiumData} displayPref={displayPref} hagoNickLocal={hagoNickLocal} />
+          ) : null}
+
           {rankingData.length > 0 ? <RankingTable data={rankingData} /> : null}
         </div>
       </section>
     </div>
   );
 }
-
