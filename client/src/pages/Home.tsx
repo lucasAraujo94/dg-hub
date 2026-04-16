@@ -339,13 +339,13 @@ export default function Home() {
         <div className="w-full flex flex-wrap items-start md:items-center gap-3 px-4 md:px-6 py-3 md:h-16 relative">
           <div className="flex items-center gap-3 md:w-64 md:px-3">
             <button
-              className="h-12 w-12 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors border border-white/10 cursor-pointer select-none"
+              className="h-12 w-12 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors border border-white/10 cursor-pointer select-none md:hidden"
               onClick={handleMenuButton}
               aria-label="Abrir/fechar menu"
             >
               <Menu className="w-5 h-5 text-muted-foreground" />
             </button>
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 md:pl-1">
               <div className="w-9 h-9 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-600 flex items-center justify-center">
                 <Zap className="w-5 h-5 text-white" />
               </div>
