@@ -70,6 +70,16 @@ function cleanupExpiredNativeSessions(now = Date.now()) {
   }
 }
 
+function buildNativeAppDeepLink(sessionToken: string, nonce: string, returnTo?: string) {
+  const url = new URL("dghub://auth/google/callback");
+  url.searchParams.set("sessionToken", sessionToken);
+  url.searchParams.set("nonce", nonce);
+  if (returnTo) {
+    url.searchParams.set("returnTo", sanitizeReturnTo(returnTo));
+  }
+  return url.toString();
+}
+
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
@@ -190,6 +200,7 @@ async function handleOAuthCallback(req: Request, res: Response) {
         sessionToken,
         expiresAt: Date.now() + NATIVE_SESSION_TTL_MS,
       });
+      const deepLink = buildNativeAppDeepLink(sessionToken, decodedState.nativeNonce, decodedState.returnTo);
       res
         .status(200)
         .type("html")
@@ -204,12 +215,19 @@ async function handleOAuthCallback(req: Request, res: Response) {
       main { max-width: 26rem; padding: 2rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 1rem; background: rgba(255,255,255,0.05); text-align: center; }
       h1 { margin-top: 0; font-size: 1.4rem; }
       p { color: #c8d1ea; line-height: 1.5; }
+      a { color: #8fe3ff; }
     </style>
+    <script>
+      window.addEventListener("load", function () {
+        window.location.replace(${JSON.stringify(deepLink)});
+      });
+    </script>
   </head>
   <body>
     <main>
       <h1>Login concluido</h1>
-      <p>Volte para o app DG Hub para continuar.</p>
+      <p>Se o app nao abrir automaticamente, toque no botao abaixo para voltar ao DG Hub.</p>
+      <p><a href=${JSON.stringify(deepLink)}>Abrir DG Hub</a></p>
     </main>
   </body>
 </html>`);
