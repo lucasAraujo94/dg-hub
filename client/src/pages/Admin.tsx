@@ -8,6 +8,21 @@ import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
+const getWithdrawalStatusLabel = (status?: string) => {
+  switch (status) {
+    case "solicitado":
+      return "Solicitado";
+    case "aprovado":
+      return "Aprovado";
+    case "pago":
+      return "Pago";
+    case "rejeitado":
+      return "Rejeitado";
+    default:
+      return status || "Pendente";
+  }
+};
+
 export default function Admin() {
   const { user } = useAuth();
   const clampDateYear = (value: string) => {
@@ -118,7 +133,7 @@ export default function Admin() {
   });
   const rejeitarSaqueMutation = trpc.saques.rejeitar.useMutation({
     onSuccess: () => {
-      toast.success("Saque rejeitado e saldo devolvido");
+      toast.success("Saque rejeitado");
       saquesQuery.refetch();
       usuariosQuery.refetch();
     },
@@ -574,7 +589,7 @@ export default function Admin() {
             <TabsContent value="saques" className="space-y-6">
               <div className="card-elegant">
                 <h2 className="text-xl font-bold mb-2">Solicitacoes de Saque</h2>
-                <p className="text-sm text-muted-foreground mb-4">Aprove, rejeite com estorno automatico ou marque como pago apos transferencia manual.</p>
+                <p className="text-sm text-muted-foreground mb-4">Aprove, rejeite ou marque como pago depois de fazer a transferencia Pix manualmente fora da plataforma.</p>
                 {saquesQuery.isLoading ? <p className="text-sm text-muted-foreground">Carregando saques...</p> : null}
                 {saquesQuery.error ? <p className="text-sm text-red-400">Erro: {saquesQuery.error.message}</p> : null}
                 {!saquesQuery.isLoading && (saquesQuery.data?.length ?? 0) === 0 ? (
@@ -593,7 +608,7 @@ export default function Admin() {
                             {(item as any).usuario?.name || (item as any).usuario?.email || `Usuario #${item.usuarioId}`}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Valor: R$ {Number(item.valor).toFixed(2)} - status: {status}
+                            Valor: R$ {Number(item.valor).toFixed(2)} - status: {getWithdrawalStatusLabel(status)}
                           </p>
                           <p className="text-xs text-muted-foreground break-all">
                             Chave {item.walletProvider}: {item.walletAddress}

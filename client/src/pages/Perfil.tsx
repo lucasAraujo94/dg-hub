@@ -13,6 +13,21 @@ import { Checkbox } from "@/components/ui/checkbox";
 type Achievement = { nome: string; icon?: string; data?: string };
 type Historico = { nome: string; posicao: string; premio: number; data: string };
 
+const getWithdrawalStatusLabel = (status?: string) => {
+  switch (status) {
+    case "solicitado":
+      return "Solicitado";
+    case "aprovado":
+      return "Aprovado";
+    case "pago":
+      return "Pago";
+    case "rejeitado":
+      return "Rejeitado";
+    default:
+      return status || "Pendente";
+  }
+};
+
 export default function Perfil() {
   const { user, refresh } = useAuth();
   const estatisticasQuery = trpc.estatisticas.get.useQuery(undefined, {
@@ -24,7 +39,7 @@ export default function Perfil() {
     refetchOnWindowFocus: false,
   });
   const solicitarSaqueMutation = trpc.saques.criar.useMutation({
-    onSuccess: () => toast.success("Solicitação de saque enviada"),
+    onSuccess: () => toast.success("Solicitação enviada para análise manual."),
     onError: error => toast.error(error.message || "Falha ao solicitar saque"),
   });
 
@@ -610,11 +625,11 @@ export default function Perfil() {
                 onClick={handleSolicitarSaque}
                 disabled={solicitarSaqueMutation.isPending}
               >
-                {solicitarSaqueMutation.isPending ? "Enviando..." : "Solicitar saque via PIX"}
+                {solicitarSaqueMutation.isPending ? "Enviando..." : "Solicitar saque para análise"}
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                Ao solicitar, o valor sai do saldo disponivel e fica reservado ate a analise do admin. Se o saque for rejeitado, o saldo retorna automaticamente.
+                O saque não é automático. Sua chave Pix será usada pela equipe quando a solicitação for aprovada e paga manualmente.
               </p>
 
               <div className="space-y-2">
@@ -629,7 +644,7 @@ export default function Perfil() {
                       <p className="font-semibold">R$ {Number(item.valor).toFixed(2)}</p>
                       <p className="text-muted-foreground">{new Date(item.dataSolicitacao).toLocaleDateString("pt-BR")}</p>
                     </div>
-                    <span className="text-yellow-300">{(item as { status?: string }).status ?? "pendente"}</span>
+                    <span className="text-yellow-300">{getWithdrawalStatusLabel((item as { status?: string }).status)}</span>
                   </div>
                 ))}
               </div>
@@ -704,9 +719,6 @@ export default function Perfil() {
     </div>
   );
 }
-
-
-
 
 
 
