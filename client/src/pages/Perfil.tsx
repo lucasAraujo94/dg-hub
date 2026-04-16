@@ -9,11 +9,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { getFriendlyWithdrawalError } from "@/lib/userMessages";
 
 type Achievement = { nome: string; icon?: string; data?: string };
 type Historico = { nome: string; posicao: string; premio: number; data: string };
 
-const getWithdrawalStatusLabel = (status?: string) => {
+const getFinancialStatusLabel = (status?: string) => {
   switch (status) {
     case "solicitado":
       return "Solicitado";
@@ -23,9 +24,24 @@ const getWithdrawalStatusLabel = (status?: string) => {
       return "Pago";
     case "rejeitado":
       return "Rejeitado";
+    case "approved":
+      return "Aprovado";
+    case "pending":
+      return "Aguardando pagamento";
+    case "cancelled":
+    case "canceled":
+      return "Cancelado";
+    case "rejected":
+      return "Recusado";
+    case "in_process":
+      return "Em processamento";
     default:
       return status || "Pendente";
   }
+};
+
+const getWithdrawalStatusLabel = (status?: string) => {
+  return getFinancialStatusLabel(status);
 };
 
 export default function Perfil() {
@@ -39,8 +55,8 @@ export default function Perfil() {
     refetchOnWindowFocus: false,
   });
   const solicitarSaqueMutation = trpc.saques.criar.useMutation({
-    onSuccess: () => toast.success("Solicitação enviada para análise manual."),
-    onError: error => toast.error(error.message || "Falha ao solicitar saque"),
+    onSuccess: () => toast.success("Solicitacao enviada. Agora ela segue para analise da equipe."),
+    onError: error => toast.error(getFriendlyWithdrawalError(error.message)),
   });
 
   const baseName = user?.name || user?.email || "Meu perfil";
@@ -97,6 +113,10 @@ export default function Perfil() {
   const [dragging, setDragging] = useState(false);
 
   const solicitacoesQuery = trpc.saques.getSolicitacoes.useQuery(undefined, {
+    enabled: Boolean(user),
+    refetchOnWindowFocus: false,
+  });
+  const extratoQuery = trpc.financeiro.extrato.useQuery(undefined, {
     enabled: Boolean(user),
     refetchOnWindowFocus: false,
   });
@@ -253,7 +273,7 @@ export default function Perfil() {
 
   const handleSolicitarSaque = () => {
     if (!user) {
-      toast.error("Entre para solicitar saque");
+      toast.error("Entre na sua conta para solicitar o saque.");
       return;
     }
     const valor = Number(valorSaque);
@@ -262,11 +282,11 @@ export default function Perfil() {
       return;
     }
     if (valor > jogador.saldoPremio) {
-      toast.error("Saldo insuficiente para o valor solicitado");
+      toast.error("Seu saldo disponivel nao cobre este saque.");
       return;
     }
     if (!walletAddress.trim()) {
-      toast.error("Informe a chave PIX para saque");
+      toast.error("Informe a chave Pix que recebera o pagamento.");
       return;
     }
     solicitarSaqueMutation.mutate({
@@ -396,8 +416,8 @@ export default function Perfil() {
     <div className="min-h-screen bg-background text-foreground pb-20">
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container py-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="container py-4 md:py-6">
+          <div className="mb-4 flex flex-col gap-3 md:mb-6 md:flex-row md:items-center md:justify-between">
             <Button asChild variant="outline" className="gap-2 rounded-full">
               <Link href="/">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card"><ArrowLeft className="w-4 h-4" /></span>
@@ -405,12 +425,12 @@ export default function Perfil() {
               </Link>
             </Button>
             
-            <h1 className="text-3xl font-bold gradient-text">Meu Perfil</h1>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleEditarPerfil}>
+            <h1 className="text-2xl font-bold gradient-text md:text-3xl">Meu Perfil</h1>
+            <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:flex md:w-auto md:items-center">
+              <Button variant="outline" size="sm" onClick={handleEditarPerfil} className="w-full md:w-auto">
                 Editar
               </Button>
-              <Button className="btn-primary" size="sm" onClick={handleSalvarPerfil}>
+              <Button className="btn-primary w-full md:w-auto" size="sm" onClick={handleSalvarPerfil}>
                 Salvar perfil
               </Button>
             </div>
@@ -429,7 +449,7 @@ export default function Perfil() {
       <section className="py-12 border-b border-border">
         <div className="container">
           <div className="card-elegant neon-border p-8">
-            <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-8 mb-8">
+            <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-center md:gap-8">
               <div
                 ref={avatarRef}
                 className="w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 rounded-2xl bg-card border border-border flex items-center justify-center shadow-lg overflow-hidden relative select-none flex-shrink-0 min-w-[9rem] min-h-[9rem]"
@@ -509,8 +529,8 @@ export default function Perfil() {
                 ) : null}
               </div>
               <div className="flex-1">
-                <h2 className="text-4xl font-bold mb-2">{displayName}</h2>
-                <div className="flex items-center gap-4 mb-4">
+                <h2 className="mb-2 text-3xl font-bold md:text-4xl">{displayName}</h2>
+                <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                   <div className="badge-elegant">
                     <Crown className="w-4 h-4" />
                     Ranking #{rankingDerived?.pos ?? jogador.ranking}
@@ -525,7 +545,7 @@ export default function Perfil() {
                     ? `Membro desde ${new Date(jogador.membroDesde).toLocaleDateString("pt-BR")}`
                     : "Perfil sem data de cadastro"}
                 </p>
-                <div className="flex flex-wrap gap-3 items-center">
+                <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -556,7 +576,7 @@ export default function Perfil() {
               </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 mb-6">
+            <div className="mb-6 grid gap-4 md:grid-cols-2 md:gap-6">
               <div className="rounded-xl border border-border/60 bg-card/50 p-4 space-y-3">
                 <h3 className="text-lg font-semibold">Apelido no Hago</h3>
                 <Input
@@ -597,7 +617,7 @@ export default function Perfil() {
             </div>
 
             {/* Saldo de Premios + saque */}
-            <div className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border border-yellow-500/30 rounded-lg p-6 space-y-4">
+            <div className="space-y-4 rounded-lg border border-yellow-500/30 bg-gradient-to-r from-yellow-900/30 to-orange-900/30 p-4 md:p-6">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">Saldo Disponível para Saque</p>
                 <p className="text-3xl font-bold text-yellow-400">R$ {jogador.saldoPremio.toFixed(2)}</p>
@@ -639,7 +659,7 @@ export default function Perfil() {
                   <p className="text-xs text-muted-foreground">Nenhuma solicitação registrada.</p>
                 ) : null}
                 {solicitacoesQuery.data?.slice(0, 3).map(item => (
-                  <div key={item.id} className="flex items-center justify-between rounded border border-yellow-500/30 bg-black/30 px-3 py-2 text-xs">
+                  <div key={item.id} className="flex flex-col gap-2 rounded border border-yellow-500/30 bg-black/30 px-3 py-2 text-xs sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-semibold">R$ {Number(item.valor).toFixed(2)}</p>
                       <p className="text-muted-foreground">{new Date(item.dataSolicitacao).toLocaleDateString("pt-BR")}</p>
@@ -647,6 +667,51 @@ export default function Perfil() {
                     <span className="text-yellow-300">{getWithdrawalStatusLabel((item as { status?: string }).status)}</span>
                   </div>
                 ))}
+              </div>
+
+              <div className="rounded-xl border border-border/60 bg-card/40 p-4 md:p-5">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold">Extrato financeiro</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Acompanhe os depósitos PIX e saques da sua conta.
+                  </p>
+                </div>
+
+                {extratoQuery.isLoading ? (
+                  <p className="text-sm text-muted-foreground">Carregando extrato...</p>
+                ) : null}
+
+                {!extratoQuery.isLoading && (extratoQuery.data?.length ?? 0) === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhuma movimentação financeira registrada até agora.</p>
+                ) : null}
+
+                <div className="space-y-3">
+                  {extratoQuery.data?.slice(0, 8).map(item => {
+                    const isDeposit = item.tipo === "deposito_pix";
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex flex-col gap-3 rounded-xl border border-border/60 bg-background/50 p-4 md:flex-row md:items-center md:justify-between"
+                      >
+                        <div className="space-y-1">
+                          <p className="font-semibold">{isDeposit ? "Depósito PIX" : "Saque"}</p>
+                          <p className="text-sm text-muted-foreground">{item.descricao || "Movimentação financeira"}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(item.data).toLocaleString("pt-BR")}</p>
+                          {item.referencia ? (
+                            <p className="text-xs text-muted-foreground">Ref: {item.referencia}</p>
+                          ) : null}
+                        </div>
+
+                        <div className="text-left md:text-right">
+                          <p className={`text-lg font-bold ${isDeposit ? "text-emerald-400" : "text-yellow-400"}`}>
+                            {isDeposit ? "+" : "-"} R$ {Number(item.valor).toFixed(2)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{getFinancialStatusLabel(item.status)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -719,9 +784,3 @@ export default function Perfil() {
     </div>
   );
 }
-
-
-
-
-
-

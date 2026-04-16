@@ -18,6 +18,7 @@ import {
   setPendingOAuthNonce,
 } from "@/lib/nativeAuth";
 import { trpc } from "@/lib/trpc";
+import { getFriendlyLoginError } from "@/lib/userMessages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Browser } from "@capacitor/browser";
 import { Mail, MessageCircle, ShieldCheck, Trophy } from "lucide-react";
@@ -99,7 +100,7 @@ export default function Login() {
           stopNativeOauthPolling();
           clearPendingOAuthNonce();
           setIsNativeOauthPending(false);
-          toast.error(error instanceof Error ? error.message : "Falha ao concluir login com Google.");
+          toast.error(getFriendlyLoginError(error instanceof Error ? error.message : undefined));
         }
       };
 
@@ -146,7 +147,7 @@ export default function Login() {
 
   const handleOauth = useCallback(async () => {
     if (!hasOAuthProvider) {
-      toast.error("Configure VITE_GOOGLE_CLIENT_ID ou VITE_OAUTH_PORTAL_URL para ativar o login.");
+      toast.error("O login com Google nao esta disponivel agora.");
       return;
     }
 
@@ -172,13 +173,13 @@ export default function Login() {
 
   const loginMutation = trpc.auth.loginLocal.useMutation({
     onSuccess: () => {
-      toast.success("Login realizado! Redirecionando...");
+      toast.success("Login realizado. Redirecionando...");
       setTimeout(() => {
         window.location.href = "#/";
       }, 400);
     },
     onError: error => {
-      toast.error(error.message || "Falha ao entrar");
+      toast.error(getFriendlyLoginError(error.message));
     },
   });
 

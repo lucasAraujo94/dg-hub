@@ -19,11 +19,15 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Link } from "wouter";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import HomeBg from "../assets/dg-games-bg.png";
 import { toast } from "sonner";
 import { getLoginUrl, isNativeApp } from "@/const";
 import { readLastSeenChatAt, writeLastSeenChatAt } from "@/lib/chatNotifications";
+
+const LazyHomeActivePanels = lazy(() => import("@/components/HomeActivePanels"));
+const LazyHomeAdminPollsPanel = lazy(() => import("@/components/HomeAdminPollsPanel"));
+const LazyHomeOverviewPanel = lazy(() => import("@/components/HomeOverviewPanel"));
 
 export default function Home() {
   const { user, loading, error, logout } = useAuth({
@@ -309,9 +313,9 @@ export default function Home() {
       });
     }
     return [
-      { position: 1, name: "Anna", points: "Campeã - Ludo", badge: "TOP" },
-      { position: 2, name: "Lucas", points: "Campeão - Golpeie e Esquiva", badge: "TOP" },
-      { position: 3, name: "Reeh", points: "Campeão - Vermelhinha", badge: "TOP" },
+      { position: 1, name: "Anna", points: "Campea - Ludo", badge: "TOP" },
+      { position: 2, name: "Lucas", points: "Campeao - Golpeie e Esquiva", badge: "TOP" },
+      { position: 3, name: "Reeh", points: "Campeao - Vermelhinha", badge: "TOP" },
     ];
   }, [rankingTopQuery.data]);
 
@@ -352,9 +356,9 @@ export default function Home() {
           </div>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 text-sm w-full md:w-auto ms-auto justify-end text-left md:text-right">
             <div className="flex flex-col items-start md:items-end max-w-[240px]">
-              <span className="text-muted-foreground break-words">Olá, {displayName}</span>
+              <span className="text-muted-foreground break-words">Ola, {displayName}</span>
               <span className="text-[11px] text-muted-foreground flex items-center gap-1 flex-wrap">
-                Sessão expira em {formatSessionTime(remainingSessionMs)}
+                Sessao expira em {formatSessionTime(remainingSessionMs)}
                 {isSessionPaused ? (
                   <span className="inline-flex items-center gap-1 text-amber-400">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -397,7 +401,7 @@ export default function Home() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-white text-xs font-bold shadow-lg">
                 DG
               </div>
-              <span className="text-sm font-semibold text-white/80">Navegação</span>
+              <span className="text-sm font-semibold text-white/80">Navegacao</span>
             </div>
             <Button
               variant="ghost"
@@ -506,400 +510,91 @@ export default function Home() {
         ) : null}
 
         {/* Main content */}
-        <main className="flex-1 p-6 space-y-6">
-          {!activeSection && (
-            <div className="h-full flex items-start justify-center px-4">
-              <div className="w-full max-w-5xl space-y-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">Campeonatos</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setActiveSection("campeonatos");
-                        setMenuOpen(false);
-                      }}
-                    >
-                      Abrir aba
-                    </Button>
-                  </div>
-                  {campeonatosQuery.isLoading ? (
-                    <p className="text-sm text-muted-foreground">Carregando campeonatos...</p>
-                  ) : (campeonatosQuery.data?.length ?? 0) === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado.</p>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {campeonatosQuery.data?.map(c => {
-        const dataInicio = c.dataInicio ? new Date(c.dataInicio) : null;
-        const rawStatus = (c as any).status ?? "ativo";
-        const started = dataInicio ? dataInicio.getTime() <= Date.now() : false;
-        const status =
-          rawStatus === "finalizado" || rawStatus === "cancelado"
-            ? rawStatus
-            : started
-              ? "finalizado"
-              : "ativo";
-        const faseLabel =
-          status === "futuro" ? "Fase de inscricoes" : status === "finalizado" ? "Finalizado" : "Em andamento";
-                        return (
-                          <div key={c.id} className="p-3 rounded-xl border border-white/10 bg-white/5">
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="min-w-0">
-                                <h4 className="font-semibold text-white break-words">{c.nome}</h4>
-                                <p className="text-xs text-muted-foreground break-words">{faseLabel}</p>
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {dataInicio ? dataInicio.toLocaleDateString("pt-BR") : "Data a definir"}
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2 break-words mb-1">
-                              {(c as { descricao?: string | null }).descricao ?? "Campeonato ativo"}
-                            </p>
-                            <div className="flex items-center justify-between text-xs text-white/80">
-                              <span>Prêmio</span>
-                              <span className="font-semibold text-yellow-400">R$ {(c as any).premioValor}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-                {pollResults.length ? (
-                  pollResults.map(poll => (
-                    <div
-                      key={poll.pollId}
-                      className="relative rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/15 via-transparent to-cyan-500/20" />
-                      <div className="relative p-6 md:p-8 flex flex-col gap-4 border border-white/10 rounded-3xl bg-black/40">
-                        <div className="text-[11px] uppercase tracking-[0.28em] text-emerald-200/80 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
-                          Enquete
-                        </div>
-                        <h2 className="text-3xl md:text-4xl font-semibold leading-tight text-white">
-                          {poll.question || "Próximo campeonato: escolha o modo"}
-                        </h2>
-                        <p className="text-sm text-emerald-100/80">
-                          Vote no jogo que quer ver no próximo torneio. 1 voto por jogador logado.
-                        </p>
-                        <div className="space-y-3">
-                          {(() => {
-                            const cleanLabel = (opt: string) => {
-                              const t = (opt || "").trim();
-                              const m = t.match(/^(.+?)\s*\(([^)]+)\)$/);
-                              if (m) {
-                                const before = m[1].trim();
-                                const inside = m[2].trim();
-                                if (inside && inside !== before) return inside;
-                                return before;
-                              }
-                              return t;
-                            };
-                            const aggregated = (poll.options ?? []).reduce<
-                              { label: string; count: number; primary: string }[]
-                            >((acc, opt) => {
-                              const label = cleanLabel(opt);
-                              const count = poll.counts?.[opt] ?? 0;
-                              const existing = acc.find(o => o.label === label);
-                              if (existing) {
-                                existing.count += count;
-                              } else {
-                                acc.push({ label, count, primary: opt });
-                              }
-                              return acc;
-                            }, []);
-                            const total = aggregated.reduce((sum, item) => sum + item.count, 0);
-                            return aggregated.map(item => {
-                              const pct = total > 0 ? Math.round((item.count / total) * 100) : 0;
-                              return (
-                                <div key={item.label} className="space-y-1">
-                                  <div className="flex justify-between text-xs text-emerald-100/80">
-                                    <span>{item.label}</span>
-                                    <span>
-                                      {pct}% ({item.count} votos)
-                                    </span>
-                                  </div>
-                                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                                    <div
-                                      className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400"
-                                      style={{ width: `${pct}%` }}
-                                    />
-                                  </div>
-                                  <Button
-                                    key={`${item.primary}-btn`}
-                                    variant="outline"
-                                    className="w-full justify-between border-emerald-400/40 text-white hover:border-emerald-400 hover:text-white/90"
-                                    onClick={() => {
-                                      if (votedPolls.has(poll.pollId)) {
-                                        toast.info("Voce ja votou nesta enquete. Apenas 1 voto por jogador.");
-                                        return;
-                                      }
-                                      pollVoteMutation.mutate({ pollId: poll.pollId, escolha: item.primary });
-                                    }}
-                                    disabled={pollVoteMutation.isPending || votedPolls.has(poll.pollId)}
-                                  >
-                                    <span className="font-semibold">{item.label}</span>
-                                    <span className="text-xs text-emerald-100/80">{item.count} votos</span>
-                                  </Button>
-                                </div>
-                              );
-                            });
-                          })()}
-                        </div>
-                        {poll.closesAt ? (
-                          <div className="text-xs text-emerald-100/70">
-                            Fecha em: {new Date(poll.closesAt).toLocaleString("pt-BR")}
-                          </div>
-                        ) : null}
-                        {pollVoteMutation.isPending ? (
-                          <p className="text-xs text-emerald-100/80">Enviando voto...</p>
-                        ) : null}
-                        <div className="text-xs text-emerald-100/70">
-                          A enquete é atualizada em tempo real após cada voto.
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="relative p-8 text-center text-emerald-50 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
-                    Nenhuma enquete ativa. Crie uma enquete no painel admin.
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {activeSection === "enquetes" && (
-            <div className="card-elegant bg-black/40 border border-emerald-400/30 p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-emerald-200/80">Admin</p>
-                  <h2 className="text-2xl font-bold text-white">Criar enquete</h2>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Pergunta</p>
-                  <input
-                    className="w-full rounded-md bg-black/30 border border-emerald-400/40 px-3 py-2 text-sm text-white"
-                    value={pollPergunta}
-                    onChange={e => setPollPergunta(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Fecha em (opcional)</p>
-                  <input
-                    type="datetime-local"
-                    max="9999-12-31T23:59"
-                    className="w-full rounded-md bg-black/30 border border-emerald-400/40 px-3 py-2 text-sm text-white"
-                    value={pollClosesAt}
-                    onChange={e => setPollClosesAt(clampDateYear(e.target.value))}
-                  />
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Opções (1 por linha, mínimo 2 e máximo 6)</p>
-                <textarea
-                  className="w-full rounded-md bg-black/30 border border-emerald-400/40 px-3 py-2 text-sm text-white min-h-[120px]"
-                  value={pollOptionsText}
-                  onChange={e => setPollOptionsText(e.target.value)}
-                />
-              </div>
-              <Button
-                className="btn-primary w-full"
-                disabled={pollCreateMutation.isPending}
-                onClick={() => {
-                  const options = pollOptionsText
-                    .split("\n")
-                    .map(opt => opt.trim())
-                    .filter(Boolean);
-                  if (options.length < 2 || options.length > 6) {
-                    toast.error("Informe entre 2 e 6 opções");
-                    return;
-                  }
-                  const year = (pollClosesAt.split("T")[0] || "").split("-")[0];
-                  if (year && year.length > 4) {
-                    toast.error("O ano deve ter no máximo 4 dígitos");
-                    return;
-                  }
-                  pollCreateMutation.mutate({
-                    pergunta: pollPergunta.trim() || null,
-                    closesAt: pollClosesAt ? new Date(pollClosesAt) : null,
-                    options,
-                  });
+        <main className="flex-1 space-y-5 px-4 py-5 md:p-6 md:space-y-6">
+          {!activeSection ? (
+            <Suspense
+              fallback={
+                <Card className="border-border/70 bg-card/60 p-5">
+                  <p className="text-sm text-muted-foreground">Carregando painel...</p>
+                </Card>
+              }
+            >
+              <LazyHomeOverviewPanel
+                user={user}
+                hasNewChatMessages={hasNewChatMessages}
+                activeChampionship={activeChampionship}
+                lastWinners={lastWinners}
+                pollResults={pollResults as any}
+                votedPolls={votedPolls}
+                isVoting={pollVoteMutation.isPending}
+                onOpenChat={() => {
+                  setActiveSection("chat");
+                  setMenuOpen(false);
+                  markChatAsRead();
                 }}
-              >
-                {pollCreateMutation.isPending ? "Criando..." : "Criar Enquete"}
-              </Button>
-            </div>
-          )}
-
-          {activeSection === "enquetes" && pollResults.length ? (
-            <section className="space-y-4">
-              <h3 className="text-lg font-semibold text-white">Enquetes abertas</h3>
-              <div className="space-y-3">
-                {pollResults.map(poll => (
-                  <Card key={poll.pollId} className="p-4 bg-black/30 border border-emerald-500/30">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-white font-semibold">{poll.question || "Enquete"}</p>
-                        {poll.closesAt ? (
-                          <p className="text-xs text-muted-foreground">
-                            Fecha em: {new Date(poll.closesAt).toLocaleString("pt-BR")}
-                          </p>
-                        ) : null}
-                      </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => pollDeleteMutation.mutate({ pollId: poll.pollId })}
-                        disabled={pollDeleteMutation.isPending}
-                      >
-                        {pollDeleteMutation.isPending ? "Excluindo..." : "Excluir"}
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </section>
+                onRegister={registrarInscricao}
+                onVote={(pollId, escolha) => {
+                  if (votedPolls.has(pollId)) {
+                    toast.info("Voce ja votou nesta enquete. Apenas 1 voto por jogador.");
+                    return;
+                  }
+                  pollVoteMutation.mutate({ pollId, escolha });
+                }}
+              />
+            </Suspense>
           ) : null}
 
-          {activeSection === "campeonatos" && (
-            <section className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
-                <Button asChild size="sm">
-                  <Link href="/campeonatos">Abrir página</Link>
-                </Button>
-              </div>
-              <div className="rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-3">
-                <p className="text-sm text-emerald-100 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  Jogadores online
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2 text-sm text-emerald-100">
-                  {onlinePlayers.map(p => (
-                    <span key={p.id} className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-                      <span className="w-2 h-2 rounded-full bg-green-400" />
-                      {p.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              {user?.role === "admin" ? (
-                <div className="rounded-lg border border-border/60 bg-card/60 p-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold">Criar novo campeonato</p>
-                    <p className="text-xs text-muted-foreground">Admins podem cadastrar e gerenciar campeonatos.</p>
-                  </div>
-                  <Button asChild size="sm" variant="secondary">
-                    <Link href="/admin">Criar campeonato</Link>
-                  </Button>
-                </div>
-              ) : null}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(campeonatosQuery.data ?? []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado ainda.</p>
-                ) : null}
-                {(campeonatosQuery.data ?? []).map(camp => {
-                  const dataInicio = camp.dataInicio ? new Date(camp.dataInicio) : null;
-                  const status = (() => { const rawStatus = (camp as any).status ?? "ativo"; const started = dataInicio ? dataInicio.getTime() <= Date.now() : false; return rawStatus === "cancelado" || rawStatus === "finalizado" ? rawStatus : started ? "finalizado" : "ativo"; })();
-                  const inscricoesEncerradas = (() => {
-                    if (status === "cancelado" || status === "finalizado") return true;
-                    if (!dataInicio) return false;
-                    const diff = dataInicio.getTime() - Date.now();
-                    if (diff <= 0) return true; // já começou
-                    return diff < 24 * 60 * 60 * 1000; // menos de 24h
-                  })();
-                  const faseLabel =
-                    status === "cancelado"
-                      ? "Cancelado"
-                      : status === "finalizado"
-                        ? "Finalizado"
-                        : inscricoesEncerradas
-                          ? "Inscricoes encerradas"
-                          : "Fase de inscricoes";
-                  return (
-                    <Card key={camp.id} className="p-4 border-border/70 bg-card/60 space-y-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold break-words">{camp.nome}</h3>
-                          <p className="text-xs text-muted-foreground break-words">{faseLabel}</p>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {dataInicio ? dataInicio.toLocaleDateString("pt-BR") : "Data a definir"}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2 break-words">
-                        {(camp as { descricao?: string | null }).descricao ?? "Campeonato ativo"}
-                      </p>
-                      <div className="flex items-center justify-between mt-1 text-sm">
-                        <span>Prêmio</span>
-                        <span className="font-medium text-yellow-400">R$ {(camp as any).premioValor}</span>
-                      </div>
-                      <Button
-                        className="mt-2"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => registrarInscricao(camp.id)}
-                        disabled={inscricoesEncerradas}
-                      >
-                        {inscricoesEncerradas ? "Inscricoes encerradas" : "Inscreva-se"}
-                      </Button>
-                    </Card>
-                  );
-                }) ?? <p className="text-sm text-muted-foreground">Nenhum campeonato cadastrado.</p>}
-              </div>
-            </section>
-          )}
 
-          {activeSection === "perfil" && (
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
-                <Button asChild size="sm">
-                  <Link href="/perfil">Abrir perfil</Link>
-                </Button>
-              </div>
-              <Card className="p-5 border-border/70 bg-card/60">
-                <p className="text-sm text-muted-foreground">Veja e edite seus dados, conquistas e histórico de campeonatos.</p>
-              </Card>
-            </section>
-          )}
+          {activeSection === "enquetes" ? (
+            <Suspense
+              fallback={
+                <Card className="border-border/70 bg-card/60 p-5">
+                  <p className="text-sm text-muted-foreground">Carregando painel...</p>
+                </Card>
+              }
+            >
+              <LazyHomeAdminPollsPanel
+                pollResults={pollResults as any}
+                pollPergunta={pollPergunta}
+                pollClosesAt={pollClosesAt}
+                pollOptionsText={pollOptionsText}
+                setPollPergunta={setPollPergunta}
+                setPollClosesAt={setPollClosesAt}
+                setPollOptionsText={setPollOptionsText}
+                clampDateYear={clampDateYear}
+                isCreating={pollCreateMutation.isPending}
+                isDeleting={pollDeleteMutation.isPending}
+                onCreate={input => pollCreateMutation.mutate(input)}
+                onDelete={pollId => pollDeleteMutation.mutate({ pollId })}
+              />
+            </Suspense>
+          ) : null}
 
-          {activeSection === "chat" && (
-            <section className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
-                <Button asChild size="sm">
-                  <Link href="/chat" onClick={markChatAsRead}>
-                    Ir para o chat
-                  </Link>
-                </Button>
-              </div>
-              <Card className="p-5 border-border/70 bg-card/60">
-                <p className="text-sm text-muted-foreground">
-                  Converse com a comunidade e acompanhe transmissões em tempo real.
-                </p>
-              </Card>
-            </section>
-          )}
+
+          {activeSection === "campeonatos" || activeSection === "perfil" || activeSection === "chat" ? (
+            <Suspense
+              fallback={
+                <Card className="border-border/70 bg-card/60 p-5">
+                  <p className="text-sm text-muted-foreground">Carregando painel...</p>
+                </Card>
+              }
+            >
+              <LazyHomeActivePanels
+                activeSection={activeSection}
+                campeonatos={(campeonatosQuery.data ?? []) as any}
+                onlinePlayers={onlinePlayers}
+                userRole={user?.role}
+                onRegister={registrarInscricao}
+                onMarkChatAsRead={markChatAsRead}
+              />
+            </Suspense>
+          ) : null}
+
         </main>
       </div>
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
 
 
 

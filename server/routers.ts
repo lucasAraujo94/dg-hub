@@ -25,6 +25,8 @@ import {
   criarNotificacao,
   getSolicitacoesSaque,
   getAllSolicitacoesSaque,
+  getAllPixPayments,
+  getExtratoFinanceiro,
   criarSolicitacaoSaque,
   aprovarSolicitacaoSaque,
   rejeitarSolicitacaoSaque,
@@ -168,6 +170,7 @@ export const appRouter = router({
   admin: router({
     listUsers: adminProcedure.query(() => listUsers()),
     listSaques: adminProcedure.query(() => getAllSolicitacoesSaque()),
+    listPixPayments: adminProcedure.query(() => getAllPixPayments()),
     inscreverUsuarioCampeonato: adminProcedure
       .input(z.object({ usuarioId: z.number(), campeonatoId: z.number() }))
       .mutation(async ({ input }) => {
@@ -736,6 +739,13 @@ export const appRouter = router({
     }),
   }),
 
+  financeiro: router({
+    extrato: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) throw new Error("Usuario nao autenticado");
+      return getExtratoFinanceiro(ctx.user.id);
+    }),
+  }),
+
   // Saques
   saques: router({
     getSolicitacoes: protectedProcedure.query(async ({ ctx }) => {
@@ -791,9 +801,6 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
-
-
-
 
 
 

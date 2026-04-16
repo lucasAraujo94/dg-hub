@@ -1,12 +1,35 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, ShieldCheck, Trophy, Users } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { getFriendlyAdminWithdrawalError, getFriendlyPixError } from "@/lib/userMessages";
+
+const LazyAdminSupportPanels = lazy(() => import("@/components/AdminSupportPanels"));
+
+const getPixStatusLabel = (status?: string) => {
+  switch (status) {
+    case "approved":
+      return "Aprovado";
+    case "pending":
+      return "Aguardando pagamento";
+    case "cancelled":
+      return "Cancelado";
+    case "canceled":
+      return "Cancelado";
+    case "rejected":
+      return "Recusado";
+    case "in_process":
+      return "Em processamento";
+    default:
+      return status || "Nao iniciado";
+  }
+};
 
 const getWithdrawalStatusLabel = (status?: string) => {
   switch (status) {
@@ -47,8 +70,17 @@ export default function Admin() {
   const [depositoValor, setDepositoValor] = useState("");
   const [depositoDescricao, setDepositoDescricao] = useState("");
   const [pixPaymentId, setPixPaymentId] = useState<number | null>(null);
+  const [depositosBusca, setDepositosBusca] = useState("");
+  const [depositosStatus, setDepositosStatus] = useState("todos");
+  const [saquesBusca, setSaquesBusca] = useState("");
+  const [saquesStatus, setSaquesStatus] = useState("todos");
+  const [activeTab, setActiveTab] = useState("campeonatos");
   const depositoRef = useRef<HTMLDivElement | null>(null);
   const saquesQuery = trpc.admin.listSaques.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+    enabled: user?.role === "admin",
+  });
+  const pixPaymentsQuery = trpc.admin.listPixPayments.useQuery(undefined, {
     refetchOnWindowFocus: false,
     enabled: user?.role === "admin",
   });
@@ -110,9 +142,9 @@ export default function Admin() {
   const criarPixMutation = trpc.payments.criarPix.useMutation({
     onSuccess: data => {
       setPixPaymentId(data.pixPaymentId ?? null);
-      toast.success("PIX gerado");
+      toast.success("PIX gerado. Compartilhe o QR Code e acompanhe o status abaixo.");
     },
-    onError: error => toast.error(error.message || "Falha ao gerar PIX"),
+    onError: error => toast.error(getFriendlyPixError(error.message)),
   });
   const pixStatusQuery = trpc.payments.getPixStatus.useQuery(
     { pixPaymentId: pixPaymentId ?? 0 },
@@ -125,26 +157,26 @@ export default function Admin() {
   );
   const aprovarSaqueMutation = trpc.saques.aprovar.useMutation({
     onSuccess: () => {
-      toast.success("Saque aprovado");
+      toast.success("Saque aprovado. Agora ele aguarda o pagamento manual.");
       saquesQuery.refetch();
       usuariosQuery.refetch();
     },
-    onError: error => toast.error(error.message || "Falha ao aprovar saque"),
+    onError: error => toast.error(getFriendlyAdminWithdrawalError(error.message)),
   });
   const rejeitarSaqueMutation = trpc.saques.rejeitar.useMutation({
     onSuccess: () => {
-      toast.success("Saque rejeitado");
+      toast.success("Saque rejeitado. O historico do usuario foi atualizado.");
       saquesQuery.refetch();
       usuariosQuery.refetch();
     },
-    onError: error => toast.error(error.message || "Falha ao rejeitar saque"),
+    onError: error => toast.error(getFriendlyAdminWithdrawalError(error.message)),
   });
   const marcarSaquePagoMutation = trpc.saques.marcarPago.useMutation({
     onSuccess: () => {
-      toast.success("Saque marcado como pago");
+      toast.success("Saque marcado como pago e saldo atualizado.");
       saquesQuery.refetch();
     },
-    onError: error => toast.error(error.message || "Falha ao marcar saque como pago"),
+    onError: error => toast.error(getFriendlyAdminWithdrawalError(error.message)),
   });
 
   if (user?.role !== "admin") {
@@ -154,7 +186,7 @@ export default function Admin() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Acesso negado</h2>
           <p className="text-muted-foreground mb-6">Apenas administradores podem acessar este painel.</p>
-          <p className="text-sm text-muted-foreground">Sessão expira em ~10 min</p>
+          <p className="text-sm text-muted-foreground">Sessao expira em ~10 min</p>
           <Link href="/">
             <Button className="btn-primary w-full">Voltar para Home</Button>
           </Link>
@@ -165,7 +197,7 @@ export default function Admin() {
 
   const handleCriarCampeonato = async () => {
     if (!nomeCampeonato || !dataInicio || !premioValor || !jogoCampeonato) {
-      toast.error("Informe nome, jogo, data e prêmio");
+      toast.error("Informe nome, jogo, data e premio");
       return;
     }
     const parsedDate = new Date(dataInicio);
@@ -236,29 +268,54 @@ export default function Admin() {
 
   const pixStatusLabel = (() => {
     const status = pixStatusQuery.data?.status ?? "";
-    if (status === "approved") return "Aprovado";
-    if (status === "pending") return "Aguardando pagamento";
-    if (status === "cancelled") return "Cancelado";
-    if (status === "rejected") return "Recusado";
-    if (status === "in_process") return "Em processamento";
-    return status || "Nao iniciado";
+    return getPixStatusLabel(status);
   })();
+
+  const filteredPixPayments = useMemo(() => {
+    const term = depositosBusca.trim().toLowerCase();
+    return (pixPaymentsQuery.data ?? []).filter(item => {
+      const statusMatch = depositosStatus === "todos" || item.status === depositosStatus;
+      if (!statusMatch) return false;
+      if (!term) return true;
+      const nome = item.usuario?.name?.toLowerCase() ?? "";
+      const nickname = item.usuario?.nickname?.toLowerCase() ?? "";
+      const email = item.usuario?.email?.toLowerCase() ?? "";
+      const referencia = item.externalReference?.toLowerCase() ?? "";
+      const descricao = item.descricao?.toLowerCase() ?? "";
+      return [nome, nickname, email, referencia, descricao].some(value => value.includes(term));
+    });
+  }, [depositosBusca, depositosStatus, pixPaymentsQuery.data]);
+
+  const filteredSaques = useMemo(() => {
+    const term = saquesBusca.trim().toLowerCase();
+    return (saquesQuery.data ?? []).filter(item => {
+      const status = (item as { status?: string }).status ?? "";
+      const statusMatch = saquesStatus === "todos" || status === saquesStatus;
+      if (!statusMatch) return false;
+      if (!term) return true;
+      const nome = (item as any).usuario?.name?.toLowerCase() ?? "";
+      const nickname = (item as any).usuario?.nickname?.toLowerCase() ?? "";
+      const email = (item as any).usuario?.email?.toLowerCase() ?? "";
+      const chave = item.walletAddress?.toLowerCase() ?? "";
+      return [nome, nickname, email, chave].some(value => value.includes(term));
+    });
+  }, [saquesBusca, saquesStatus, saquesQuery.data]);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container py-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="container py-4 md:py-6">
+          <div className="mb-4 flex flex-col gap-3 md:mb-6 md:flex-row md:items-center md:justify-between">
             <Button asChild variant="outline" className="gap-2 rounded-full">
               <Link href="/">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">←</span>
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">&larr;</span>
                 <span>Voltar</span>
               </Link>
             </Button>
-            <h1 className="text-3xl font-bold gradient-text">Painel Administrativo</h1>
+            <h1 className="text-2xl font-bold gradient-text md:text-3xl">Painel Administrativo</h1>
             <div className="w-20" />
           </div>
-          <p className="text-muted-foreground">Gerencie campeonatos e usuarios.</p>
+          <p className="text-muted-foreground">Gerencie campeonatos, usuarios e operacoes financeiras.</p>
         </div>
       </div>
 
@@ -312,8 +369,8 @@ export default function Admin() {
 
       <section className="py-12">
         <div className="container">
-          <Tabs defaultValue="campeonatos" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-2 rounded-2xl bg-card/60 p-1 md:mb-8 md:grid-cols-4">
               <TabsTrigger value="campeonatos">Campeonatos</TabsTrigger>
               <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
               <TabsTrigger value="depositos">Depositos</TabsTrigger>
@@ -322,7 +379,7 @@ export default function Admin() {
 
             {/* Campeonatos */}
             <TabsContent value="campeonatos" className="space-y-6">
-              <div className="card-elegant">
+              <div className="card-elegant p-4 md:p-6">
                 <h2 className="text-2xl font-bold mb-6">Criar Novo Campeonato</h2>
                 <div className="space-y-4">
                   <div>
@@ -343,7 +400,7 @@ export default function Admin() {
                       <Input type="datetime-local" value={dataInicio} onChange={e => setDataInicio(clampDateYear(e.target.value))} />
                     </div>
                     <div>
-                      <label className="text-sm font-semibold mb-2 block">Valor do Prêmio (R$)</label>
+                      <label className="text-sm font-semibold mb-2 block">Valor do premio (R$)</label>
                       <Input value={premioValor} onChange={e => setPremioValor(e.target.value)} placeholder="Ex: 500" />
                     </div>
                   </div>
@@ -353,7 +410,7 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="card-elegant">
+              <div className="card-elegant p-4 md:p-6">
                 <h2 className="text-xl font-bold mb-4">Inscrever Jogador em Campeonato</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -392,7 +449,7 @@ export default function Admin() {
                 </Button>
               </div>
 
-              <div className="card-elegant">
+              <div className="card-elegant p-4 md:p-6">
                 <h2 className="text-xl font-bold mb-4">Sorteio de Partidas</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -416,7 +473,7 @@ export default function Admin() {
                 </Button>
               </div>
 
-              <div className="card-elegant">
+              <div className="card-elegant p-4 md:p-6">
                 <h2 className="text-xl font-bold mb-4">Gerenciar Campeonatos</h2>
                 {campeonatosQuery.isLoading ? <p className="text-sm text-muted-foreground">Carregando campeonatos...</p> : null}
                 {campeonatosQuery.error ? (
@@ -503,202 +560,163 @@ export default function Admin() {
               </div>
             </TabsContent>
 
-            {/* Depositos */}
             <TabsContent value="depositos" className="space-y-6">
-              <div className="card-elegant" ref={depositoRef}>
-                <h2 className="text-xl font-bold mb-2">Depositar via PIX para Jogador</h2>
-                <p className="text-sm text-muted-foreground mb-4">Gere um PIX real, acompanhe o status e aguarde a confirmacao automatica.</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-sm font-semibold mb-2 block">Jogador</label>
-                    <select
-                      className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm"
-                      value={depositoUsuarioId}
-                      onChange={e => setDepositoUsuarioId(e.target.value)}
-                    >
-                      <option value="">Selecione um jogador</option>
-                      {usuariosSelect.map(u => (
-                        <option key={u.id} value={u.id}>
-                          {u.name || u.email || u.openId}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold mb-2 block">Valor (R$)</label>
-                    <Input value={depositoValor} onChange={e => setDepositoValor(e.target.value)} placeholder="Ex: 25.00" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold mb-2 block">Descricao</label>
-                    <Input value={depositoDescricao} onChange={e => setDepositoDescricao(e.target.value)} placeholder="Premiacao, bonus, deposito..." />
-                  </div>
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <Button className="btn-secondary" onClick={handleGerarPix} disabled={criarPixMutation.isPending}>
-                    {criarPixMutation.isPending ? "Gerando..." : "Gerar PIX"}
-                  </Button>
-                </div>
-
-                {pixStatusQuery.data ? (
-                  <div className="mt-6 rounded-xl border border-border/60 bg-card/50 p-4 space-y-4">
-                    <div className="flex flex-col gap-1">
-                      <p className="text-sm font-semibold">Status: {pixStatusLabel}</p>
-                      <p className="text-xs text-muted-foreground">
-                        ID interno {pixStatusQuery.data.id} - pagamento {pixStatusQuery.data.providerPaymentId ?? "aguardando criacao"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Valor: R$ {pixStatusQuery.data.valor.toFixed(2)}
-                      </p>
-                    </div>
-
-                    {pixStatusQuery.data.qrCodeBase64 ? (
-                      <div className="flex flex-col items-start gap-3">
-                        <img
-                          src={`data:image/png;base64,${pixStatusQuery.data.qrCodeBase64}`}
-                          alt="QR Code PIX"
-                          className="w-56 max-w-full rounded-lg border border-border bg-white p-3"
-                        />
-                        <p className="text-xs text-muted-foreground break-all">{pixStatusQuery.data.qrCode}</p>
-                        {pixStatusQuery.data.ticketUrl ? (
-                          <a
-                            href={pixStatusQuery.data.ticketUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-sm text-primary underline"
-                          >
-                            Abrir comprovante do PIX
-                          </a>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">QR Code ainda nao disponivel.</p>
-                    )}
-
-                    {pixStatusQuery.data.creditedAt ? (
-                      <p className="text-sm text-green-400">
-                        Saldo creditado em {new Date(pixStatusQuery.data.creditedAt).toLocaleString("pt-BR")}
-                      </p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">O saldo sera creditado automaticamente apos o pagamento aprovado.</p>
-                    )}
-                  </div>
-                ) : null}
-              </div>
+              <Suspense
+                fallback={
+                  <Card className="border-border/70 bg-card/60 p-5">
+                    <p className="text-sm text-muted-foreground">Carregando painel...</p>
+                  </Card>
+                }
+              >
+                <LazyAdminSupportPanels
+                  activeTab="depositos"
+                  depositoRef={depositoRef}
+                  usuariosSelect={usuariosSelect}
+                  depositoUsuarioId={depositoUsuarioId}
+                  setDepositoUsuarioId={setDepositoUsuarioId}
+                  depositoValor={depositoValor}
+                  setDepositoValor={setDepositoValor}
+                  depositoDescricao={depositoDescricao}
+                  setDepositoDescricao={setDepositoDescricao}
+                  handleGerarPix={handleGerarPix}
+                  criarPixPending={criarPixMutation.isPending}
+                  pixStatusData={pixStatusQuery.data}
+                  pixStatusLabel={pixStatusLabel}
+                  depositosBusca={depositosBusca}
+                  setDepositosBusca={setDepositosBusca}
+                  depositosStatus={depositosStatus}
+                  setDepositosStatus={setDepositosStatus}
+                  pixPaymentsLoading={pixPaymentsQuery.isLoading}
+                  pixPaymentsError={pixPaymentsQuery.error?.message ?? null}
+                  filteredPixPayments={filteredPixPayments}
+                  getPixStatusLabel={getPixStatusLabel}
+                  saquesBusca={saquesBusca}
+                  setSaquesBusca={setSaquesBusca}
+                  saquesStatus={saquesStatus}
+                  setSaquesStatus={setSaquesStatus}
+                  saquesLoading={saquesQuery.isLoading}
+                  saquesError={saquesQuery.error?.message ?? null}
+                  filteredSaques={filteredSaques}
+                  getWithdrawalStatusLabel={getWithdrawalStatusLabel}
+                  aprovarSaquePending={aprovarSaqueMutation.isPending}
+                  rejeitarSaquePending={rejeitarSaqueMutation.isPending}
+                  marcarSaquePagoPending={marcarSaquePagoMutation.isPending}
+                  onApproveWithdrawal={solicitacaoId => aprovarSaqueMutation.mutate({ solicitacaoId })}
+                  onRejectWithdrawal={solicitacaoId => rejeitarSaqueMutation.mutate({ solicitacaoId })}
+                  onMarkWithdrawalPaid={solicitacaoId => marcarSaquePagoMutation.mutate({ solicitacaoId })}
+                  usuariosLoading={usuariosQuery.isLoading}
+                  usuariosError={usuariosQuery.error?.message ?? null}
+                  usuariosData={usuariosQuery.data ?? []}
+                  setRolePending={setRoleMutation.isPending}
+                  onToggleRole={handleToggleRole}
+                />
+              </Suspense>
             </TabsContent>
 
             <TabsContent value="saques" className="space-y-6">
-              <div className="card-elegant">
-                <h2 className="text-xl font-bold mb-2">Solicitacoes de Saque</h2>
-                <p className="text-sm text-muted-foreground mb-4">Aprove, rejeite ou marque como pago depois de fazer a transferencia Pix manualmente fora da plataforma.</p>
-                {saquesQuery.isLoading ? <p className="text-sm text-muted-foreground">Carregando saques...</p> : null}
-                {saquesQuery.error ? <p className="text-sm text-red-400">Erro: {saquesQuery.error.message}</p> : null}
-                {!saquesQuery.isLoading && (saquesQuery.data?.length ?? 0) === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhuma solicitacao de saque registrada.</p>
-                ) : null}
-                <div className="space-y-3">
-                  {saquesQuery.data?.map(item => {
-                    const status = (item as { status?: string }).status ?? "solicitado";
-                    const canApprove = status === "solicitado";
-                    const canReject = status === "solicitado" || status === "aprovado";
-                    const canPay = status === "solicitado" || status === "aprovado";
-                    return (
-                      <div key={item.id} className="rounded-lg border border-border/60 bg-card/60 p-4 space-y-3">
-                        <div className="flex flex-col gap-1">
-                          <p className="font-semibold">
-                            {(item as any).usuario?.name || (item as any).usuario?.email || `Usuario #${item.usuarioId}`}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Valor: R$ {Number(item.valor).toFixed(2)} - status: {getWithdrawalStatusLabel(status)}
-                          </p>
-                          <p className="text-xs text-muted-foreground break-all">
-                            Chave {item.walletProvider}: {item.walletAddress}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Solicitado em {new Date(item.dataSolicitacao).toLocaleString("pt-BR")}
-                            {item.dataPagamento ? ` - pago em ${new Date(item.dataPagamento).toLocaleString("pt-BR")}` : ""}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={!canApprove || aprovarSaqueMutation.isPending}
-                            onClick={() => aprovarSaqueMutation.mutate({ solicitacaoId: item.id })}
-                          >
-                            Aprovar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            disabled={!canReject || rejeitarSaqueMutation.isPending}
-                            onClick={() => rejeitarSaqueMutation.mutate({ solicitacaoId: item.id })}
-                          >
-                            Rejeitar
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="btn-primary"
-                            disabled={!canPay || marcarSaquePagoMutation.isPending}
-                            onClick={() => marcarSaquePagoMutation.mutate({ solicitacaoId: item.id })}
-                          >
-                            Marcar pago
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <Suspense
+                fallback={
+                  <Card className="border-border/70 bg-card/60 p-5">
+                    <p className="text-sm text-muted-foreground">Carregando painel...</p>
+                  </Card>
+                }
+              >
+                <LazyAdminSupportPanels
+                  activeTab="saques"
+                  depositoRef={depositoRef}
+                  usuariosSelect={usuariosSelect}
+                  depositoUsuarioId={depositoUsuarioId}
+                  setDepositoUsuarioId={setDepositoUsuarioId}
+                  depositoValor={depositoValor}
+                  setDepositoValor={setDepositoValor}
+                  depositoDescricao={depositoDescricao}
+                  setDepositoDescricao={setDepositoDescricao}
+                  handleGerarPix={handleGerarPix}
+                  criarPixPending={criarPixMutation.isPending}
+                  pixStatusData={pixStatusQuery.data}
+                  pixStatusLabel={pixStatusLabel}
+                  depositosBusca={depositosBusca}
+                  setDepositosBusca={setDepositosBusca}
+                  depositosStatus={depositosStatus}
+                  setDepositosStatus={setDepositosStatus}
+                  pixPaymentsLoading={pixPaymentsQuery.isLoading}
+                  pixPaymentsError={pixPaymentsQuery.error?.message ?? null}
+                  filteredPixPayments={filteredPixPayments}
+                  getPixStatusLabel={getPixStatusLabel}
+                  saquesBusca={saquesBusca}
+                  setSaquesBusca={setSaquesBusca}
+                  saquesStatus={saquesStatus}
+                  setSaquesStatus={setSaquesStatus}
+                  saquesLoading={saquesQuery.isLoading}
+                  saquesError={saquesQuery.error?.message ?? null}
+                  filteredSaques={filteredSaques}
+                  getWithdrawalStatusLabel={getWithdrawalStatusLabel}
+                  aprovarSaquePending={aprovarSaqueMutation.isPending}
+                  rejeitarSaquePending={rejeitarSaqueMutation.isPending}
+                  marcarSaquePagoPending={marcarSaquePagoMutation.isPending}
+                  onApproveWithdrawal={solicitacaoId => aprovarSaqueMutation.mutate({ solicitacaoId })}
+                  onRejectWithdrawal={solicitacaoId => rejeitarSaqueMutation.mutate({ solicitacaoId })}
+                  onMarkWithdrawalPaid={solicitacaoId => marcarSaquePagoMutation.mutate({ solicitacaoId })}
+                  usuariosLoading={usuariosQuery.isLoading}
+                  usuariosError={usuariosQuery.error?.message ?? null}
+                  usuariosData={usuariosQuery.data ?? []}
+                  setRolePending={setRoleMutation.isPending}
+                  onToggleRole={handleToggleRole}
+                />
+              </Suspense>
             </TabsContent>
 
-            {/* Usuarios */}
             <TabsContent value="usuarios" className="space-y-6">
-              <div className="card-elegant">
-                <div className="flex items-center gap-2 mb-4">
-                  <ShieldCheck className="w-5 h-5 text-green-400" />
-                  <h2 className="text-2xl font-bold">Usuarios</h2>
-                </div>
-                {usuariosQuery.isLoading ? <p className="text-sm text-muted-foreground">Carregando usuarios...</p> : null}
-                {usuariosQuery.error ? <p className="text-sm text-red-400">Erro: {usuariosQuery.error.message}</p> : null}
-                {!usuariosQuery.isLoading && (usuariosQuery.data?.length ?? 0) === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhum usuario cadastrado.</p>
-                ) : null}
-                <div className="space-y-3">
-                  {usuariosQuery.data?.map(u => {
-                    const lastSeen = u.lastSignedIn ? new Date(u.lastSignedIn as any).getTime() : 0;
-                    const isOnline = lastSeen > 0 && Date.now() - lastSeen < 10 * 60 * 1000;
-                    return (
-                      <div key={u.id} className="flex items-center justify-between p-4 bg-card/50 rounded-lg border border-border/50">
-                        <div className="flex flex-col gap-1">
-                          <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-                            <span className={`w-2 h-2 rounded-full inline-block ${isOnline ? "bg-green-500" : "bg-zinc-500"}`} />
-                            {isOnline ? "online" : "offline"}
-                          </span>
-                          <p className="font-semibold">
-                            {u.nickname ? `${u.name || u.email || u.openId} (${u.nickname})` : u.name || u.email || u.openId}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {(u as any)?.hideEmail ? "email oculto" : u.email || "sem email"} - role: <span className="font-semibold">{u.role}</span>
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Ultimo acesso: {u.lastSignedIn ? new Date(u.lastSignedIn as any).toLocaleString("pt-BR") : "n/d"}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleToggleRole(u.openId, u.email, u.role)}
-                            disabled={setRoleMutation.isPending}
-                          >
-                            {u.role === "admin" ? "Tornar usuario" : "Tornar admin"}
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <Suspense
+                fallback={
+                  <Card className="border-border/70 bg-card/60 p-5">
+                    <p className="text-sm text-muted-foreground">Carregando painel...</p>
+                  </Card>
+                }
+              >
+                <LazyAdminSupportPanels
+                  activeTab="usuarios"
+                  depositoRef={depositoRef}
+                  usuariosSelect={usuariosSelect}
+                  depositoUsuarioId={depositoUsuarioId}
+                  setDepositoUsuarioId={setDepositoUsuarioId}
+                  depositoValor={depositoValor}
+                  setDepositoValor={setDepositoValor}
+                  depositoDescricao={depositoDescricao}
+                  setDepositoDescricao={setDepositoDescricao}
+                  handleGerarPix={handleGerarPix}
+                  criarPixPending={criarPixMutation.isPending}
+                  pixStatusData={pixStatusQuery.data}
+                  pixStatusLabel={pixStatusLabel}
+                  depositosBusca={depositosBusca}
+                  setDepositosBusca={setDepositosBusca}
+                  depositosStatus={depositosStatus}
+                  setDepositosStatus={setDepositosStatus}
+                  pixPaymentsLoading={pixPaymentsQuery.isLoading}
+                  pixPaymentsError={pixPaymentsQuery.error?.message ?? null}
+                  filteredPixPayments={filteredPixPayments}
+                  getPixStatusLabel={getPixStatusLabel}
+                  saquesBusca={saquesBusca}
+                  setSaquesBusca={setSaquesBusca}
+                  saquesStatus={saquesStatus}
+                  setSaquesStatus={setSaquesStatus}
+                  saquesLoading={saquesQuery.isLoading}
+                  saquesError={saquesQuery.error?.message ?? null}
+                  filteredSaques={filteredSaques}
+                  getWithdrawalStatusLabel={getWithdrawalStatusLabel}
+                  aprovarSaquePending={aprovarSaqueMutation.isPending}
+                  rejeitarSaquePending={rejeitarSaqueMutation.isPending}
+                  marcarSaquePagoPending={marcarSaquePagoMutation.isPending}
+                  onApproveWithdrawal={solicitacaoId => aprovarSaqueMutation.mutate({ solicitacaoId })}
+                  onRejectWithdrawal={solicitacaoId => rejeitarSaqueMutation.mutate({ solicitacaoId })}
+                  onMarkWithdrawalPaid={solicitacaoId => marcarSaquePagoMutation.mutate({ solicitacaoId })}
+                  usuariosLoading={usuariosQuery.isLoading}
+                  usuariosError={usuariosQuery.error?.message ?? null}
+                  usuariosData={usuariosQuery.data ?? []}
+                  setRolePending={setRoleMutation.isPending}
+                  onToggleRole={handleToggleRole}
+                />
+              </Suspense>
             </TabsContent>
           </Tabs>
         </div>
@@ -706,3 +724,4 @@ export default function Admin() {
     </div>
   );
 }
+

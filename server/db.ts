@@ -832,6 +832,87 @@ export async function getAllSolicitacoesSaque() {
   });
 }
 
+export async function getAllPixPayments() {
+  return prisma.pixPayment.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      usuario: {
+        select: {
+          id: true,
+          name: true,
+          nickname: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+    },
+  });
+}
+
+export type ExtratoFinanceiroItem = {
+  id: string;
+  tipo: "deposito_pix" | "saque";
+  valor: number;
+  status: string;
+  descricao: string | null;
+  referencia: string | null;
+  data: Date;
+};
+
+export async function getExtratoFinanceiro(usuarioId: number): Promise<ExtratoFinanceiroItem[]> {
+  const [pixPayments, saques] = await Promise.all([
+    prisma.pixPayment.findMany({
+      where: { usuarioId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        valor: true,
+        status: true,
+        descricao: true,
+        externalReference: true,
+        approvedAt: true,
+        creditedAt: true,
+        createdAt: true,
+      },
+    }),
+    prisma.solicitacaoSaque.findMany({
+      where: { usuarioId },
+      orderBy: { dataSolicitacao: "desc" },
+      select: {
+        id: true,
+        valor: true,
+        status: true,
+        walletProvider: true,
+        walletAddress: true,
+        dataSolicitacao: true,
+        dataPagamento: true,
+      },
+    }),
+  ]);
+
+  const depositos: ExtratoFinanceiroItem[] = pixPayments.map(item => ({
+    id: `pix-${item.id}`,
+    tipo: "deposito_pix",
+    valor: Number(item.valor),
+    status: item.status,
+    descricao: item.descricao ?? "Depósito via PIX",
+    referencia: item.externalReference,
+    data: item.creditedAt ?? item.approvedAt ?? item.createdAt,
+  }));
+
+  const retiradas: ExtratoFinanceiroItem[] = saques.map(item => ({
+    id: `saque-${item.id}`,
+    tipo: "saque",
+    valor: Number(item.valor),
+    status: item.status,
+    descricao: `Saque via ${item.walletProvider} para ${item.walletAddress}`,
+    referencia: null,
+    data: item.dataPagamento ?? item.dataSolicitacao,
+  }));
+
+  return [...depositos, ...retiradas].sort((a, b) => b.data.getTime() - a.data.getTime());
+}
+
 export async function aprovarSolicitacaoSaque(solicitacaoId: number) {
   return prisma.$transaction(async tx => {
     const saque = await tx.solicitacaoSaque.findUnique({
