@@ -98,7 +98,7 @@ export default function HomeOverviewPanel({
                   <p className="mt-1 text-xs text-white/60">{championshipStatus.subtitle}</p>
                 </Card>
                 <Card className="border-white/10 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">Status rapido</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">Avisos</p>
                   <p className="mt-2 text-lg font-semibold text-white">
                     {hasNewChatMessages ? "Chat com novidades" : "Tudo em dia"}
                   </p>
