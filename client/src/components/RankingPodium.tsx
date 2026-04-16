@@ -37,9 +37,9 @@ type PodiumTone = {
 };
 
 const PODIUM_LAYOUT = [
-  { place: 2, desktopOrder: "md:order-1", heightClass: "md:mt-16", scaleClass: "md:scale-[0.97]" },
-  { place: 1, desktopOrder: "md:order-2", heightClass: "md:-mt-6", scaleClass: "md:scale-100" },
-  { place: 3, desktopOrder: "md:order-3", heightClass: "md:mt-20", scaleClass: "md:scale-[0.95]" },
+  { place: 2, mobileOrder: "order-2", desktopOrder: "md:order-1", heightClass: "md:mt-16", scaleClass: "md:scale-[0.97]" },
+  { place: 1, mobileOrder: "order-1", desktopOrder: "md:order-2", heightClass: "md:-mt-6", scaleClass: "md:scale-100" },
+  { place: 3, mobileOrder: "order-3", desktopOrder: "md:order-3", heightClass: "md:mt-20", scaleClass: "md:scale-[0.95]" },
 ] as const;
 
 const podiumTones: Record<1 | 2 | 3, PodiumTone> = {
@@ -133,6 +133,7 @@ function PodiumCard({
   place,
   displayPref,
   hagoNickLocal,
+  mobileOrder,
   desktopOrder,
   heightClass,
   scaleClass,
@@ -141,6 +142,7 @@ function PodiumCard({
   place: 1 | 2 | 3;
   displayPref: "real" | "hago";
   hagoNickLocal?: string;
+  mobileOrder: string;
   desktopOrder: string;
   heightClass: string;
   scaleClass: string;
@@ -159,9 +161,9 @@ function PodiumCard({
   return (
     <HoverCard openDelay={120} closeDelay={120}>
       <HoverCardTrigger asChild>
-        <Link href={profileHref} className={`group relative block ${desktopOrder} ${heightClass}`}>
+        <Link href={profileHref} className={`group relative block ${mobileOrder} ${desktopOrder} ${heightClass}`}>
           <article
-            className={`relative overflow-hidden rounded-[28px] border p-4 sm:p-5 transition-all duration-300 ease-out animate-in fade-in zoom-in-95 ${tone.cardClass} ${tone.glowClass} ${scaleClass} hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_55px_rgba(255,255,255,0.08)]`}
+            className={`relative overflow-hidden rounded-[24px] border p-3 transition-all duration-300 ease-out animate-in fade-in zoom-in-95 sm:rounded-[28px] sm:p-5 ${tone.cardClass} ${tone.glowClass} ${scaleClass} hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_55px_rgba(255,255,255,0.08)]`}
           >
             <div className={`absolute inset-x-5 top-0 h-px bg-gradient-to-r ${tone.accentClass} opacity-80`} />
             <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -169,14 +171,14 @@ function PodiumCard({
             </div>
 
             <div className="relative flex flex-col items-center text-center">
-              <div className={`mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] ${tone.badgeClass}`}>
+              <div className={`mb-3 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] sm:px-3 sm:text-[11px] sm:tracking-[0.22em] ${tone.badgeClass}`}>
                 <Icon className={`h-3.5 w-3.5 ${tone.iconClass}`} />
                 {place}º lugar
               </div>
 
               <div className="relative mb-4">
                 <div className={`absolute inset-0 rounded-full blur-xl bg-gradient-to-br ${tone.accentClass} opacity-35`} />
-                <div className="relative h-20 w-20 sm:h-24 sm:w-24 overflow-hidden rounded-full border border-white/20 bg-black/30">
+                <div className="relative h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-black/30 sm:h-24 sm:w-24">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
                   ) : (
@@ -184,14 +186,14 @@ function PodiumCard({
                   )}
                 </div>
                 {place === 1 ? (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full border border-amber-300/30 bg-amber-300/12 p-2 shadow-[0_0_24px_rgba(251,191,36,0.25)]">
-                    <Crown className="h-5 w-5 text-amber-200" />
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full border border-amber-300/30 bg-amber-300/12 p-1.5 shadow-[0_0_24px_rgba(251,191,36,0.25)] sm:-top-4 sm:p-2">
+                    <Crown className="h-4 w-4 text-amber-200 sm:h-5 sm:w-5" />
                   </div>
                 ) : null}
               </div>
 
               <div className="space-y-1">
-                <p className="text-lg font-semibold leading-tight text-foreground">
+                <p className="text-base font-semibold leading-tight text-foreground sm:text-lg">
                   {displayName}
                 </p>
                 {isAdmin ? (
@@ -202,19 +204,19 @@ function PodiumCard({
                 ) : null}
               </div>
 
-              <div className="mt-4 grid w-full grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+              <div className="mt-3 grid w-full grid-cols-2 gap-2 sm:mt-4 sm:gap-3">
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-2.5 py-2.5 sm:px-3 sm:py-3">
                   <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Pontos</p>
-                  <p className="mt-1 text-xl font-bold text-foreground">{player.pontuacao}</p>
+                  <p className="mt-1 text-lg font-bold text-foreground sm:text-xl">{player.pontuacao}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-3">
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-2.5 py-2.5 sm:px-3 sm:py-3">
                   <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Vitorias</p>
-                  <p className="mt-1 text-xl font-bold text-foreground">{wins}</p>
+                  <p className="mt-1 text-lg font-bold text-foreground sm:text-xl">{wins}</p>
                 </div>
               </div>
 
-              <div className={`mt-5 h-3 w-full rounded-full bg-gradient-to-r ${tone.blockClass} opacity-90`} />
-              <div className={`mt-2 w-full rounded-t-3xl border border-white/10 bg-white/5 bg-gradient-to-b ${tone.blockClass} px-3 py-4 text-sm font-semibold text-white/95`}>
+              <div className={`mt-4 h-2.5 w-full rounded-full bg-gradient-to-r ${tone.blockClass} opacity-90 sm:mt-5 sm:h-3`} />
+              <div className={`mt-2 w-full rounded-t-3xl border border-white/10 bg-white/5 bg-gradient-to-b ${tone.blockClass} px-3 py-3 text-xs font-semibold text-white/95 sm:py-4 sm:text-sm`}>
                 Destaque do pódio
               </div>
             </div>
@@ -284,7 +286,7 @@ export function RankingPodium({ data, displayPref, hagoNickLocal }: RankingPodiu
             return (
               <div
                 key={layout.place}
-                className={`rounded-[28px] border border-dashed border-white/10 bg-black/10 p-6 text-center text-sm text-muted-foreground ${layout.desktopOrder} ${layout.heightClass}`}
+                className={`rounded-[24px] border border-dashed border-white/10 bg-black/10 p-5 text-center text-sm text-muted-foreground sm:rounded-[28px] sm:p-6 ${layout.mobileOrder} ${layout.desktopOrder} ${layout.heightClass}`}
               >
                 Posição {layout.place}º aguardando jogador
               </div>
@@ -298,6 +300,7 @@ export function RankingPodium({ data, displayPref, hagoNickLocal }: RankingPodiu
               place={layout.place}
               displayPref={displayPref}
               hagoNickLocal={hagoNickLocal}
+              mobileOrder={layout.mobileOrder}
               desktopOrder={layout.desktopOrder}
               heightClass={layout.heightClass}
               scaleClass={layout.scaleClass}
