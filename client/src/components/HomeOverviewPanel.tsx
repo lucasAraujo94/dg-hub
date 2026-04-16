@@ -28,7 +28,8 @@ type Championship = {
 type HomeOverviewPanelProps = {
   user: any;
   hasNewChatMessages: boolean;
-  activeChampionship: Championship;
+  activeChampionship: Championship | null;
+  championshipCount: number;
   lastWinners: Winner[];
   pollResults: PollResult[];
   votedPolls: Set<number>;
@@ -42,6 +43,7 @@ export default function HomeOverviewPanel({
   user,
   hasNewChatMessages,
   activeChampionship,
+  championshipCount,
   lastWinners,
   pollResults,
   votedPolls,
@@ -50,6 +52,19 @@ export default function HomeOverviewPanel({
   onRegister,
   onVote,
 }: HomeOverviewPanelProps) {
+  const championshipStatus = activeChampionship
+    ? {
+        title: activeChampionship.nome,
+        subtitle: activeChampionship.fase,
+      }
+    : {
+        title: championshipCount > 0 ? "Sem campeonato aberto" : "Nenhum campeonato cadastrado",
+        subtitle:
+          championshipCount > 0
+            ? "Nao ha inscricoes ou partidas em destaque agora."
+            : "Assim que um campeonato for criado, ele aparece aqui.",
+      };
+
   return (
     <div className="h-full flex items-start justify-center px-0 md:px-4">
       <div className="w-full max-w-5xl space-y-4">
@@ -79,40 +94,40 @@ export default function HomeOverviewPanel({
                 </Card>
                 <Card className="border-white/10 bg-white/5 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/50">Campeonato atual</p>
-                  <p className="mt-2 text-lg font-semibold text-white">{activeChampionship.nome}</p>
-                  <p className="mt-1 text-xs text-white/60">{activeChampionship.fase}</p>
+                  <p className="mt-2 text-lg font-semibold text-white">{championshipStatus.title}</p>
+                  <p className="mt-1 text-xs text-white/60">{championshipStatus.subtitle}</p>
                 </Card>
                 <Card className="border-white/10 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">Sinal do dia</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">Status rapido</p>
                   <p className="mt-2 text-lg font-semibold text-white">
                     {hasNewChatMessages ? "Chat com novidades" : "Tudo em dia"}
                   </p>
                   <p className="mt-1 text-xs text-white/60">
-                    {hasNewChatMessages ? "Leia as mensagens novas da comunidade." : "Sem alertas urgentes agora."}
+                    {hasNewChatMessages ? "Leia as mensagens novas da comunidade." : "Sem pendencias ou alertas importantes agora."}
                   </p>
                 </Card>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <Button asChild className="h-auto min-h-24 justify-start rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-4 py-4 text-left text-white hover:bg-emerald-500/20">
+                <Button asChild className="h-auto min-h-24 justify-start whitespace-normal rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-4 py-4 text-left text-white hover:bg-emerald-500/20">
                   <Link href="/campeonatos">
-                    <div className="flex flex-col items-start gap-1">
+                    <div className="flex min-w-0 flex-col items-start gap-1 text-left">
                       <span className="text-sm font-semibold">Entrar em campeonato</span>
                       <span className="text-xs text-white/70">Veja torneios e inscricoes abertas.</span>
                     </div>
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="h-auto min-h-24 justify-start rounded-2xl border-white/15 bg-white/5 px-4 py-4 text-left text-white hover:bg-white/10">
+                <Button asChild variant="outline" className="h-auto min-h-24 justify-start whitespace-normal rounded-2xl border-white/15 bg-white/5 px-4 py-4 text-left text-white hover:bg-white/10">
                   <Link href="/perfil">
-                    <div className="flex flex-col items-start gap-1">
+                    <div className="flex min-w-0 flex-col items-start gap-1 text-left">
                       <span className="text-sm font-semibold">Abrir perfil</span>
                       <span className="text-xs text-white/70">Saldo, saques e extrato financeiro.</span>
                     </div>
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="h-auto min-h-24 justify-start rounded-2xl border-white/15 bg-white/5 px-4 py-4 text-left text-white hover:bg-white/10">
+                <Button asChild variant="outline" className="h-auto min-h-24 justify-start whitespace-normal rounded-2xl border-white/15 bg-white/5 px-4 py-4 text-left text-white hover:bg-white/10">
                   <Link href="/ranking">
-                    <div className="flex flex-col items-start gap-1">
+                    <div className="flex min-w-0 flex-col items-start gap-1 text-left">
                       <span className="text-sm font-semibold">Ver ranking</span>
                       <span className="text-xs text-white/70">Confira lideres e sua colocacao.</span>
                     </div>
@@ -120,10 +135,10 @@ export default function HomeOverviewPanel({
                 </Button>
                 <Button
                   variant="outline"
-                  className="h-auto min-h-24 justify-start rounded-2xl border-white/15 bg-white/5 px-4 py-4 text-left text-white hover:bg-white/10"
+                  className="h-auto min-h-24 justify-start whitespace-normal rounded-2xl border-white/15 bg-white/5 px-4 py-4 text-left text-white hover:bg-white/10"
                   onClick={onOpenChat}
                 >
-                  <div className="flex flex-col items-start gap-1">
+                  <div className="flex min-w-0 flex-col items-start gap-1 text-left">
                     <span className="text-sm font-semibold">Abrir chat</span>
                     <span className="text-xs text-white/70">Converse e acompanhe avisos da comunidade.</span>
                   </div>
@@ -135,28 +150,38 @@ export default function HomeOverviewPanel({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-white/50">Em destaque</p>
-                  <h2 className="mt-2 text-2xl font-semibold text-white">{activeChampionship.nome}</h2>
+                  <h2 className="mt-2 text-2xl font-semibold text-white">
+                    {activeChampionship?.nome ?? "Nenhum campeonato em destaque"}
+                  </h2>
                 </div>
-                <span className="rounded-full border border-purple-400/30 bg-purple-500/10 px-3 py-1 text-xs text-purple-100">
-                  {activeChampionship.fase}
-                </span>
+                {activeChampionship ? (
+                  <span className="rounded-full border border-purple-400/30 bg-purple-500/10 px-3 py-1 text-xs text-purple-100">
+                    {activeChampionship.fase}
+                  </span>
+                ) : null}
               </div>
-              <div className="mt-4 space-y-3 text-sm text-white/70">
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                  <span>Inicio</span>
-                  <span className="font-medium text-white">{activeChampionship.inicio}</span>
+              {activeChampionship ? (
+                <div className="mt-4 space-y-3 text-sm text-white/70">
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <span>Inicio</span>
+                    <span className="font-medium text-white">{activeChampionship.inicio}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <span>Premiacao</span>
+                    <span className="font-medium text-yellow-400">R$ {Number(activeChampionship.premio ?? 0).toFixed(2)}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                  <span>Premiacao</span>
-                  <span className="font-medium text-yellow-400">R$ {Number(activeChampionship.premio ?? 0).toFixed(2)}</span>
+              ) : (
+                <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-5 text-sm text-white/65">
+                  Nenhum campeonato disponivel para destaque neste momento.
                 </div>
-              </div>
+              )}
               <Button
                 className="mt-5 h-11 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white"
-                onClick={() => onRegister(activeChampionship.id)}
-                disabled={!activeChampionship.id}
+                onClick={() => onRegister(activeChampionship?.id)}
+                disabled={!activeChampionship?.id}
               >
-                Participar agora
+                {activeChampionship?.id ? "Participar agora" : "Aguardando proximo campeonato"}
               </Button>
 
               <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">

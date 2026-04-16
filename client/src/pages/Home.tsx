@@ -268,17 +268,7 @@ export default function Home() {
         };
       }) ?? [];
 
-    return (
-      list.find(item => item.status === "ativo") ||
-      list.find(item => item.status === "futuro") || {
-        id: undefined,
-        nome: "Campeonato Relampago",
-        inicio: "Sabado 04/04/2026 as 18:00",
-        premio: 50,
-        fase: "Fase de inscricoes",
-        status: "futuro",
-      }
-    );
+    return list.find(item => item.status === "ativo") || list.find(item => item.status === "futuro") || null;
   }, [campeonatosQuery.data]);
 
   const inscreverMutation = trpc.campeonatos.inscrever.useMutation({
@@ -339,7 +329,7 @@ export default function Home() {
       {/* Top bar */}
       <header className="border-b border-border bg-card/70 backdrop-blur-sm">
         <div className="w-full flex flex-wrap items-start md:items-center gap-3 px-4 md:px-6 py-3 md:h-16 relative">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 md:w-64 md:px-3">
             <button
               className="h-12 w-12 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors border border-white/10 cursor-pointer select-none"
               onClick={handleMenuButton}
@@ -347,11 +337,11 @@ export default function Home() {
             >
               <Menu className="w-5 h-5 text-muted-foreground" />
             </button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <div className="w-9 h-9 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-600 flex items-center justify-center">
                 <Zap className="w-5 h-5 text-white" />
               </div>
-              <span className="text-lg font-bold gradient-text">DG Hub</span>
+              <span className="text-lg font-bold leading-none gradient-text">DG Hub</span>
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 text-sm w-full md:w-auto ms-auto justify-end text-left md:text-right">
@@ -523,6 +513,7 @@ export default function Home() {
                 user={user}
                 hasNewChatMessages={hasNewChatMessages}
                 activeChampionship={activeChampionship}
+                championshipCount={(campeonatosQuery.data ?? []).length}
                 lastWinners={lastWinners}
                 pollResults={pollResults as any}
                 votedPolls={votedPolls}
