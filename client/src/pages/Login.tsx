@@ -20,7 +20,6 @@ import {
 import { trpc } from "@/lib/trpc";
 import { getFriendlyLoginError } from "@/lib/userMessages";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { App as CapacitorApp } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Mail, MessageCircle, ShieldCheck, Trophy } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -35,22 +34,6 @@ const loginSchema = z.object({
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
-
-function parseNativeAuthCallback(url: string) {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "dghub:" || parsed.hostname !== "auth" || parsed.pathname !== "/google/callback") {
-      return null;
-    }
-    return {
-      sessionToken: parsed.searchParams.get("sessionToken"),
-      nonce: parsed.searchParams.get("nonce"),
-      returnTo: parsed.searchParams.get("returnTo"),
-    };
-  } catch {
-    return null;
-  }
-}
 
 export default function Login() {
   const { isAuthenticated } = useAuth();
@@ -162,27 +145,9 @@ export default function Login() {
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("focus", handleFocus);
 
-    let removeUrlOpenListener: (() => void) | undefined;
-    void CapacitorApp.addListener("appUrlOpen", event => {
-      const payload = parseNativeAuthCallback(event.url);
-      if (!payload) return;
-      if (payload.sessionToken) {
-        void finalizeNativeAuth(payload.sessionToken, payload.returnTo);
-        return;
-      }
-      if (payload.nonce) {
-        startNativeOauthPolling(payload.nonce);
-      }
-    }).then(listener => {
-      removeUrlOpenListener = () => {
-        void listener.remove();
-      };
-    });
-
     return () => {
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("focus", handleFocus);
-      removeUrlOpenListener?.();
       stopNativeOauthPolling();
     };
   }, [finalizeNativeAuth, startNativeOauthPolling, stopNativeOauthPolling]);
