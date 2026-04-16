@@ -290,10 +290,18 @@ export default function Home() {
 
   const lastWinners = useMemo(() => {
     if (rankingTopQuery.data?.length) {
+      let pref: "real" | "hago" = "real";
+      if (typeof window !== "undefined") {
+        const storedPref = localStorage.getItem("dg-display-pref");
+        if (storedPref === "real" || storedPref === "hago") {
+          pref = storedPref;
+        }
+      }
       return rankingTopQuery.data.map((r, idx) => {
         const usuario = (r as { usuario?: { name?: string | null; nickname?: string | null; email?: string | null } }).usuario;
         const baseName = usuario?.name || usuario?.email || `Jogador ${r.usuarioId}`;
-        const name = usuario?.nickname ? `${baseName} (${usuario.nickname})` : baseName;
+        const nickname = (usuario?.nickname || "").trim();
+        const name = pref === "hago" && nickname ? nickname : baseName;
         return {
           position: idx + 1,
           name,

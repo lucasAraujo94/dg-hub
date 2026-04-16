@@ -193,7 +193,7 @@ export default function HomeOverviewPanel({
                         <p className="text-sm font-semibold text-white">#{item.position} {item.name}</p>
                         <p className="text-xs text-white/55">{item.points}</p>
                       </div>
-                      <span className="rounded-full border border-yellow-400/30 bg-yellow-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-yellow-200">
+                      <span className="shrink-0 whitespace-nowrap rounded-full border border-yellow-400/30 bg-yellow-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-yellow-200">
                         {item.badge}
                       </span>
                     </div>
