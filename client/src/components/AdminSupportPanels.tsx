@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ShieldCheck } from "lucide-react";
 
 type AdminSupportPanelsProps = {
-  activeTab: "premiacoes" | "saques" | "usuarios";
+  activeTab: "premiacoes" | "usuarios";
   depositoRef: React.Ref<HTMLDivElement>;
   usuariosSelect: any[];
   depositoUsuarioId: string;
@@ -25,18 +25,6 @@ type AdminSupportPanelsProps = {
   pixPaymentsError?: string | null;
   filteredPixPayments: any[];
   getPixStatusLabel: (status?: string) => string;
-  saquesBusca: string;
-  setSaquesBusca: (value: string) => void;
-  saquesStatus: string;
-  setSaquesStatus: (value: string) => void;
-  saquesLoading: boolean;
-  saquesError?: string | null;
-  filteredSaques: any[];
-  getWithdrawalStatusLabel: (status?: string) => string;
-  rejeitarSaquePending: boolean;
-  marcarSaquePagoPending: boolean;
-  onRejectWithdrawal: (solicitacaoId: number) => void;
-  onMarkWithdrawalPaid: (solicitacaoId: number) => void;
   usuariosLoading: boolean;
   usuariosError?: string | null;
   usuariosData: any[];
@@ -67,18 +55,6 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
     pixPaymentsError,
     filteredPixPayments,
     getPixStatusLabel,
-    saquesBusca,
-    setSaquesBusca,
-    saquesStatus,
-    setSaquesStatus,
-    saquesLoading,
-    saquesError,
-    filteredSaques,
-    getWithdrawalStatusLabel,
-    rejeitarSaquePending,
-    marcarSaquePagoPending,
-    onRejectWithdrawal,
-    onMarkWithdrawalPaid,
     usuariosLoading,
     usuariosError,
     usuariosData,
@@ -196,57 +172,6 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
               </div>
             ))}
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (activeTab === "saques") {
-    return (
-      <div className="card-elegant p-4 md:p-6">
-        <h2 className="text-xl font-bold mb-2">Solicitacoes de saque</h2>
-        <p className="text-sm text-muted-foreground mb-4">Aprove, rejeite ou execute o saque. Ao confirmar o pagamento, a plataforma envia a transferencia Pix pelo Asaas.</p>
-        <div className="grid grid-cols-1 gap-3 mb-4 md:grid-cols-2">
-          <Input value={saquesBusca} onChange={e => setSaquesBusca(e.target.value)} placeholder="Buscar por jogador, email ou chave Pix..." />
-          <select className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm" value={saquesStatus} onChange={e => setSaquesStatus(e.target.value)}>
-            <option value="todos">Todos os status</option>
-            <option value="solicitado">Solicitado</option>
-            <option value="pago">Pago</option>
-            <option value="rejeitado">Rejeitado</option>
-          </select>
-        </div>
-        {saquesLoading ? <p className="text-sm text-muted-foreground">Carregando saques...</p> : null}
-        {saquesError ? <p className="text-sm text-red-400">Erro: {saquesError}</p> : null}
-        {!saquesLoading && filteredSaques.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhuma solicitacao de saque encontrada com os filtros atuais.</p>
-        ) : null}
-        <div className="space-y-3">
-          {filteredSaques.map(item => {
-            const status = item.status ?? "solicitado";
-            const canReject = status === "solicitado";
-            const canPay = status === "solicitado";
-            return (
-              <div key={item.id} className="rounded-lg border border-border/60 bg-card/60 p-4 space-y-3">
-                <div className="flex flex-col gap-1">
-                  <p className="font-semibold">{item.usuario?.name || item.usuario?.email || `Usuario #${item.usuarioId}`}</p>
-                  <p className="text-xs text-muted-foreground">Valor: R$ {Number(item.valor).toFixed(2)} - status: {getWithdrawalStatusLabel(status)}</p>
-                  <p className="text-xs text-muted-foreground break-all">Chave {item.walletProvider}: {item.walletAddress}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Solicitado em {new Date(item.dataSolicitacao).toLocaleString("pt-BR")}
-                    {item.dataPagamento ? ` - pago em ${new Date(item.dataPagamento).toLocaleString("pt-BR")}` : ""}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="secondary" disabled={!canReject || rejeitarSaquePending} onClick={() => onRejectWithdrawal(item.id)}>
-                    Rejeitar
-                  </Button>
-                  <Button size="sm" className="btn-primary" disabled={!canPay || marcarSaquePagoPending} onClick={() => onMarkWithdrawalPaid(item.id)}>
-                    Pagar via Pix
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
     );

@@ -8,7 +8,6 @@ import { Suspense, lazy, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { getFriendlyAdminWithdrawalError } from "@/lib/userMessages";
 
 const LazyAdminSupportPanels = lazy(() => import("@/components/AdminSupportPanels"));
 
@@ -40,19 +39,6 @@ const getPixStatusLabel = (status?: string) => {
   }
 };
 
-const getWithdrawalStatusLabel = (status?: string) => {
-  switch (status) {
-    case "solicitado":
-      return "Solicitado";
-    case "pago":
-      return "Pago";
-    case "rejeitado":
-      return "Rejeitado";
-    default:
-      return status || "Pendente";
-  }
-};
-
 export default function Admin() {
   const { user } = useAuth();
   const clampDateYear = (value: string) => {
@@ -79,14 +65,8 @@ export default function Admin() {
   const [ultimaPremiacao, setUltimaPremiacao] = useState<any | null>(null);
   const [depositosBusca, setDepositosBusca] = useState("");
   const [depositosStatus, setDepositosStatus] = useState("todos");
-  const [saquesBusca, setSaquesBusca] = useState("");
-  const [saquesStatus, setSaquesStatus] = useState("todos");
   const [activeTab, setActiveTab] = useState("campeonatos");
   const depositoRef = useRef<HTMLDivElement | null>(null);
-  const saquesQuery = trpc.admin.listSaques.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-    enabled: user?.role === "admin",
-  });
   const pixPaymentsQuery = trpc.admin.listPixPayments.useQuery(undefined, {
     refetchOnWindowFocus: false,
     enabled: user?.role === "admin",
@@ -155,22 +135,6 @@ export default function Admin() {
     },
     onError: error => toast.error(error.message || "Falha ao premiar saldo"),
   });
-  const rejeitarSaqueMutation = trpc.saques.rejeitar.useMutation({
-    onSuccess: () => {
-      toast.success("Saque rejeitado. O historico do usuario foi atualizado.");
-      saquesQuery.refetch();
-      usuariosQuery.refetch();
-    },
-    onError: error => toast.error(getFriendlyAdminWithdrawalError(error.message)),
-  });
-  const marcarSaquePagoMutation = trpc.saques.marcarPago.useMutation({
-    onSuccess: () => {
-      toast.success("Saque marcado como pago e saldo atualizado.");
-      saquesQuery.refetch();
-    },
-    onError: error => toast.error(getFriendlyAdminWithdrawalError(error.message)),
-  });
-
   if (user?.role !== "admin") {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
@@ -277,21 +241,6 @@ export default function Admin() {
     });
   }, [depositosBusca, depositosStatus, pixPaymentsQuery.data]);
 
-  const filteredSaques = useMemo(() => {
-    const term = saquesBusca.trim().toLowerCase();
-    return (saquesQuery.data ?? []).filter(item => {
-      const status = (item as { status?: string }).status ?? "";
-      const statusMatch = saquesStatus === "todos" || status === saquesStatus;
-      if (!statusMatch) return false;
-      if (!term) return true;
-      const nome = (item as any).usuario?.name?.toLowerCase() ?? "";
-      const nickname = (item as any).usuario?.nickname?.toLowerCase() ?? "";
-      const email = (item as any).usuario?.email?.toLowerCase() ?? "";
-      const chave = item.walletAddress?.toLowerCase() ?? "";
-      return [nome, nickname, email, chave].some(value => value.includes(term));
-    });
-  }, [saquesBusca, saquesStatus, saquesQuery.data]);
-
   return (
     <div className="safe-shell min-h-screen bg-background text-foreground pb-20">
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
@@ -361,11 +310,10 @@ export default function Admin() {
       <section className="py-12">
         <div className="container">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-2 rounded-2xl bg-card/60 p-1 md:mb-8 md:grid-cols-4">
+            <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-2 rounded-2xl bg-card/60 p-1 md:mb-8 md:grid-cols-3">
               <TabsTrigger value="campeonatos">Campeonatos</TabsTrigger>
               <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
               <TabsTrigger value="premiacoes">Premiacoes</TabsTrigger>
-              <TabsTrigger value="saques">Saques</TabsTrigger>
             </TabsList>
 
             {/* Campeonatos */}
@@ -581,69 +529,6 @@ export default function Admin() {
                   pixPaymentsError={pixPaymentsQuery.error?.message ?? null}
                   filteredPixPayments={filteredPixPayments}
                   getPixStatusLabel={getPixStatusLabel}
-                  saquesBusca={saquesBusca}
-                  setSaquesBusca={setSaquesBusca}
-                  saquesStatus={saquesStatus}
-                  setSaquesStatus={setSaquesStatus}
-                  saquesLoading={saquesQuery.isLoading}
-                  saquesError={saquesQuery.error?.message ?? null}
-                  filteredSaques={filteredSaques}
-                  getWithdrawalStatusLabel={getWithdrawalStatusLabel}
-                  rejeitarSaquePending={rejeitarSaqueMutation.isPending}
-                  marcarSaquePagoPending={marcarSaquePagoMutation.isPending}
-                  onRejectWithdrawal={solicitacaoId => rejeitarSaqueMutation.mutate({ solicitacaoId })}
-                  onMarkWithdrawalPaid={solicitacaoId => marcarSaquePagoMutation.mutate({ solicitacaoId })}
-                  usuariosLoading={usuariosQuery.isLoading}
-                  usuariosError={usuariosQuery.error?.message ?? null}
-                  usuariosData={usuariosQuery.data ?? []}
-                  setRolePending={setRoleMutation.isPending}
-                  onToggleRole={handleToggleRole}
-                />
-              </Suspense>
-            </TabsContent>
-
-            <TabsContent value="saques" className="space-y-6">
-              <Suspense
-                fallback={
-                  <Card className="border-border/70 bg-card/60 p-5">
-                    <p className="text-sm text-muted-foreground">Carregando painel...</p>
-                  </Card>
-                }
-              >
-                <LazyAdminSupportPanels
-                  activeTab="saques"
-                  depositoRef={depositoRef}
-                  usuariosSelect={usuariosSelect}
-                  depositoUsuarioId={depositoUsuarioId}
-                  setDepositoUsuarioId={setDepositoUsuarioId}
-                  depositoValor={depositoValor}
-                  setDepositoValor={setDepositoValor}
-                  depositoDescricao={depositoDescricao}
-                  setDepositoDescricao={setDepositoDescricao}
-                  handleGerarPix={handleGerarPix}
-                  criarPixPending={premiarSaldoMutation.isPending}
-                  pixStatusData={ultimaPremiacao}
-                  pixStatusLabel={pixStatusLabel}
-                  depositosBusca={depositosBusca}
-                  setDepositosBusca={setDepositosBusca}
-                  depositosStatus={depositosStatus}
-                  setDepositosStatus={setDepositosStatus}
-                  pixPaymentsLoading={pixPaymentsQuery.isLoading}
-                  pixPaymentsError={pixPaymentsQuery.error?.message ?? null}
-                  filteredPixPayments={filteredPixPayments}
-                  getPixStatusLabel={getPixStatusLabel}
-                  saquesBusca={saquesBusca}
-                  setSaquesBusca={setSaquesBusca}
-                  saquesStatus={saquesStatus}
-                  setSaquesStatus={setSaquesStatus}
-                  saquesLoading={saquesQuery.isLoading}
-                  saquesError={saquesQuery.error?.message ?? null}
-                  filteredSaques={filteredSaques}
-                  getWithdrawalStatusLabel={getWithdrawalStatusLabel}
-                  rejeitarSaquePending={rejeitarSaqueMutation.isPending}
-                  marcarSaquePagoPending={marcarSaquePagoMutation.isPending}
-                  onRejectWithdrawal={solicitacaoId => rejeitarSaqueMutation.mutate({ solicitacaoId })}
-                  onMarkWithdrawalPaid={solicitacaoId => marcarSaquePagoMutation.mutate({ solicitacaoId })}
                   usuariosLoading={usuariosQuery.isLoading}
                   usuariosError={usuariosQuery.error?.message ?? null}
                   usuariosData={usuariosQuery.data ?? []}
@@ -683,18 +568,6 @@ export default function Admin() {
                   pixPaymentsError={pixPaymentsQuery.error?.message ?? null}
                   filteredPixPayments={filteredPixPayments}
                   getPixStatusLabel={getPixStatusLabel}
-                  saquesBusca={saquesBusca}
-                  setSaquesBusca={setSaquesBusca}
-                  saquesStatus={saquesStatus}
-                  setSaquesStatus={setSaquesStatus}
-                  saquesLoading={saquesQuery.isLoading}
-                  saquesError={saquesQuery.error?.message ?? null}
-                  filteredSaques={filteredSaques}
-                  getWithdrawalStatusLabel={getWithdrawalStatusLabel}
-                  rejeitarSaquePending={rejeitarSaqueMutation.isPending}
-                  marcarSaquePagoPending={marcarSaquePagoMutation.isPending}
-                  onRejectWithdrawal={solicitacaoId => rejeitarSaqueMutation.mutate({ solicitacaoId })}
-                  onMarkWithdrawalPaid={solicitacaoId => marcarSaquePagoMutation.mutate({ solicitacaoId })}
                   usuariosLoading={usuariosQuery.isLoading}
                   usuariosError={usuariosQuery.error?.message ?? null}
                   usuariosData={usuariosQuery.data ?? []}
