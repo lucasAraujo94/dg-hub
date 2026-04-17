@@ -161,7 +161,10 @@ function PodiumCard({
   return (
     <HoverCard openDelay={120} closeDelay={120}>
       <HoverCardTrigger asChild>
-        <Link href={profileHref} className={`group relative block ${mobileOrder} ${desktopOrder} ${heightClass}`}>
+        <Link
+          href={profileHref}
+          className={`group relative block min-w-[260px] flex-none snap-center sm:min-w-0 sm:flex-auto ${mobileOrder} ${desktopOrder} ${heightClass}`}
+        >
           <article
             className={`relative overflow-hidden rounded-[24px] border p-3 transition-all duration-300 ease-out animate-in fade-in zoom-in-95 sm:rounded-[28px] sm:p-5 ${tone.cardClass} ${tone.glowClass} ${scaleClass} hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_55px_rgba(255,255,255,0.08)]`}
           >
@@ -279,14 +282,15 @@ export function RankingPodium({ data, displayPref, hagoNickLocal }: RankingPodiu
         </p>
       </div>
 
-      <div className="relative grid grid-cols-1 gap-4 md:grid-cols-3 md:items-end">
+      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
+        <div className="relative flex snap-x snap-mandatory gap-4 md:grid md:grid-cols-3 md:items-end">
         {PODIUM_LAYOUT.map(layout => {
           const player = topThree[layout.place - 1];
           if (!player) {
             return (
               <div
                 key={layout.place}
-                className={`rounded-[24px] border border-dashed border-white/10 bg-black/10 p-5 text-center text-sm text-muted-foreground sm:rounded-[28px] sm:p-6 ${layout.mobileOrder} ${layout.desktopOrder} ${layout.heightClass}`}
+                className={`min-w-[260px] flex-none snap-center rounded-[24px] border border-dashed border-white/10 bg-black/10 p-5 text-center text-sm text-muted-foreground sm:min-w-0 sm:flex-auto sm:rounded-[28px] sm:p-6 ${layout.mobileOrder} ${layout.desktopOrder} ${layout.heightClass}`}
               >
                 Posição {layout.place}º aguardando jogador
               </div>
@@ -307,6 +311,7 @@ export function RankingPodium({ data, displayPref, hagoNickLocal }: RankingPodiu
             />
           );
         })}
+        </div>
       </div>
     </section>
   );
