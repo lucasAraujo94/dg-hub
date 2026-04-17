@@ -754,6 +754,71 @@ export async function creditarSaldo(usuarioId: number, valor: number) {
   });
 }
 
+export async function premiarUsuarioInternamente(params: {
+  usuarioId: number;
+  valor: number;
+  descricao?: string | null;
+  createdByUserId?: number | null;
+}) {
+  if (params.valor <= 0) {
+    throw new Error("Valor deve ser positivo");
+  }
+
+  return prisma.$transaction(async tx => {
+    const usuario = await tx.user.findUnique({
+      where: { id: params.usuarioId },
+      select: { id: true, saldoPremio: true },
+    });
+
+    if (!usuario) {
+      throw new Error("Usuario nao encontrado");
+    }
+
+    const now = new Date();
+    const externalReference = `reward_${params.usuarioId}_${now.getTime()}_${Math.random().toString(36).slice(2, 8)}`;
+    const descricao = params.descricao?.trim() || "Premiacao interna";
+
+    const pixPayment = await tx.pixPayment.create({
+      data: {
+        usuarioId: params.usuarioId,
+        createdByUserId: params.createdByUserId ?? null,
+        provider: "internal",
+        externalReference,
+        status: "approved",
+        valor: params.valor,
+        descricao,
+        approvedAt: now,
+        creditedAt: now,
+      },
+    });
+
+    const updatedUser = await tx.user.update({
+      where: { id: params.usuarioId },
+      data: { saldoPremio: { increment: params.valor } },
+      select: { id: true, saldoPremio: true },
+    });
+
+    await tx.notificacao.create({
+      data: {
+        usuarioId: params.usuarioId,
+        tipo: "premiacao",
+        mensagem: `${descricao} (+R$ ${params.valor.toFixed(2)})`,
+      },
+    });
+
+    return {
+      pixPaymentId: pixPayment.id,
+      usuarioId: updatedUser.id,
+      saldoPremio: Number(updatedUser.saldoPremio),
+      externalReference,
+      status: pixPayment.status,
+      valor: Number(pixPayment.valor),
+      descricao,
+      creditedAt: pixPayment.creditedAt,
+    };
+  });
+}
+
 export async function getNotificacoes(usuarioId: number) {
   return prisma.notificacao.findMany({
     where: { usuarioId },

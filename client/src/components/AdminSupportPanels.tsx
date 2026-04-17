@@ -90,8 +90,8 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
     return (
       <div className="space-y-6">
         <div className="card-elegant p-4 md:p-6" ref={depositoRef}>
-          <h2 className="text-xl font-bold mb-2">Premiar jogador via PIX</h2>
-          <p className="text-sm text-muted-foreground mb-4">Gere um PIX real pelo Asaas, acompanhe o status e aguarde a confirmacao automatica.</p>
+          <h2 className="text-xl font-bold mb-2">Premiar jogador</h2>
+          <p className="text-sm text-muted-foreground mb-4">Adicione saldo interno ao jogador. O saque acontece depois via Pix automatico com a chave escolhida por ele.</p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <label className="text-sm font-semibold mb-2 block">Jogador</label>
@@ -119,7 +119,7 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
           </div>
           <div className="mt-4 flex justify-end">
             <Button className="btn-secondary" onClick={handleGerarPix} disabled={criarPixPending}>
-              {criarPixPending ? "Gerando..." : "Gerar PIX de premiacao"}
+              {criarPixPending ? "Premiando..." : "Premiar saldo"}
             </Button>
           </div>
 
@@ -128,35 +128,18 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-semibold">Status: {pixStatusLabel}</p>
                 <p className="text-xs text-muted-foreground">
-                  ID interno {pixStatusData.id} - pagamento {pixStatusData.providerPaymentId ?? "aguardando criacao"}
+                  Lancamento interno {pixStatusData.pixPaymentId ?? pixStatusData.id} - referencia {pixStatusData.externalReference ?? "n/d"}
                 </p>
                 <p className="text-xs text-muted-foreground">Valor: R$ {pixStatusData.valor.toFixed(2)}</p>
+                {pixStatusData.saldoPremio !== undefined ? (
+                  <p className="text-xs text-muted-foreground">Novo saldo disponivel: R$ {Number(pixStatusData.saldoPremio).toFixed(2)}</p>
+                ) : null}
               </div>
 
-              {pixStatusData.qrCodeBase64 ? (
-                <div className="flex flex-col items-start gap-3">
-                  <img
-                    src={`data:image/png;base64,${pixStatusData.qrCodeBase64}`}
-                    alt="QR Code PIX"
-                    className="w-56 max-w-full rounded-lg border border-border bg-white p-3"
-                  />
-                  <p className="text-xs text-muted-foreground break-all">{pixStatusData.qrCode}</p>
-                  {pixStatusData.ticketUrl ? (
-                    <a href={pixStatusData.ticketUrl} target="_blank" rel="noreferrer" className="text-sm text-primary underline">
-                      Abrir comprovante do PIX
-                    </a>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">QR Code ainda nao disponivel.</p>
-              )}
-
               {pixStatusData.creditedAt ? (
-                <p className="text-sm text-green-400">
-                  Saldo creditado em {new Date(pixStatusData.creditedAt).toLocaleString("pt-BR")}
-                </p>
+                <p className="text-sm text-green-400">Saldo creditado em {new Date(pixStatusData.creditedAt).toLocaleString("pt-BR")}</p>
               ) : (
-                <p className="text-sm text-muted-foreground">O saldo sera creditado automaticamente apos o pagamento aprovado.</p>
+                <p className="text-sm text-muted-foreground">A premiacao sera refletida no saldo assim que o lancamento for concluido.</p>
               )}
             </div>
           ) : null}
@@ -165,7 +148,7 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
         <div className="card-elegant p-4 md:p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <h2 className="text-xl font-bold mb-2">Historico de premiacoes PIX</h2>
+              <h2 className="text-xl font-bold mb-2">Historico de premiacoes</h2>
               <p className="text-sm text-muted-foreground">Filtre por status e localize rapido o jogador ou a referencia da premiacao.</p>
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

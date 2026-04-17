@@ -46,6 +46,7 @@ import {
   sortearPartidasCampeonato,
   listUsers,
   getPublicUserById,
+  premiarUsuarioInternamente,
   votarEnquete,
   resultadosEnquete,
   criarEnquete,
@@ -345,6 +346,22 @@ export const appRouter = router({
     listUsers: adminProcedure.query(() => listUsers()),
     listSaques: adminProcedure.query(() => getAllSolicitacoesSaque()),
     listPixPayments: adminProcedure.query(() => getAllPixPayments()),
+    premiarSaldo: adminProcedure
+      .input(
+        z.object({
+          usuarioId: z.number(),
+          valor: z.number().positive(),
+          descricao: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        return premiarUsuarioInternamente({
+          usuarioId: input.usuarioId,
+          valor: input.valor,
+          descricao: input.descricao,
+          createdByUserId: ctx.user?.id ?? null,
+        });
+      }),
     inscreverUsuarioCampeonato: adminProcedure
       .input(z.object({ usuarioId: z.number(), campeonatoId: z.number() }))
       .mutation(async ({ input }) => {

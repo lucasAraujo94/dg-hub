@@ -8,7 +8,7 @@ import { Suspense, lazy, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { getFriendlyAdminWithdrawalError, getFriendlyPixError } from "@/lib/userMessages";
+import { getFriendlyAdminWithdrawalError } from "@/lib/userMessages";
 
 const LazyAdminSupportPanels = lazy(() => import("@/components/AdminSupportPanels"));
 
@@ -76,7 +76,7 @@ export default function Admin() {
   const [depositoUsuarioId, setDepositoUsuarioId] = useState("");
   const [depositoValor, setDepositoValor] = useState("");
   const [depositoDescricao, setDepositoDescricao] = useState("");
-  const [pixPaymentId, setPixPaymentId] = useState<number | null>(null);
+  const [ultimaPremiacao, setUltimaPremiacao] = useState<any | null>(null);
   const [depositosBusca, setDepositosBusca] = useState("");
   const [depositosStatus, setDepositosStatus] = useState("todos");
   const [saquesBusca, setSaquesBusca] = useState("");
@@ -146,22 +146,15 @@ export default function Admin() {
     onSuccess: () => usuariosQuery.refetch(),
     onError: error => toast.error(error.message || "Falha ao atualizar permissoes"),
   });
-  const criarPixMutation = trpc.payments.criarPix.useMutation({
+  const premiarSaldoMutation = trpc.admin.premiarSaldo.useMutation({
     onSuccess: data => {
-      setPixPaymentId(data.pixPaymentId ?? null);
-      toast.success("PIX gerado. Compartilhe o QR Code e acompanhe o status abaixo.");
+      setUltimaPremiacao(data);
+      usuariosQuery.refetch();
+      pixPaymentsQuery.refetch();
+      toast.success("Saldo premiado com sucesso.");
     },
-    onError: error => toast.error(getFriendlyPixError(error.message)),
+    onError: error => toast.error(error.message || "Falha ao premiar saldo"),
   });
-  const pixStatusQuery = trpc.payments.getPixStatus.useQuery(
-    { pixPaymentId: pixPaymentId ?? 0 },
-    {
-      enabled: Boolean(pixPaymentId),
-      refetchOnWindowFocus: false,
-      refetchInterval: query =>
-        query.state.data && !query.state.data.creditedAt && query.state.data.status !== "approved" ? 5000 : false,
-    }
-  );
   const rejeitarSaqueMutation = trpc.saques.rejeitar.useMutation({
     onSuccess: () => {
       toast.success("Saque rejeitado. O historico do usuario foi atualizado.");
@@ -255,18 +248,17 @@ export default function Admin() {
       toast.error("Informe um valor valido");
       return;
     }
-    const data = await criarPixMutation.mutateAsync({
+    await premiarSaldoMutation.mutateAsync({
       usuarioId: Number(depositoUsuarioId),
       valor,
       descricao: depositoDescricao || undefined,
     });
-    if (data.pixPaymentId) {
-      setPixPaymentId(data.pixPaymentId);
-    }
+    setDepositoValor("");
+    setDepositoDescricao("");
   };
 
   const pixStatusLabel = (() => {
-    const status = pixStatusQuery.data?.status ?? "";
+    const status = ultimaPremiacao?.status ?? "";
     return getPixStatusLabel(status);
   })();
 
@@ -347,7 +339,7 @@ export default function Admin() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">Premiacao PIX</p>
-                  <p className="text-xs text-muted-foreground">Gere QR para premiar jogadores pelo Asaas</p>
+                  <p className="text-xs text-muted-foreground">Credite saldo interno para saque posterior via Asaas</p>
                 </div>
                 <Button
                   size="sm"
@@ -358,7 +350,7 @@ export default function Admin() {
                     setTimeout(() => depositoRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
                   }}
                 >
-                  Gerar QR
+                  Premiar
                 </Button>
               </div>
             </div>
@@ -578,8 +570,8 @@ export default function Admin() {
                   depositoDescricao={depositoDescricao}
                   setDepositoDescricao={setDepositoDescricao}
                   handleGerarPix={handleGerarPix}
-                  criarPixPending={criarPixMutation.isPending}
-                  pixStatusData={pixStatusQuery.data}
+                  criarPixPending={premiarSaldoMutation.isPending}
+                  pixStatusData={ultimaPremiacao}
                   pixStatusLabel={pixStatusLabel}
                   depositosBusca={depositosBusca}
                   setDepositosBusca={setDepositosBusca}
@@ -629,8 +621,8 @@ export default function Admin() {
                   depositoDescricao={depositoDescricao}
                   setDepositoDescricao={setDepositoDescricao}
                   handleGerarPix={handleGerarPix}
-                  criarPixPending={criarPixMutation.isPending}
-                  pixStatusData={pixStatusQuery.data}
+                  criarPixPending={premiarSaldoMutation.isPending}
+                  pixStatusData={ultimaPremiacao}
                   pixStatusLabel={pixStatusLabel}
                   depositosBusca={depositosBusca}
                   setDepositosBusca={setDepositosBusca}
@@ -680,8 +672,8 @@ export default function Admin() {
                   depositoDescricao={depositoDescricao}
                   setDepositoDescricao={setDepositoDescricao}
                   handleGerarPix={handleGerarPix}
-                  criarPixPending={criarPixMutation.isPending}
-                  pixStatusData={pixStatusQuery.data}
+                  criarPixPending={premiarSaldoMutation.isPending}
+                  pixStatusData={ultimaPremiacao}
                   pixStatusLabel={pixStatusLabel}
                   depositosBusca={depositosBusca}
                   setDepositosBusca={setDepositosBusca}
