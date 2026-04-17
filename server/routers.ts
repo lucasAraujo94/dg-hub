@@ -651,7 +651,6 @@ export const appRouter = router({
           nickname: z.string().max(100).nullable().optional(),
           hideEmail: z.boolean().optional(),
           birthDate: z.string().min(10).nullable().optional(),
-          cpfCnpj: z.string().max(18).nullable().optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {
@@ -672,7 +671,6 @@ export const appRouter = router({
           nickname: input.nickname ?? undefined,
           hideEmail: input.hideEmail ?? undefined,
           birthDate,
-          cpfCnpj: input.cpfCnpj ?? undefined,
         });
         return updated;
       }),
