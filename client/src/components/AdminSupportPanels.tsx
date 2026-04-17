@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ShieldCheck } from "lucide-react";
 
 type AdminSupportPanelsProps = {
-  activeTab: "depositos" | "saques" | "usuarios";
+  activeTab: "premiacoes" | "saques" | "usuarios";
   depositoRef: React.Ref<HTMLDivElement>;
   usuariosSelect: any[];
   depositoUsuarioId: string;
@@ -86,12 +86,12 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
     onToggleRole,
   } = props;
 
-  if (activeTab === "depositos") {
+  if (activeTab === "premiacoes") {
     return (
       <div className="space-y-6">
         <div className="card-elegant p-4 md:p-6" ref={depositoRef}>
-          <h2 className="text-xl font-bold mb-2">Depositar via PIX para jogador</h2>
-          <p className="text-sm text-muted-foreground mb-4">Gere um PIX real, acompanhe o status e aguarde a confirmacao automatica.</p>
+          <h2 className="text-xl font-bold mb-2">Premiar jogador via PIX</h2>
+          <p className="text-sm text-muted-foreground mb-4">Gere um PIX real pelo Asaas, acompanhe o status e aguarde a confirmacao automatica.</p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <label className="text-sm font-semibold mb-2 block">Jogador</label>
@@ -114,12 +114,12 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
             </div>
             <div>
               <label className="text-sm font-semibold mb-2 block">Descricao</label>
-              <Input value={depositoDescricao} onChange={e => setDepositoDescricao(e.target.value)} placeholder="Premiacao, bonus, deposito..." />
+              <Input value={depositoDescricao} onChange={e => setDepositoDescricao(e.target.value)} placeholder="Premiacao, bonus, campanha..." />
             </div>
           </div>
           <div className="mt-4 flex justify-end">
             <Button className="btn-secondary" onClick={handleGerarPix} disabled={criarPixPending}>
-              {criarPixPending ? "Gerando..." : "Gerar PIX"}
+              {criarPixPending ? "Gerando..." : "Gerar PIX de premiacao"}
             </Button>
           </div>
 
@@ -165,8 +165,8 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
         <div className="card-elegant p-4 md:p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <h2 className="text-xl font-bold mb-2">Historico de depositos PIX</h2>
-              <p className="text-sm text-muted-foreground">Filtre por status e localize rapido o jogador ou a referencia do pagamento.</p>
+              <h2 className="text-xl font-bold mb-2">Historico de premiacoes PIX</h2>
+              <p className="text-sm text-muted-foreground">Filtre por status e localize rapido o jogador ou a referencia da premiacao.</p>
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <Input value={depositosBusca} onChange={e => setDepositosBusca(e.target.value)} placeholder="Buscar por jogador, email, referencia..." />
@@ -185,10 +185,10 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
             </div>
           </div>
 
-          {pixPaymentsLoading ? <p className="mt-4 text-sm text-muted-foreground">Carregando depositos...</p> : null}
+          {pixPaymentsLoading ? <p className="mt-4 text-sm text-muted-foreground">Carregando premiacoes...</p> : null}
           {pixPaymentsError ? <p className="mt-4 text-sm text-red-400">Erro: {pixPaymentsError}</p> : null}
           {!pixPaymentsLoading && filteredPixPayments.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">Nenhum deposito encontrado com os filtros atuais.</p>
+            <p className="mt-4 text-sm text-muted-foreground">Nenhuma premiacao encontrada com os filtros atuais.</p>
           ) : null}
 
           <div className="mt-4 space-y-3">

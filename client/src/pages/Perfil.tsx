@@ -696,7 +696,7 @@ export default function Perfil() {
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold">Extrato financeiro</h3>
                   <p className="text-sm text-muted-foreground">
-                    Acompanhe os depósitos PIX e saques da sua conta.
+                    Acompanhe as premiacoes PIX e saques da sua conta.
                   </p>
                 </div>
 
@@ -717,7 +717,7 @@ export default function Perfil() {
                         className="flex flex-col gap-3 rounded-xl border border-border/60 bg-background/50 p-4 md:flex-row md:items-center md:justify-between"
                       >
                         <div className="space-y-1">
-                          <p className="font-semibold">{isDeposit ? "Depósito PIX" : "Saque"}</p>
+                          <p className="font-semibold">{isDeposit ? "Premiacao PIX" : "Saque"}</p>
                           <p className="text-sm text-muted-foreground">{item.descricao || "Movimentação financeira"}</p>
                           <p className="text-xs text-muted-foreground">{new Date(item.data).toLocaleString("pt-BR")}</p>
                           {item.referencia ? (

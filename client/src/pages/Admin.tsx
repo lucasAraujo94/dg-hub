@@ -346,14 +346,14 @@ export default function Admin() {
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Deposito PIX</p>
-                  <p className="text-xs text-muted-foreground">Gere QR para premiar jogadores</p>
+                  <p className="text-sm text-muted-foreground mb-2">Premiacao PIX</p>
+                  <p className="text-xs text-muted-foreground">Gere QR para premiar jogadores pelo Asaas</p>
                 </div>
                 <Button
                   size="sm"
                   className="btn-secondary"
                   onClick={() => {
-                    const tab = document.querySelector<HTMLButtonElement>('[data-value="depositos"]');
+                    const tab = document.querySelector<HTMLButtonElement>('[data-value="premiacoes"]');
                     tab?.click();
                     setTimeout(() => depositoRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
                   }}
@@ -372,7 +372,7 @@ export default function Admin() {
             <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-2 rounded-2xl bg-card/60 p-1 md:mb-8 md:grid-cols-4">
               <TabsTrigger value="campeonatos">Campeonatos</TabsTrigger>
               <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
-              <TabsTrigger value="depositos">Depositos</TabsTrigger>
+              <TabsTrigger value="premiacoes">Premiacoes</TabsTrigger>
               <TabsTrigger value="saques">Saques</TabsTrigger>
             </TabsList>
 
@@ -559,7 +559,7 @@ export default function Admin() {
               </div>
             </TabsContent>
 
-            <TabsContent value="depositos" className="space-y-6">
+            <TabsContent value="premiacoes" className="space-y-6">
               <Suspense
                 fallback={
                   <Card className="border-border/70 bg-card/60 p-5">
@@ -568,7 +568,7 @@ export default function Admin() {
                 }
               >
                 <LazyAdminSupportPanels
-                  activeTab="depositos"
+                  activeTab="premiacoes"
                   depositoRef={depositoRef}
                   usuariosSelect={usuariosSelect}
                   depositoUsuarioId={depositoUsuarioId}
