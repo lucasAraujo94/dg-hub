@@ -99,6 +99,7 @@ export default function Perfil() {
   const [savedAvatarUrl, setSavedAvatarUrl] = useState<string | null>(null);
   const [hagoNickname, setHagoNickname] = useState<string>("");
   const [birthDate, setBirthDate] = useState<string>("");
+  const [cpfCnpj, setCpfCnpj] = useState<string>("");
   const [displayPreference, setDisplayPreference] = useState<"real" | "hago">("real");
   const [hideEmail, setHideEmail] = useState(false);
   const [showValorModal, setShowValorModal] = useState(false);
@@ -262,6 +263,9 @@ export default function Perfil() {
     if (typeof (user as any)?.nickname === "string") {
       setHagoNickname((user as any).nickname || "");
     }
+    if (typeof (user as any)?.cpfCnpj === "string") {
+      setCpfCnpj((user as any).cpfCnpj || "");
+    }
   }, [user]);
 
   // Preview local na hora
@@ -319,6 +323,7 @@ export default function Perfil() {
         nickname: normalizedNick || null,
         hideEmail,
         birthDate,
+        cpfCnpj: cpfCnpj.trim() || null,
       });
       utils.auth.me.setData(undefined, prev =>
         prev
@@ -327,10 +332,12 @@ export default function Perfil() {
               nickname: updated.nickname ?? normalizedNick,
               hideEmail: updated.hideEmail,
               birthDate: updated.birthDate ?? prev.birthDate,
+              cpfCnpj: updated.cpfCnpj ?? cpfCnpj.trim(),
             }
           : prev
       );
       setHagoNickname(updated.nickname ?? normalizedNick);
+      setCpfCnpj(updated.cpfCnpj ?? cpfCnpj.trim());
       setBirthDate(updated.birthDate ? new Date(updated.birthDate).toISOString().split("T")[0] : birthDate);
       await refresh?.();
       toast.success("Perfil salvo/atualizado");
@@ -583,6 +590,11 @@ export default function Perfil() {
                   placeholder="Seu apelido no Hago"
                   value={hagoNickname}
                   onChange={e => setHagoNickname(e.target.value)}
+                />
+                <Input
+                  placeholder="CPF ou CNPJ"
+                  value={cpfCnpj}
+                  onChange={e => setCpfCnpj(e.target.value)}
                 />
                 <div className="space-y-1">
                   <Label className="text-sm">Data de nascimento (obrigatoria)</Label>

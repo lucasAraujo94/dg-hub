@@ -38,6 +38,7 @@ import {
   getUserByEmail,
   createLocalUser,
   setUserRole,
+  setUserAsaasCustomerId,
   broadcastTournamentAnnouncement,
   criarMensagemChat,
   setUserAvatar,
@@ -90,6 +91,22 @@ const mapMercadoPagoPix = (payment: any) => {
     expiresAt: payment?.date_of_expiration ? new Date(payment.date_of_expiration) : null,
   };
 };
+
+const formatDateOnly = (date: Date) => date.toISOString().slice(0, 10);
+
+const mapAsaasPixPayment = (payment: any) => ({
+  providerPaymentId: String(payment?.id ?? ""),
+  externalReference: payment?.externalReference ? String(payment.externalReference) : null,
+  status: String(payment?.status ?? "PENDING"),
+  valor: Number(payment?.value ?? 0),
+  qrCode: null,
+  qrCodeBase64: null,
+  ticketUrl: payment?.invoiceUrl ? String(payment.invoiceUrl) : null,
+  metadataJson: null,
+  rawResponseJson: JSON.stringify(payment),
+  approvedAt: payment?.clientPaymentDate ? new Date(payment.clientPaymentDate) : null,
+  expiresAt: payment?.dueDate ? new Date(`${payment.dueDate}T23:59:59Z`) : null,
+});
 
 const detectPixKeyType = (
   rawKey: string,
@@ -190,6 +207,59 @@ const transferWithdrawalViaAsaas = async (params: {
           ? JSON.stringify(error.response.data)
           : error.response?.data || error.message;
       throw new Error(`Asaas transfer error: ${detail}`);
+    }
+    throw error;
+  }
+};
+
+const ensureUserHasAsaasCustomer = async (user: {
+  id: number;
+  name?: string | null;
+  email?: string | null;
+  cpfCnpj?: string | null;
+  asaasCustomerId?: string | null;
+}) => {
+  if (!ENV.asaasApiKey) {
+    throw new Error("ASAAS_API_KEY nao configurado");
+  }
+
+  const cpfCnpj = user.cpfCnpj?.replace(/\D/g, "") ?? "";
+  if (!cpfCnpj || ![11, 14].includes(cpfCnpj.length)) {
+    throw new Error("CPF/CNPJ do usuario nao configurado para gerar cobranca Pix");
+  }
+
+  if (user.asaasCustomerId) {
+    return user.asaasCustomerId;
+  }
+
+  const payload = {
+    name: user.name?.trim() || user.email?.trim() || `Usuario ${user.id}`,
+    cpfCnpj,
+    email: user.email?.trim().toLowerCase() || undefined,
+    externalReference: `user_${user.id}`,
+    notificationDisabled: true,
+  };
+
+  try {
+    const response = await axios.post(`${ENV.asaasBaseUrl}/v3/customers`, payload, {
+      headers: {
+        access_token: ENV.asaasApiKey,
+        "Content-Type": "application/json",
+      },
+    });
+    const customerId = String(response.data?.id ?? "");
+    if (!customerId) {
+      throw new Error("Asaas nao retornou customer id");
+    }
+    await setUserAsaasCustomerId(user.id, customerId);
+    return customerId;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const detail =
+        typeof error.response?.data === "object" && error.response?.data
+          ? JSON.stringify(error.response.data)
+          : error.response?.data || error.message;
+      throw new Error(`Asaas customer error: ${detail}`);
     }
     throw error;
   }
@@ -362,42 +432,41 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
-        if (!ENV.mpAccessToken) {
-          throw new Error("MP_ACCESS_TOKEN nao configurado");
+        if (!ENV.asaasApiKey) {
+          throw new Error("ASAAS_API_KEY nao configurado");
         }
+        const usuario = await listUsers().then(users => users.find(user => user.id === input.usuarioId));
+        if (!usuario) {
+          throw new Error("Usuario nao encontrado");
+        }
+        const customerId = await ensureUserHasAsaasCustomer({
+          id: usuario.id,
+          name: usuario.name,
+          email: usuario.email,
+          cpfCnpj: (usuario as any).cpfCnpj,
+          asaasCustomerId: (usuario as any).asaasCustomerId,
+        });
         const externalReference = `pix_${input.usuarioId}_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
-        const payerEmail =
-          ctx.user?.email?.trim().toLowerCase() ||
-          `pagamento+${input.usuarioId}@${ENV.appId}`;
-        const notificationUrl = `${resolvePublicBaseUrl(ctx.req)}/api/mp/webhook`;
         const payload = {
-          transaction_amount: input.valor,
+          customer: customerId,
+          billingType: "PIX",
+          value: input.valor,
+          dueDate: formatDateOnly(new Date()),
           description: input.descricao ?? `Deposito PIX - usuario ${input.usuarioId}`,
-          payment_method_id: "pix",
-          external_reference: externalReference,
-          notification_url: notificationUrl,
-          payer: {
-            email: payerEmail,
-          },
-          metadata: {
-            userId: input.usuarioId,
-            createdByUserId: ctx.user?.id ?? null,
-            externalReference,
-          },
+          externalReference,
         };
 
         let resp;
         try {
-          resp = await axios.post("https://api.mercadopago.com/v1/payments", payload, {
+          resp = await axios.post(`${ENV.asaasBaseUrl}/v3/payments`, payload, {
             headers: {
-              Authorization: `Bearer ${ENV.mpAccessToken}`,
+              access_token: ENV.asaasApiKey,
               "Content-Type": "application/json",
-              "X-Idempotency-Key": externalReference,
             },
           });
         } catch (error) {
           if (axios.isAxiosError(error)) {
-            console.error("[payments.criarPix] Mercado Pago create payment failed", {
+            console.error("[payments.criarPix] Asaas create payment failed", {
               status: error.response?.status,
               data: error.response?.data,
               payload,
@@ -406,28 +475,34 @@ export const appRouter = router({
               typeof error.response?.data === "object" && error.response?.data
                 ? JSON.stringify(error.response.data)
                 : error.response?.data || error.message;
-            throw new Error(`Mercado Pago error: ${detail}`);
+            throw new Error(`Asaas payment error: ${detail}`);
           }
           throw error;
         }
 
         const data: any = resp.data;
-        const pixInfo = data?.point_of_interaction?.transaction_data;
+        const qrResp = await axios.get(`${ENV.asaasBaseUrl}/v3/payments/${data.id}/pixQrCode`, {
+          headers: {
+            access_token: ENV.asaasApiKey,
+          },
+        });
+        const qrData: any = qrResp.data;
         const created = await createPixPaymentRecord({
           usuarioId: input.usuarioId,
           createdByUserId: ctx.user?.id ?? null,
+          provider: "asaas",
           externalReference,
           providerPaymentId: data?.id ? String(data.id) : null,
-          status: String(data?.status ?? "pending"),
-          valor: Number(data?.transaction_amount ?? input.valor),
+          status: String(data?.status ?? "PENDING"),
+          valor: Number(data?.value ?? input.valor),
           descricao: input.descricao ?? `Deposito PIX - usuario ${input.usuarioId}`,
-          qrCode: pixInfo?.qr_code ?? null,
-          qrCodeBase64: pixInfo?.qr_code_base64 ?? null,
-          ticketUrl: pixInfo?.ticket_url ?? null,
-          metadataJson: data?.metadata ? JSON.stringify(data.metadata) : null,
+          qrCode: qrData?.payload ?? null,
+          qrCodeBase64: qrData?.encodedImage ?? null,
+          ticketUrl: data?.invoiceUrl ?? null,
+          metadataJson: null,
           rawResponseJson: JSON.stringify(data),
-          approvedAt: data?.date_approved ? new Date(data.date_approved) : null,
-          expiresAt: data?.date_of_expiration ? new Date(data.date_of_expiration) : null,
+          approvedAt: data?.clientPaymentDate ? new Date(data.clientPaymentDate) : null,
+          expiresAt: qrData?.expirationDate ? new Date(qrData.expirationDate) : null,
         });
 
         return {
@@ -435,9 +510,9 @@ export const appRouter = router({
           id: data?.id,
           externalReference,
           status: data?.status,
-          qrCode: pixInfo?.qr_code ?? null,
-          qrCodeBase64: pixInfo?.qr_code_base64 ?? null,
-          ticketUrl: pixInfo?.ticket_url ?? null,
+          qrCode: qrData?.payload ?? null,
+          qrCodeBase64: qrData?.encodedImage ?? null,
+          ticketUrl: data?.invoiceUrl ?? null,
         };
       }),
     getPixStatus: adminProcedure
@@ -448,16 +523,16 @@ export const appRouter = router({
           throw new Error("Pagamento PIX nao encontrado");
         }
 
-        if (record.providerPaymentId && ENV.mpAccessToken && !record.creditedAt && record.status !== "approved") {
+        if (record.providerPaymentId && ENV.asaasApiKey && !record.creditedAt && record.status !== "RECEIVED") {
           try {
-            const paymentResp = await axios.get(`https://api.mercadopago.com/v1/payments/${record.providerPaymentId}`, {
-              headers: { Authorization: `Bearer ${ENV.mpAccessToken}` },
+            const paymentResp = await axios.get(`${ENV.asaasBaseUrl}/v3/payments/${record.providerPaymentId}`, {
+              headers: { access_token: ENV.asaasApiKey },
             });
-            const synced = await syncPixPaymentRecord(mapMercadoPagoPix(paymentResp.data));
+            const synced = await syncPixPaymentRecord(mapAsaasPixPayment(paymentResp.data));
             if (synced) {
               record = synced;
             }
-            if (record.status === "approved" && !record.creditedAt && record.providerPaymentId) {
+            if (record.status === "RECEIVED" && !record.creditedAt && record.providerPaymentId) {
               await creditPixPaymentIfNeeded({
                 pixPaymentId: record.id,
                 usuarioId: record.usuarioId,
@@ -474,7 +549,7 @@ export const appRouter = router({
           }
         }
 
-        if (record.status === "approved" && !record.creditedAt && record.providerPaymentId) {
+        if (record.status === "RECEIVED" && !record.creditedAt && record.providerPaymentId) {
           await creditPixPaymentIfNeeded({
             pixPaymentId: record.id,
             usuarioId: record.usuarioId,
@@ -558,6 +633,7 @@ export const appRouter = router({
           nickname: z.string().max(100).nullable().optional(),
           hideEmail: z.boolean().optional(),
           birthDate: z.string().min(10).nullable().optional(),
+          cpfCnpj: z.string().max(18).nullable().optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {
@@ -578,6 +654,7 @@ export const appRouter = router({
           nickname: input.nickname ?? undefined,
           hideEmail: input.hideEmail ?? undefined,
           birthDate,
+          cpfCnpj: input.cpfCnpj ?? undefined,
         });
         return updated;
       }),

@@ -8,6 +8,8 @@ export type InsertUser = {
   name?: NullableString;
   nickname?: NullableString; // Nome no Hago
   email?: NullableString;
+  cpfCnpj?: NullableString;
+  asaasCustomerId?: NullableString;
   loginMethod?: NullableString;
   passwordHash?: NullableString;
   role?: "user" | "admin";
@@ -22,6 +24,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   const normalizedEmail = user.email?.trim().toLowerCase() ?? null;
   const normalizedNickname = user.nickname?.trim() || null;
+  const normalizedCpfCnpj = user.cpfCnpj?.trim() || null;
+  const normalizedAsaasCustomerId = user.asaasCustomerId?.trim() || null;
   const role = user.openId === ENV.ownerOpenId ? ("admin" as const) : user.role;
 
   const lastSignedIn = user.lastSignedIn ?? new Date();
@@ -34,6 +38,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       name: user.name ?? null,
       nickname: normalizedNickname ?? user.name ?? null,
       email: normalizedEmail,
+      cpfCnpj: normalizedCpfCnpj,
+      asaasCustomerId: normalizedAsaasCustomerId,
       loginMethod: user.loginMethod ?? null,
       passwordHash: user.passwordHash ?? null,
       role: role ?? "user",
@@ -44,6 +50,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       name: user.name ?? undefined,
       nickname: user.nickname !== undefined ? normalizedNickname ?? user.name ?? null : undefined,
       email: normalizedEmail ?? undefined,
+      cpfCnpj: user.cpfCnpj !== undefined ? normalizedCpfCnpj : undefined,
+      asaasCustomerId: user.asaasCustomerId !== undefined ? normalizedAsaasCustomerId : undefined,
       loginMethod: user.loginMethod ?? undefined,
       passwordHash: user.passwordHash ?? undefined,
       role: role ?? undefined,
@@ -66,6 +74,8 @@ export async function listUsers() {
       name: true,
       nickname: true,
       email: true,
+      cpfCnpj: true,
+      asaasCustomerId: true,
       role: true,
       createdAt: true,
       lastSignedIn: true,
@@ -268,10 +278,12 @@ export async function setUserAvatar(userId: number, avatarUrl: string) {
 
 export async function setUserPreferences(
   userId: number,
-  prefs: { nickname?: string | null; hideEmail?: boolean; birthDate?: Date | null }
+  prefs: { nickname?: string | null; hideEmail?: boolean; birthDate?: Date | null; cpfCnpj?: string | null }
 ) {
   const normalizedNickname =
     prefs.nickname !== undefined ? (prefs.nickname?.trim() || null) : undefined;
+  const normalizedCpfCnpj =
+    prefs.cpfCnpj !== undefined ? (prefs.cpfCnpj?.replace(/\D/g, "") || null) : undefined;
   const birthDate = prefs.birthDate ?? undefined;
   return prisma.user.update({
     where: { id: userId },
@@ -279,12 +291,15 @@ export async function setUserPreferences(
       nickname: normalizedNickname,
       hideEmail: prefs.hideEmail ?? undefined,
       birthDate,
+      cpfCnpj: normalizedCpfCnpj,
     },
     select: {
       id: true,
       nickname: true,
       hideEmail: true,
       email: true,
+      cpfCnpj: true,
+      asaasCustomerId: true,
       name: true,
       role: true,
       avatarUrl: true,
@@ -1166,6 +1181,7 @@ export type PixPaymentRecord = {
 type CreatePixPaymentInput = {
   usuarioId: number;
   createdByUserId?: number | null;
+  provider?: string;
   externalReference: string;
   valor: number;
   descricao?: string | null;
@@ -1199,6 +1215,7 @@ export async function createPixPaymentRecord(input: CreatePixPaymentInput) {
     INSERT INTO "pixPayments" (
       "usuarioId",
       "createdByUserId",
+      "provider",
       "externalReference",
       "providerPaymentId",
       "status",
@@ -1216,6 +1233,7 @@ export async function createPixPaymentRecord(input: CreatePixPaymentInput) {
     VALUES (
       ${input.usuarioId},
       ${input.createdByUserId ?? null},
+      ${input.provider ?? "asaas"},
       ${input.externalReference},
       ${input.providerPaymentId ?? null},
       ${input.status ?? "pending"},
@@ -1233,6 +1251,14 @@ export async function createPixPaymentRecord(input: CreatePixPaymentInput) {
     RETURNING *
   `;
   return rows[0] ?? null;
+}
+
+export async function setUserAsaasCustomerId(userId: number, asaasCustomerId: string) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: { asaasCustomerId },
+    select: { id: true, asaasCustomerId: true },
+  });
 }
 
 export async function getPixPaymentById(id: number) {

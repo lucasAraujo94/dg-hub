@@ -14,10 +14,19 @@ const LazyAdminSupportPanels = lazy(() => import("@/components/AdminSupportPanel
 
 const getPixStatusLabel = (status?: string) => {
   switch (status) {
+    case "RECEIVED":
+      return "Recebido";
+    case "CONFIRMED":
     case "approved":
       return "Aprovado";
+    case "PENDING":
     case "pending":
       return "Aguardando pagamento";
+    case "OVERDUE":
+      return "Vencido";
+    case "REFUNDED":
+      return "Estornado";
+    case "CANCELLED":
     case "cancelled":
       return "Cancelado";
     case "canceled":

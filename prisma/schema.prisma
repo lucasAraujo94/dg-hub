@@ -14,6 +14,8 @@ model User {
   name         String?   @db.Text
   nickname     String?   @db.VarChar(100) @map("nome_no_hago")
   email        String?   @db.VarChar(320)
+  cpfCnpj      String?   @db.VarChar(18)
+  asaasCustomerId String? @db.VarChar(32)
   loginMethod  String?   @db.VarChar(64)
   passwordHash String?   @db.VarChar(255)
   role         String    @default("user") @db.VarChar(10)
@@ -213,7 +215,7 @@ model PixPayment {
   id                Int       @id @default(autoincrement())
   usuarioId         Int
   createdByUserId   Int?
-  provider          String    @default("mercadopago") @db.VarChar(32)
+  provider          String    @default("asaas") @db.VarChar(32)
   externalReference String    @unique @db.VarChar(120)
   providerPaymentId String?   @unique @db.VarChar(120)
   status            String    @default("pending") @db.VarChar(32)

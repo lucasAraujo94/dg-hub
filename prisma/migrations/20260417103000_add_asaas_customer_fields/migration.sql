@@ -1,0 +1,3 @@
+ALTER TABLE "users"
+ADD COLUMN "cpfCnpj" VARCHAR(18),
+ADD COLUMN "asaasCustomerId" VARCHAR(32);

@@ -16,6 +16,7 @@ import {
   getPixPaymentByExternalReference,
   getPixPaymentByProviderPaymentId,
   syncPixPaymentRecord,
+  getPixPaymentById,
 } from "../db";
 
 process.env.NODE_ENV ??= "development";
@@ -53,6 +54,22 @@ function mapMercadoPagoPix(payment: any) {
     rawResponseJson: JSON.stringify(payment),
     approvedAt: payment?.date_approved ? new Date(payment.date_approved) : null,
     expiresAt: payment?.date_of_expiration ? new Date(payment.date_of_expiration) : null,
+  };
+}
+
+function mapAsaasPixPayment(payment: any) {
+  return {
+    providerPaymentId: String(payment?.id ?? ""),
+    externalReference: payment?.externalReference ? String(payment.externalReference) : null,
+    status: String(payment?.status ?? "PENDING"),
+    valor: Number(payment?.value ?? 0),
+    qrCode: null,
+    qrCodeBase64: null,
+    ticketUrl: payment?.invoiceUrl ? String(payment.invoiceUrl) : null,
+    metadataJson: null,
+    rawResponseJson: JSON.stringify(payment),
+    approvedAt: payment?.clientPaymentDate ? new Date(payment.clientPaymentDate) : null,
+    expiresAt: payment?.dueDate ? new Date(`${payment.dueDate}T23:59:59Z`) : null,
   };
 }
 
@@ -164,6 +181,44 @@ async function startServer() {
       return res.status(200).send(result.credited ? "credited" : "already");
     } catch (error) {
       console.error("[mp webhook] error", error);
+      return res.status(500).send("error");
+    }
+  });
+
+  app.post("/api/asaas/webhook", async (req, res) => {
+    try {
+      const event = String((req.body as any)?.event ?? "");
+      const payment = (req.body as any)?.payment;
+      const paymentId = payment?.id ? String(payment.id) : "";
+      if (!paymentId) {
+        return res.status(200).send("missing payment id");
+      }
+
+      const paymentData = mapAsaasPixPayment(payment);
+      const localRecord =
+        (paymentData.providerPaymentId ? await getPixPaymentByProviderPaymentId(paymentData.providerPaymentId) : null) ??
+        (paymentData.externalReference ? await getPixPaymentByExternalReference(paymentData.externalReference) : null);
+
+      if (!localRecord) {
+        return res.status(200).send("payment not tracked");
+      }
+
+      const synced = await syncPixPaymentRecord(paymentData);
+      if (event !== "PAYMENT_RECEIVED" || paymentData.status !== "RECEIVED") {
+        return res.status(200).send(synced?.status ?? "pending");
+      }
+
+      const targetRecord = synced ?? (await getPixPaymentById(localRecord.id)) ?? localRecord;
+      const result = await creditPixPaymentIfNeeded({
+        pixPaymentId: targetRecord.id,
+        usuarioId: targetRecord.usuarioId,
+        valor: Number(targetRecord.valor),
+        providerPaymentId: paymentData.providerPaymentId,
+      });
+
+      return res.status(200).send(result.credited ? "credited" : "already");
+    } catch (error) {
+      console.error("[asaas webhook] error", error);
       return res.status(500).send("error");
     }
   });

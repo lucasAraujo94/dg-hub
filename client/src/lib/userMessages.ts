@@ -39,14 +39,20 @@ export const getFriendlyPixError = (message?: string) => {
   if (normalized.includes("mp_access_token")) {
     return "O PIX ainda nao esta configurado no servidor.";
   }
+  if (normalized.includes("asaas_api_key")) {
+    return "O PIX via Asaas ainda nao esta configurado no servidor.";
+  }
+  if (normalized.includes("cpf/cnpj do usuario")) {
+    return "O usuario precisa cadastrar CPF ou CNPJ no perfil para gerar PIX no Asaas.";
+  }
+  if (normalized.includes("asaas customer error")) {
+    return "Nao foi possivel cadastrar o cliente no Asaas para gerar o PIX.";
+  }
+  if (normalized.includes("asaas payment error")) {
+    return "O Asaas recusou a geracao do PIX. Revise a conta e os dados do usuario.";
+  }
   if (normalized.includes("x-idempotency-key")) {
     return "Nao foi possivel iniciar o PIX agora. Tente novamente.";
-  }
-  if (normalized.includes("collector user without key")) {
-    return "A conta recebedora ainda nao esta habilitada para gerar PIX.";
-  }
-  if (normalized.includes("mercado pago error")) {
-    return "O provedor de pagamento recusou a geracao do PIX. Revise a configuracao da conta e tente novamente.";
   }
 
   return "Nao foi possivel gerar o PIX agora. Tente novamente em instantes.";
