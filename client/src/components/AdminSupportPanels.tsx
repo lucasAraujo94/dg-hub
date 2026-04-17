@@ -33,10 +33,8 @@ type AdminSupportPanelsProps = {
   saquesError?: string | null;
   filteredSaques: any[];
   getWithdrawalStatusLabel: (status?: string) => string;
-  aprovarSaquePending: boolean;
   rejeitarSaquePending: boolean;
   marcarSaquePagoPending: boolean;
-  onApproveWithdrawal: (solicitacaoId: number) => void;
   onRejectWithdrawal: (solicitacaoId: number) => void;
   onMarkWithdrawalPaid: (solicitacaoId: number) => void;
   usuariosLoading: boolean;
@@ -77,10 +75,8 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
     saquesError,
     filteredSaques,
     getWithdrawalStatusLabel,
-    aprovarSaquePending,
     rejeitarSaquePending,
     marcarSaquePagoPending,
-    onApproveWithdrawal,
     onRejectWithdrawal,
     onMarkWithdrawalPaid,
     usuariosLoading,
@@ -226,13 +222,12 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
     return (
       <div className="card-elegant p-4 md:p-6">
         <h2 className="text-xl font-bold mb-2">Solicitacoes de saque</h2>
-        <p className="text-sm text-muted-foreground mb-4">Aprove, rejeite ou marque como pago depois de fazer a transferencia Pix manualmente fora da plataforma.</p>
+        <p className="text-sm text-muted-foreground mb-4">Aprove, rejeite ou execute o saque. Ao confirmar o pagamento, a plataforma envia a transferencia Pix pelo Asaas.</p>
         <div className="grid grid-cols-1 gap-3 mb-4 md:grid-cols-2">
           <Input value={saquesBusca} onChange={e => setSaquesBusca(e.target.value)} placeholder="Buscar por jogador, email ou chave Pix..." />
           <select className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm" value={saquesStatus} onChange={e => setSaquesStatus(e.target.value)}>
             <option value="todos">Todos os status</option>
             <option value="solicitado">Solicitado</option>
-            <option value="aprovado">Aprovado</option>
             <option value="pago">Pago</option>
             <option value="rejeitado">Rejeitado</option>
           </select>
@@ -245,9 +240,8 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
         <div className="space-y-3">
           {filteredSaques.map(item => {
             const status = item.status ?? "solicitado";
-            const canApprove = status === "solicitado";
-            const canReject = status === "solicitado" || status === "aprovado";
-            const canPay = status === "solicitado" || status === "aprovado";
+            const canReject = status === "solicitado";
+            const canPay = status === "solicitado";
             return (
               <div key={item.id} className="rounded-lg border border-border/60 bg-card/60 p-4 space-y-3">
                 <div className="flex flex-col gap-1">
@@ -260,14 +254,11 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" disabled={!canApprove || aprovarSaquePending} onClick={() => onApproveWithdrawal(item.id)}>
-                    Aprovar
-                  </Button>
                   <Button size="sm" variant="secondary" disabled={!canReject || rejeitarSaquePending} onClick={() => onRejectWithdrawal(item.id)}>
                     Rejeitar
                   </Button>
                   <Button size="sm" className="btn-primary" disabled={!canPay || marcarSaquePagoPending} onClick={() => onMarkWithdrawalPaid(item.id)}>
-                    Marcar pago
+                    Pagar via Pix
                   </Button>
                 </div>
               </div>

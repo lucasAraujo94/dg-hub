@@ -19,4 +19,7 @@ export const ENV = {
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
   mpAccessToken: process.env.MP_ACCESS_TOKEN ?? "",
   mpWebhookSecret: process.env.MP_WEBHOOK_SECRET ?? "",
+  asaasApiKey: process.env.ASAAS_API_KEY ?? "",
+  asaasBaseUrl: process.env.ASAAS_BASE_URL?.trim() || "https://api.asaas.com",
+  asaasWithdrawWebhookToken: process.env.ASAAS_WITHDRAW_WEBHOOK_TOKEN ?? "",
 };

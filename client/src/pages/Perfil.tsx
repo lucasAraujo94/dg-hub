@@ -55,7 +55,7 @@ export default function Perfil() {
     refetchOnWindowFocus: false,
   });
   const solicitarSaqueMutation = trpc.saques.criar.useMutation({
-    onSuccess: () => toast.success("Solicitacao enviada. Agora ela segue para analise da equipe."),
+    onSuccess: () => toast.success("Saque enviado com sucesso via Pix."),
     onError: error => toast.error(getFriendlyWithdrawalError(error.message)),
   });
 
@@ -88,7 +88,7 @@ export default function Perfil() {
   const historicoCampeonatos: Historico[] =
     (user as { tournaments?: Historico[] } | null | undefined)?.tournaments ?? [];
 
-  const [walletProvider, setWalletProvider] = useState("PIX");
+  const [walletProvider, setWalletProvider] = useState("CPF");
   const [walletAddress, setWalletAddress] = useState("");
   const [valorSaque, setValorSaque] = useState("");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState(jogador.avatar);
@@ -624,6 +624,17 @@ export default function Perfil() {
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
+                <select
+                  value={walletProvider}
+                  onChange={e => setWalletProvider(e.target.value)}
+                  className="w-full rounded-md border border-yellow-500/30 bg-black/20 px-3 py-2 text-sm"
+                >
+                  <option value="CPF">Chave Pix CPF</option>
+                  <option value="CNPJ">Chave Pix CNPJ</option>
+                  <option value="EMAIL">Chave Pix E-mail</option>
+                  <option value="PHONE">Chave Pix Telefone</option>
+                  <option value="EVP">Chave Pix Aleatoria</option>
+                </select>
                 <Input
                   placeholder="Valor (R$)"
                   value={valorSaque}
@@ -649,7 +660,7 @@ export default function Perfil() {
               </Button>
 
               <p className="text-xs text-muted-foreground">
-                O saque não é automático. Sua chave Pix será usada pela equipe quando a solicitação for aprovada e paga manualmente.
+                O saque e enviado automaticamente via Pix para a chave informada.
               </p>
 
               <div className="space-y-2">

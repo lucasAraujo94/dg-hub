@@ -832,6 +832,23 @@ export async function getAllSolicitacoesSaque() {
   });
 }
 
+export async function getSolicitacaoSaqueById(solicitacaoId: number) {
+  return prisma.solicitacaoSaque.findUnique({
+    where: { id: solicitacaoId },
+    include: {
+      usuario: {
+        select: {
+          id: true,
+          name: true,
+          nickname: true,
+          email: true,
+          avatarUrl: true,
+        },
+      },
+    },
+  });
+}
+
 export async function getAllPixPayments() {
   return prisma.pixPayment.findMany({
     orderBy: { createdAt: "desc" },
@@ -1045,6 +1062,78 @@ export async function marcarSolicitacaoSaqueComoPaga(solicitacaoId: number) {
         usuarioId: saque.usuarioId,
         tipo: "saque_pago",
         mensagem: `Seu saque de R$ ${Number(saque.valor).toFixed(2)} foi marcado como pago.`,
+      },
+    });
+
+    return updated;
+  });
+}
+
+export async function concluirSolicitacaoSaqueComTransferencia(input: {
+  solicitacaoId: number;
+  paymentProvider: string;
+  providerTransferId: string;
+  providerStatus: string;
+  providerResponseJson: string;
+}) {
+  return prisma.$transaction(async tx => {
+    const saque = await tx.solicitacaoSaque.findUnique({
+      where: { id: input.solicitacaoId },
+      select: {
+        id: true,
+        usuarioId: true,
+        status: true,
+        valor: true,
+        providerTransferId: true,
+      },
+    });
+
+    if (!saque) {
+      throw new Error("Solicitacao de saque nao encontrada");
+    }
+    if (saque.status === "rejeitado") {
+      throw new Error("Saque rejeitado nao pode ser pago");
+    }
+    if (saque.status === "pago") {
+      return saque;
+    }
+    if (saque.providerTransferId && saque.providerTransferId !== input.providerTransferId) {
+      throw new Error("Saque ja possui uma transferencia vinculada");
+    }
+
+    const user = await tx.user.findUnique({
+      where: { id: saque.usuarioId },
+      select: { id: true, saldoPremio: true },
+    });
+    if (!user) {
+      throw new Error("Usuario do saque nao encontrado");
+    }
+    if (Number(user.saldoPremio) < Number(saque.valor)) {
+      throw new Error("Saldo insuficiente para concluir o saque");
+    }
+
+    await tx.user.update({
+      where: { id: saque.usuarioId },
+      data: { saldoPremio: { decrement: Number(saque.valor) } },
+    });
+
+    const updated = await tx.solicitacaoSaque.update({
+      where: { id: input.solicitacaoId },
+      data: {
+        status: "pago",
+        paymentProvider: input.paymentProvider,
+        providerTransferId: input.providerTransferId,
+        providerStatus: input.providerStatus,
+        providerResponseJson: input.providerResponseJson,
+        dataPagamento: new Date(),
+      },
+    });
+
+    await tx.notificacao.create({
+      data: {
+        usuarioId: saque.usuarioId,
+        tipo: "saque_pago",
+        mensagem: `Seu saque de R$ ${Number(saque.valor).toFixed(2)} foi pago via Pix automatico.`,
       },
     });
 

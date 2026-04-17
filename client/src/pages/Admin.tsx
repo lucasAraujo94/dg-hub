@@ -35,8 +35,6 @@ const getWithdrawalStatusLabel = (status?: string) => {
   switch (status) {
     case "solicitado":
       return "Solicitado";
-    case "aprovado":
-      return "Aprovado";
     case "pago":
       return "Pago";
     case "rejeitado":
@@ -155,14 +153,6 @@ export default function Admin() {
         query.state.data && !query.state.data.creditedAt && query.state.data.status !== "approved" ? 5000 : false,
     }
   );
-  const aprovarSaqueMutation = trpc.saques.aprovar.useMutation({
-    onSuccess: () => {
-      toast.success("Saque aprovado. Agora ele aguarda o pagamento manual.");
-      saquesQuery.refetch();
-      usuariosQuery.refetch();
-    },
-    onError: error => toast.error(getFriendlyAdminWithdrawalError(error.message)),
-  });
   const rejeitarSaqueMutation = trpc.saques.rejeitar.useMutation({
     onSuccess: () => {
       toast.success("Saque rejeitado. O historico do usuario foi atualizado.");
@@ -598,10 +588,8 @@ export default function Admin() {
                   saquesError={saquesQuery.error?.message ?? null}
                   filteredSaques={filteredSaques}
                   getWithdrawalStatusLabel={getWithdrawalStatusLabel}
-                  aprovarSaquePending={aprovarSaqueMutation.isPending}
                   rejeitarSaquePending={rejeitarSaqueMutation.isPending}
                   marcarSaquePagoPending={marcarSaquePagoMutation.isPending}
-                  onApproveWithdrawal={solicitacaoId => aprovarSaqueMutation.mutate({ solicitacaoId })}
                   onRejectWithdrawal={solicitacaoId => rejeitarSaqueMutation.mutate({ solicitacaoId })}
                   onMarkWithdrawalPaid={solicitacaoId => marcarSaquePagoMutation.mutate({ solicitacaoId })}
                   usuariosLoading={usuariosQuery.isLoading}
@@ -651,10 +639,8 @@ export default function Admin() {
                   saquesError={saquesQuery.error?.message ?? null}
                   filteredSaques={filteredSaques}
                   getWithdrawalStatusLabel={getWithdrawalStatusLabel}
-                  aprovarSaquePending={aprovarSaqueMutation.isPending}
                   rejeitarSaquePending={rejeitarSaqueMutation.isPending}
                   marcarSaquePagoPending={marcarSaquePagoMutation.isPending}
-                  onApproveWithdrawal={solicitacaoId => aprovarSaqueMutation.mutate({ solicitacaoId })}
                   onRejectWithdrawal={solicitacaoId => rejeitarSaqueMutation.mutate({ solicitacaoId })}
                   onMarkWithdrawalPaid={solicitacaoId => marcarSaquePagoMutation.mutate({ solicitacaoId })}
                   usuariosLoading={usuariosQuery.isLoading}
@@ -704,10 +690,8 @@ export default function Admin() {
                   saquesError={saquesQuery.error?.message ?? null}
                   filteredSaques={filteredSaques}
                   getWithdrawalStatusLabel={getWithdrawalStatusLabel}
-                  aprovarSaquePending={aprovarSaqueMutation.isPending}
                   rejeitarSaquePending={rejeitarSaqueMutation.isPending}
                   marcarSaquePagoPending={marcarSaquePagoMutation.isPending}
-                  onApproveWithdrawal={solicitacaoId => aprovarSaqueMutation.mutate({ solicitacaoId })}
                   onRejectWithdrawal={solicitacaoId => rejeitarSaqueMutation.mutate({ solicitacaoId })}
                   onMarkWithdrawalPaid={solicitacaoId => marcarSaquePagoMutation.mutate({ solicitacaoId })}
                   usuariosLoading={usuariosQuery.isLoading}

@@ -168,6 +168,44 @@ async function startServer() {
     }
   });
 
+  app.get("/api/asaas/withdraw-validation", (_req, res) => {
+    res.status(200).json({
+      ok: true,
+      service: "dg-hub",
+      webhook: "asaas-withdraw-validation",
+      now: new Date().toISOString(),
+    });
+  });
+
+  app.post("/api/asaas/withdraw-validation", async (req, res) => {
+    try {
+      const authHeader = String(req.headers["asaas-access-token"] ?? "");
+      if (ENV.asaasWithdrawWebhookToken && authHeader !== ENV.asaasWithdrawWebhookToken) {
+        console.warn("[asaas withdraw webhook] invalid token");
+        return res.status(401).json({
+          status: "REFUSED",
+          refuseReason: "Token de autenticacao invalido",
+        });
+      }
+
+      const body = req.body as any;
+      const type = String(body?.type ?? "");
+
+      console.log("[asaas withdraw webhook] validation request", {
+        type,
+        transferId: body?.transfer?.id ?? body?.pixRefund?.transferId ?? null,
+      });
+
+      return res.status(200).json({ status: "APPROVED" });
+    } catch (error) {
+      console.error("[asaas withdraw webhook] error", error);
+      return res.status(500).json({
+        status: "REFUSED",
+        refuseReason: "Falha interna ao validar saque",
+      });
+    }
+  });
+
   app.use(
     "/api/trpc",
     createExpressMiddleware({

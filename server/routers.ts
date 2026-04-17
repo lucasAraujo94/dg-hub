@@ -28,9 +28,9 @@ import {
   getAllPixPayments,
   getExtratoFinanceiro,
   criarSolicitacaoSaque,
-  aprovarSolicitacaoSaque,
+  concluirSolicitacaoSaqueComTransferencia,
+  getSolicitacaoSaqueById,
   rejeitarSolicitacaoSaque,
-  marcarSolicitacaoSaqueComoPaga,
   getPartidasCampeonato,
   registrarResultado,
   atualizarRanking,
@@ -89,6 +89,110 @@ const mapMercadoPagoPix = (payment: any) => {
     approvedAt: payment?.date_approved ? new Date(payment.date_approved) : null,
     expiresAt: payment?.date_of_expiration ? new Date(payment.date_of_expiration) : null,
   };
+};
+
+const detectPixKeyType = (
+  rawKey: string,
+  hint?: string | null
+): { key: string; type: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP" } => {
+  const key = rawKey.trim();
+  const normalized = key.replace(/\s+/g, "");
+  const digitsOnly = normalized.replace(/\D/g, "");
+  const normalizedHint = hint?.trim().toUpperCase() ?? "";
+
+  if (["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"].includes(normalizedHint)) {
+    switch (normalizedHint) {
+      case "CPF":
+        if (!/^[0-9]{11}$/.test(digitsOnly)) throw new Error("Chave Pix invalida para CPF");
+        return { key: digitsOnly, type: "CPF" };
+      case "CNPJ":
+        if (!/^[0-9]{14}$/.test(digitsOnly)) throw new Error("Chave Pix invalida para CNPJ");
+        return { key: digitsOnly, type: "CNPJ" };
+      case "EMAIL":
+        if (!normalized.includes("@")) throw new Error("Chave Pix invalida para EMAIL");
+        return { key: normalized.toLowerCase(), type: "EMAIL" };
+      case "PHONE":
+        if (/^\+?55[0-9]{11}$/.test(normalized)) {
+          return { key: digitsOnly.slice(-11), type: "PHONE" };
+        }
+        if (!/^[0-9]{11}$/.test(digitsOnly)) throw new Error("Chave Pix invalida para telefone");
+        return { key: digitsOnly, type: "PHONE" };
+      case "EVP":
+        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalized)) {
+          throw new Error("Chave Pix invalida para EVP");
+        }
+        return { key: normalized, type: "EVP" };
+    }
+  }
+
+  if (normalized.includes("@")) {
+    return { key: normalized.toLowerCase(), type: "EMAIL" };
+  }
+  if (/^[0-9]{11}$/.test(digitsOnly)) {
+    return { key: digitsOnly, type: "CPF" };
+  }
+  if (/^[0-9]{14}$/.test(digitsOnly)) {
+    return { key: digitsOnly, type: "CNPJ" };
+  }
+  if (/^\+?55[0-9]{11}$/.test(normalized)) {
+    return { key: digitsOnly.slice(-11), type: "PHONE" };
+  }
+  if (/^[0-9]{11}$/.test(normalized)) {
+    return { key: normalized, type: "PHONE" };
+  }
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(normalized)) {
+    return { key: normalized, type: "EVP" };
+  }
+
+  throw new Error("Chave Pix invalida para transferencia automatica");
+};
+
+const transferWithdrawalViaAsaas = async (params: {
+  solicitacaoId: number;
+  valor: number;
+  pixKey: string;
+  pixKeyTypeHint?: string | null;
+  usuarioId: number;
+}) => {
+  if (!ENV.asaasApiKey) {
+    throw new Error("ASAAS_API_KEY nao configurado");
+  }
+
+  const pix = detectPixKeyType(params.pixKey, params.pixKeyTypeHint);
+  const externalReference = `withdraw_${params.solicitacaoId}_${params.usuarioId}`;
+  const payload = {
+    value: params.valor,
+    operationType: "PIX",
+    pixAddressKey: pix.key,
+    pixAddressKeyType: pix.type,
+    description: `Saque automatico DG Hub #${params.solicitacaoId}`,
+    externalReference,
+  };
+
+  try {
+    const response = await axios.post(`${ENV.asaasBaseUrl}/v3/transfers`, payload, {
+      headers: {
+        access_token: ENV.asaasApiKey,
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("[saques.marcarPago] Asaas transfer failed", {
+        status: error.response?.status,
+        data: error.response?.data,
+        payload,
+      });
+      const detail =
+        typeof error.response?.data === "object" && error.response?.data
+          ? JSON.stringify(error.response.data)
+          : error.response?.data || error.message;
+      throw new Error(`Asaas transfer error: ${detail}`);
+    }
+    throw error;
+  }
 };
 
 export const appRouter = router({
@@ -763,17 +867,69 @@ export const appRouter = router({
       )
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user) throw new Error("Usuario nao autenticado");
-        return criarSolicitacaoSaque(ctx.user.id, input.valor, input.walletProvider, input.walletAddress);
+        const saque = await criarSolicitacaoSaque(ctx.user.id, input.valor, input.walletProvider, input.walletAddress);
+        const transfer = await transferWithdrawalViaAsaas({
+          solicitacaoId: saque.id,
+          usuarioId: saque.usuarioId,
+          valor: Number(saque.valor),
+          pixKey: saque.walletAddress,
+          pixKeyTypeHint: saque.walletProvider,
+        });
+
+        const providerStatus = String(transfer?.status ?? "");
+        if (providerStatus !== "DONE") {
+          throw new Error(`Transferencia Asaas retornou status ${providerStatus || "desconhecido"}`);
+        }
+
+        return concluirSolicitacaoSaqueComTransferencia({
+          solicitacaoId: saque.id,
+          paymentProvider: "asaas",
+          providerTransferId: String(transfer?.id ?? ""),
+          providerStatus,
+          providerResponseJson: JSON.stringify(transfer),
+        });
       }),
-    aprovar: adminProcedure
-      .input(z.object({ solicitacaoId: z.number() }))
-      .mutation(async ({ input }) => aprovarSolicitacaoSaque(input.solicitacaoId)),
     rejeitar: adminProcedure
       .input(z.object({ solicitacaoId: z.number() }))
       .mutation(async ({ input }) => rejeitarSolicitacaoSaque(input.solicitacaoId)),
     marcarPago: adminProcedure
       .input(z.object({ solicitacaoId: z.number() }))
-      .mutation(async ({ input }) => marcarSolicitacaoSaqueComoPaga(input.solicitacaoId)),
+      .mutation(async ({ input }) => {
+        const saque = await getSolicitacaoSaqueById(input.solicitacaoId);
+        if (!saque) {
+          throw new Error("Solicitacao de saque nao encontrada");
+        }
+        if (saque.status === "rejeitado") {
+          throw new Error("Saque rejeitado nao pode ser pago");
+        }
+        if (saque.status === "pago") {
+          return saque;
+        }
+        if (saque.providerTransferId) {
+          throw new Error("Esse saque ja possui transferencia registrada");
+        }
+
+        const transfer = await transferWithdrawalViaAsaas({
+          solicitacaoId: saque.id,
+          usuarioId: saque.usuarioId,
+          valor: Number(saque.valor),
+          pixKey: saque.walletAddress,
+          pixKeyTypeHint: saque.walletProvider,
+        });
+
+        const providerStatus = String(transfer?.status ?? "");
+        if (providerStatus !== "DONE") {
+          throw new Error(`Transferencia Asaas retornou status ${providerStatus || "desconhecido"}`);
+        }
+
+        return concluirSolicitacaoSaqueComTransferencia({
+          solicitacaoId: saque.id,
+          paymentProvider: "asaas",
+          providerTransferId: String(transfer?.id ?? ""),
+          providerStatus,
+          providerResponseJson: JSON.stringify(transfer),
+        });
+      }),
   }),
 
   // Partidas (Admin)
@@ -801,6 +957,3 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
-
-
-

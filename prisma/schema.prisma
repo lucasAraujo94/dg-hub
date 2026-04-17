@@ -197,6 +197,10 @@ model SolicitacaoSaque {
   status          String      @default("solicitado") @db.VarChar(20)
   walletProvider  String      @db.VarChar(80)
   walletAddress   String      @db.VarChar(255)
+  paymentProvider String?     @db.VarChar(32)
+  providerTransferId String?  @unique @db.VarChar(120)
+  providerStatus  String?     @db.VarChar(32)
+  providerResponseJson String? @db.Text
   dataSolicitacao DateTime    @default(now())
   dataPagamento   DateTime?
 

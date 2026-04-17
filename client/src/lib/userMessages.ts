@@ -20,6 +20,9 @@ export const getFriendlyWithdrawalError = (message?: string) => {
   if (normalized.includes("saldo insuficiente")) {
     return "Seu saldo disponivel nao cobre este saque.";
   }
+  if (normalized.includes("chave pix invalida")) {
+    return "Informe uma chave Pix valida para receber o saque automatico.";
+  }
   if (normalized.includes("nao autenticado")) {
     return "Entre na sua conta para solicitar o saque.";
   }
@@ -60,6 +63,15 @@ export const getFriendlyAdminWithdrawalError = (message?: string) => {
   }
   if (normalized.includes("saldo insuficiente")) {
     return "O usuario nao tem saldo suficiente para concluir esse pagamento agora.";
+  }
+  if (normalized.includes("asaas_api_key")) {
+    return "O saque automatico ainda nao esta configurado no servidor.";
+  }
+  if (normalized.includes("asaas transfer error")) {
+    return "O Asaas recusou ou nao conseguiu concluir a transferencia Pix. Revise a conta Asaas e a chave Pix do usuario.";
+  }
+  if (normalized.includes("transferencia asaas retornou status")) {
+    return "A transferencia foi criada no Asaas, mas ainda nao foi concluida instantaneamente.";
   }
 
   return "Nao foi possivel atualizar o saque agora. Tente novamente.";
