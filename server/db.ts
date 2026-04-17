@@ -866,6 +866,11 @@ export async function criarSolicitacaoSaque(usuarioId: number, valor: number, wa
       throw new Error("Saldo insuficiente para solicitar o saque");
     }
 
+    await tx.user.update({
+      where: { id: usuarioId },
+      data: { saldoPremio: { decrement: valor } },
+    });
+
     const saque = await tx.solicitacaoSaque.create({
       data: {
         usuarioId,
@@ -873,6 +878,7 @@ export async function criarSolicitacaoSaque(usuarioId: number, valor: number, wa
         walletProvider,
         walletAddress,
         status: "solicitado",
+        providerStatus: "BALANCE_RESERVED",
       },
     });
 
@@ -1019,6 +1025,8 @@ export async function aprovarSolicitacaoSaque(solicitacaoId: number) {
         usuarioId: true,
         status: true,
         valor: true,
+        providerStatus: true,
+        providerTransferId: true,
       },
     });
 
@@ -1074,6 +1082,13 @@ export async function rejeitarSolicitacaoSaque(solicitacaoId: number) {
       throw new Error("Saque pago nao pode ser rejeitado");
     }
 
+    if (saque.providerStatus === "BALANCE_RESERVED" || saque.providerTransferId || saque.providerStatus) {
+      await tx.user.update({
+        where: { id: saque.usuarioId },
+        data: { saldoPremio: { increment: Number(saque.valor) } },
+      });
+    }
+
     const updated = await tx.solicitacaoSaque.update({
       where: { id: solicitacaoId },
       data: { status: "rejeitado" },
@@ -1113,22 +1128,6 @@ export async function marcarSolicitacaoSaqueComoPaga(solicitacaoId: number) {
       return saque;
     }
 
-    const user = await tx.user.findUnique({
-      where: { id: saque.usuarioId },
-      select: { id: true, saldoPremio: true },
-    });
-    if (!user) {
-      throw new Error("Usuario do saque nao encontrado");
-    }
-    if (Number(user.saldoPremio) < Number(saque.valor)) {
-      throw new Error("Saldo insuficiente para concluir o saque");
-    }
-
-    await tx.user.update({
-      where: { id: saque.usuarioId },
-      data: { saldoPremio: { decrement: Number(saque.valor) } },
-    });
-
     const updated = await tx.solicitacaoSaque.update({
       where: { id: solicitacaoId },
       data: {
@@ -1146,6 +1145,24 @@ export async function marcarSolicitacaoSaqueComoPaga(solicitacaoId: number) {
     });
 
     return updated;
+  });
+}
+
+export async function registrarTransferenciaSolicitacaoSaque(input: {
+  solicitacaoId: number;
+  paymentProvider: string;
+  providerTransferId?: string | null;
+  providerStatus: string;
+  providerResponseJson: string;
+}) {
+  return prisma.solicitacaoSaque.update({
+    where: { id: input.solicitacaoId },
+    data: {
+      paymentProvider: input.paymentProvider,
+      providerTransferId: input.providerTransferId ?? undefined,
+      providerStatus: input.providerStatus,
+      providerResponseJson: input.providerResponseJson,
+    },
   });
 }
 
@@ -1180,22 +1197,6 @@ export async function concluirSolicitacaoSaqueComTransferencia(input: {
     if (saque.providerTransferId && saque.providerTransferId !== input.providerTransferId) {
       throw new Error("Saque ja possui uma transferencia vinculada");
     }
-
-    const user = await tx.user.findUnique({
-      where: { id: saque.usuarioId },
-      select: { id: true, saldoPremio: true },
-    });
-    if (!user) {
-      throw new Error("Usuario do saque nao encontrado");
-    }
-    if (Number(user.saldoPremio) < Number(saque.valor)) {
-      throw new Error("Saldo insuficiente para concluir o saque");
-    }
-
-    await tx.user.update({
-      where: { id: saque.usuarioId },
-      data: { saldoPremio: { decrement: Number(saque.valor) } },
-    });
 
     const updated = await tx.solicitacaoSaque.update({
       where: { id: input.solicitacaoId },

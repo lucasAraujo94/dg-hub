@@ -30,6 +30,7 @@ import {
   criarSolicitacaoSaque,
   concluirSolicitacaoSaqueComTransferencia,
   getSolicitacaoSaqueById,
+  registrarTransferenciaSolicitacaoSaque,
   rejeitarSolicitacaoSaque,
   getPartidasCampeonato,
   registrarResultado,
@@ -962,26 +963,44 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user) throw new Error("Usuario nao autenticado");
         const saque = await criarSolicitacaoSaque(ctx.user.id, input.valor, input.walletProvider, input.walletAddress);
-        const transfer = await transferWithdrawalViaAsaas({
-          solicitacaoId: saque.id,
-          usuarioId: saque.usuarioId,
-          valor: Number(saque.valor),
-          pixKey: saque.walletAddress,
-          pixKeyTypeHint: saque.walletProvider,
-        });
+        try {
+          const transfer = await transferWithdrawalViaAsaas({
+            solicitacaoId: saque.id,
+            usuarioId: saque.usuarioId,
+            valor: Number(saque.valor),
+            pixKey: saque.walletAddress,
+            pixKeyTypeHint: saque.walletProvider,
+          });
 
-        const providerStatus = String(transfer?.status ?? "");
-        if (providerStatus !== "DONE") {
-          throw new Error(`Transferencia Asaas retornou status ${providerStatus || "desconhecido"}`);
+          const providerTransferId = transfer?.id ? String(transfer.id) : null;
+          const providerStatus = String(transfer?.status ?? "");
+          if (providerTransferId && providerStatus !== "DONE") {
+            return registrarTransferenciaSolicitacaoSaque({
+              solicitacaoId: saque.id,
+              paymentProvider: "asaas",
+              providerTransferId,
+              providerStatus,
+              providerResponseJson: JSON.stringify(transfer),
+            });
+          }
+          if (providerStatus !== "DONE") {
+            throw new Error(`Transferencia Asaas retornou status ${providerStatus || "desconhecido"}`);
+          }
+
+          return concluirSolicitacaoSaqueComTransferencia({
+            solicitacaoId: saque.id,
+            paymentProvider: "asaas",
+            providerTransferId: String(transfer?.id ?? ""),
+            providerStatus,
+            providerResponseJson: JSON.stringify(transfer),
+          });
+        } catch (error: any) {
+          const message = String(error?.message ?? "");
+          if (message.includes("checkout.already.requested") || message.toLowerCase().includes("ja solicitado")) {
+            return saque;
+          }
+          throw error;
         }
-
-        return concluirSolicitacaoSaqueComTransferencia({
-          solicitacaoId: saque.id,
-          paymentProvider: "asaas",
-          providerTransferId: String(transfer?.id ?? ""),
-          providerStatus,
-          providerResponseJson: JSON.stringify(transfer),
-        });
       }),
     rejeitar: adminProcedure
       .input(z.object({ solicitacaoId: z.number() }))
@@ -1011,7 +1030,17 @@ export const appRouter = router({
           pixKeyTypeHint: saque.walletProvider,
         });
 
+        const providerTransferId = transfer?.id ? String(transfer.id) : null;
         const providerStatus = String(transfer?.status ?? "");
+        if (providerTransferId && providerStatus !== "DONE") {
+          return registrarTransferenciaSolicitacaoSaque({
+            solicitacaoId: saque.id,
+            paymentProvider: "asaas",
+            providerTransferId,
+            providerStatus,
+            providerResponseJson: JSON.stringify(transfer),
+          });
+        }
         if (providerStatus !== "DONE") {
           throw new Error(`Transferencia Asaas retornou status ${providerStatus || "desconhecido"}`);
         }
