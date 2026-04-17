@@ -17,6 +17,9 @@ export const getFriendlyLoginError = (message?: string) => {
 export const getFriendlyWithdrawalError = (message?: string) => {
   const normalized = (message || "").toLowerCase();
 
+  if (normalized.includes("checkout.already.requested") || normalized.includes("ja solicitado")) {
+    return "Esse saque ja foi enviado para processamento. Aguarde a atualizacao do status.";
+  }
   if (normalized.includes("saldo insuficiente")) {
     return "Seu saldo disponivel nao cobre este saque.";
   }
@@ -61,6 +64,9 @@ export const getFriendlyPixError = (message?: string) => {
 export const getFriendlyAdminWithdrawalError = (message?: string) => {
   const normalized = (message || "").toLowerCase();
 
+  if (normalized.includes("checkout.already.requested") || normalized.includes("ja solicitado")) {
+    return "Esse saque ja foi enviado ao Asaas anteriormente. Aguarde a atualizacao ou confira o status antes de tentar de novo.";
+  }
   if (normalized.includes("ja foi paga") || normalized.includes("ja foi pago")) {
     return "Esse saque ja foi concluido anteriormente.";
   }
