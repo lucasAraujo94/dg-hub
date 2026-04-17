@@ -1289,34 +1289,34 @@ export async function getPixPaymentByProviderPaymentId(providerPaymentId: string
 }
 
 export async function syncPixPaymentRecord(input: SyncPixPaymentInput) {
-  const providerPaymentId = input.providerPaymentId;
-  const externalReference = input.externalReference ?? null;
-  const valor = input.valor == null ? null : input.valor.toFixed(2);
-  const rows = await prisma.$queryRaw<PixPaymentRecord[]>`
-    UPDATE "pixPayments"
-    SET
-      "providerPaymentId" = ${providerPaymentId},
-      "status" = ${input.status},
-      "valor" = COALESCE(CAST(${valor} AS DECIMAL(10,2)), "valor"),
-      "qrCode" = COALESCE(${input.qrCode ?? null}, "qrCode"),
-      "qrCodeBase64" = COALESCE(${input.qrCodeBase64 ?? null}, "qrCodeBase64"),
-      "ticketUrl" = COALESCE(${input.ticketUrl ?? null}, "ticketUrl"),
-      "metadataJson" = COALESCE(${input.metadataJson ?? null}, "metadataJson"),
-      "rawResponseJson" = COALESCE(${input.rawResponseJson ?? null}, "rawResponseJson"),
-      "approvedAt" = CASE
-        WHEN ${input.approvedAt ?? null} IS NOT NULL THEN ${input.approvedAt ?? null}
-        ELSE "approvedAt"
-      END,
-      "expiresAt" = CASE
-        WHEN ${input.expiresAt ?? null} IS NOT NULL THEN ${input.expiresAt ?? null}
-        ELSE "expiresAt"
-      END,
-      "updatedAt" = NOW()
-    WHERE "providerPaymentId" = ${providerPaymentId}
-       OR (${externalReference} IS NOT NULL AND "externalReference" = ${externalReference})
-    RETURNING *
-  `;
-  return rows[0] ?? null;
+  const existing = await prisma.pixPayment.findFirst({
+    where: {
+      OR: [
+        { providerPaymentId: input.providerPaymentId },
+        ...(input.externalReference ? [{ externalReference: input.externalReference }] : []),
+      ],
+    },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  return prisma.pixPayment.update({
+    where: { id: existing.id },
+    data: {
+      providerPaymentId: input.providerPaymentId,
+      status: input.status,
+      valor: input.valor ?? undefined,
+      qrCode: input.qrCode ?? undefined,
+      qrCodeBase64: input.qrCodeBase64 ?? undefined,
+      ticketUrl: input.ticketUrl ?? undefined,
+      metadataJson: input.metadataJson ?? undefined,
+      rawResponseJson: input.rawResponseJson ?? undefined,
+      approvedAt: input.approvedAt ?? undefined,
+      expiresAt: input.expiresAt ?? undefined,
+    },
+  }) as Promise<PixPaymentRecord | null>;
 }
 
 export async function creditPixPaymentIfNeeded(params: {
