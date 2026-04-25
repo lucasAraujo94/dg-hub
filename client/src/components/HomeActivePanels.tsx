@@ -107,24 +107,22 @@ export default function HomeActivePanels({
   }, [breakIndex, normalizedWord]);
 
   const topSegment = normalizedWord.slice(0, effectiveBreakIndex);
-  const bottomSegment = normalizedWord.slice(effectiveBreakIndex);
+  const bottomSegment = normalizedWord;
 
   const exportText = useMemo(() => {
-    const top = topSegment;
-    const bottom = bottomSegment;
-    if (!top && !bottom) return "";
+    if (!normalizedWord) return "";
 
-    const width = Math.max(bottom.length, top.length + 4);
-    const topPad = Math.max(0, Math.floor((width - top.length) / 2));
-    const bottomPad = Math.max(0, Math.floor((width - bottom.length) / 2));
+    const width = Math.max(normalizedWord.length, topSegment.length + 4);
+    const topPad = Math.max(0, Math.floor((width - topSegment.length) / 2));
+    const bottomPad = Math.max(0, Math.floor((width - normalizedWord.length) / 2));
 
     return [
-      top ? `${" ".repeat(topPad)}${top}` : "",
-      bottom ? `${" ".repeat(bottomPad)}${bottom}` : "",
+      topSegment ? `${" ".repeat(topPad)}${topSegment}` : "",
+      `${" ".repeat(bottomPad)}${normalizedWord}`,
     ]
       .filter(Boolean)
       .join("\n");
-  }, [bottomSegment, topSegment]);
+  }, [normalizedWord, topSegment]);
 
   const renderIcon = (variant: string) => {
     if (variant === "none") return null;
@@ -343,7 +341,7 @@ export default function HomeActivePanels({
                   placeholder="Ex: Familia"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use uma unica palavra. A quebra acontece dentro dela, nao entre duas palavras.
+                  Use uma unica palavra. O topo mostra apenas o prefixo; a base mostra a palavra completa.
                 </p>
               </div>
               <div className="space-y-2">
@@ -358,11 +356,11 @@ export default function HomeActivePanels({
                   disabled={normalizedWord.length <= 1}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Define em qual letra a palavra sera dividida em duas linhas.
+                  Define quantas letras sobem para o detalhe tipografico superior.
                 </p>
               </div>
               <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
-                O modelo define a tipografia. Voce informa a palavra e o ponto da quebra.
+                O modelo define a hierarquia tipografica: prefixo menor em cima, palavra completa dominante embaixo.
               </div>
             </div>
 
