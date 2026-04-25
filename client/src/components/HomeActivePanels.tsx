@@ -2,9 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Minus, Plus, Crown } from "lucide-react";
+import { Crown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 
@@ -31,34 +30,60 @@ type HomeActivePanelsProps = {
   onMarkChatAsRead: () => void;
 };
 
-type StackedTextLine = {
+type TextPreset = {
   id: string;
-  text: string;
-  x: number;
-  y: number;
-  size: number;
-  spacing: number;
-  weight: number;
-  color: string;
-  uppercase: boolean;
+  name: string;
+  topSpacing: number;
+  topClassName: string;
+  bottomClassName: string;
+  topScale: string;
+  bottomScale: string;
+  frameClassName: string;
+  contentWidth: string;
+  outputTopGap: number;
+  outputBottomGap: number;
 };
 
-const createLine = (id: string, overrides?: Partial<StackedTextLine>): StackedTextLine => ({
-  id,
-  text: "NOVO TEXTO",
-  x: 50,
-  y: 50,
-  size: 28,
-  spacing: 0.12,
-  weight: 700,
-  color: "#111111",
-  uppercase: true,
-  ...overrides,
-});
-
-const STARTER_LINES: StackedTextLine[] = [
-  createLine("line-1", { text: "", y: 38, size: 18, spacing: 0.52, weight: 700 }),
-  createLine("line-2", { text: "", y: 54, size: 46, spacing: 0.05, weight: 900 }),
+const TEXT_PRESETS: TextPreset[] = [
+  {
+    id: "supreme-classic",
+    name: "Modelo Supreme",
+    topSpacing: 3,
+    topClassName: "max-w-[74%]",
+    bottomClassName: "-mt-2 max-w-full",
+    topScale: "text-[18px] font-bold tracking-[0.52em]",
+    bottomScale: "text-[46px] font-black tracking-[0.05em]",
+    frameClassName: "rounded-[2.6rem]",
+    contentWidth: "max-w-[74%]",
+    outputTopGap: 3,
+    outputBottomGap: 0,
+  },
+  {
+    id: "supreme-wide",
+    name: "Modelo Wide",
+    topSpacing: 4,
+    topClassName: "max-w-[70%]",
+    bottomClassName: "-mt-3 max-w-full",
+    topScale: "text-[16px] font-bold tracking-[0.62em]",
+    bottomScale: "text-[44px] font-black tracking-[0.08em]",
+    frameClassName: "rounded-[2.8rem]",
+    contentWidth: "max-w-[76%]",
+    outputTopGap: 4,
+    outputBottomGap: 1,
+  },
+  {
+    id: "supreme-tight",
+    name: "Modelo Tight",
+    topSpacing: 2,
+    topClassName: "max-w-[80%]",
+    bottomClassName: "-mt-1 max-w-full",
+    topScale: "text-[19px] font-semibold tracking-[0.38em]",
+    bottomScale: "text-[48px] font-black tracking-[0.03em]",
+    frameClassName: "rounded-[2.5rem]",
+    contentWidth: "max-w-[72%]",
+    outputTopGap: 2,
+    outputBottomGap: 0,
+  },
 ];
 
 export default function HomeActivePanels({
@@ -69,108 +94,37 @@ export default function HomeActivePanels({
   onRegister,
   onMarkChatAsRead,
 }: HomeActivePanelsProps) {
-  const [lines, setLines] = useState<StackedTextLine[]>(STARTER_LINES);
-  const [selectedLineId, setSelectedLineId] = useState<string>(STARTER_LINES[0].id);
+  const [selectedPresetId, setSelectedPresetId] = useState(TEXT_PRESETS[0].id);
+  const [topText, setTopText] = useState("");
+  const [bottomText, setBottomText] = useState("");
   const [canvasBg, setCanvasBg] = useState("#f7f7f5");
   const [showIcons, setShowIcons] = useState(true);
   const [leftIcon, setLeftIcon] = useState("crown");
   const [rightIcon, setRightIcon] = useState("queen");
 
-  const selectedLine = useMemo(
-    () => lines.find(line => line.id === selectedLineId) ?? lines[0] ?? null,
-    [lines, selectedLineId]
+  const selectedPreset = useMemo(
+    () => TEXT_PRESETS.find(preset => preset.id === selectedPresetId) ?? TEXT_PRESETS[0],
+    [selectedPresetId]
   );
 
   const exportText = useMemo(() => {
-    const builtLines = lines
-      .map((line, index) => {
-        const raw = line.text.trim();
-        if (!raw) return null;
+    const top = topText.trim().toUpperCase();
+    const bottom = bottomText.trim().toUpperCase();
+    if (!top && !bottom) return "";
 
-        const content = line.uppercase ? raw.toUpperCase() : raw;
-        const spacingUnits =
-          index === 0
-            ? Math.max(1, Math.round(line.spacing * 5))
-            : Math.max(0, Math.round(line.spacing * 2));
-        const gap = " ".repeat(spacingUnits);
-        const rendered = content
-          .split("\n")
-          .map(part => part.split("").join(gap))
-          .join("\n");
+    const topRendered = top.split("").join(" ".repeat(selectedPreset.outputTopGap));
+    const bottomRendered = bottom.split("").join(" ".repeat(selectedPreset.outputBottomGap));
+    const width = Math.max(bottomRendered.length, topRendered.length + 6);
+    const topPad = Math.max(0, Math.floor((width - topRendered.length) / 2));
+    const bottomPad = Math.max(0, Math.floor((width - bottomRendered.length) / 2));
 
-        const visualWidth = Math.max(
-          1,
-          Math.round(
-            rendered.length +
-              line.size * (index === 0 ? 0.18 : 0.34) +
-              line.weight / 300
-          )
-        );
-
-        return {
-          rendered,
-          visualWidth,
-          index,
-        };
-      })
-      .filter(
-        (item): item is { rendered: string; visualWidth: number; index: number } =>
-          Boolean(item)
-      );
-
-    if (builtLines.length === 0) return "";
-
-    if (builtLines.length === 2) {
-      const [topLine, bottomLine] = builtLines;
-      const baseWidth = Math.max(bottomLine.visualWidth, topLine.visualWidth + 6);
-      const topPad = Math.max(0, Math.floor((baseWidth - topLine.visualWidth) / 2));
-      const bottomPad = Math.max(0, Math.floor((baseWidth - bottomLine.visualWidth) / 2));
-      return `${" ".repeat(topPad)}${topLine.rendered}\n${" ".repeat(bottomPad)}${bottomLine.rendered}`;
-    }
-
-    const maxWidth = Math.max(...builtLines.map(item => item.visualWidth));
-
-    return builtLines
-      .map(item => {
-        const leftPad = Math.max(0, Math.floor((maxWidth - item.visualWidth) / 2));
-        return `${" ".repeat(leftPad)}${item.rendered}`;
-      })
+    return [
+      top ? `${" ".repeat(topPad)}${topRendered}` : "",
+      bottom ? `${" ".repeat(bottomPad)}${bottomRendered}` : "",
+    ]
+      .filter(Boolean)
       .join("\n");
-  }, [lines]);
-
-  const updateLine = (lineId: string, updates: Partial<StackedTextLine>) => {
-    setLines(current =>
-      current.map(line => (line.id === lineId ? { ...line, ...updates } : line))
-    );
-  };
-
-  const addLine = () => {
-    const nextId = `line-${Date.now()}`;
-    const nextLine = createLine(nextId, {
-      text: `LINHA ${lines.length + 1}`,
-      y: Math.min(70, 34 + lines.length * 12),
-      size: 24,
-      spacing: 0.18,
-      weight: 700,
-    });
-    setLines(current => [...current, nextLine]);
-    setSelectedLineId(nextId);
-  };
-
-  const removeLine = (lineId: string) => {
-    if (lines.length === 1) return;
-    const filtered = lines.filter(line => line.id !== lineId);
-    setLines(filtered);
-    if (selectedLineId === lineId) {
-      setSelectedLineId(filtered[0]?.id ?? "");
-    }
-  };
-
-  const getLinePreviewClassName = (index: number) => {
-    if (index === 0) return "max-w-[78%]";
-    if (index === 1) return "-mt-2 max-w-full";
-    return "-mt-1 max-w-[90%]";
-  };
+  }, [bottomText, selectedPreset, topText]);
 
   const renderIcon = (variant: string) => {
     if (variant === "none") return null;
@@ -334,171 +288,63 @@ export default function HomeActivePanels({
           <div>
             <h2 className="text-xl font-semibold">Criador de textos empilhados</h2>
             <p className="text-sm text-muted-foreground">
-              Modelo vazio para voce montar um texto empilhado parecido com a referencia,
-              mas com o conteudo que quiser.
+              Escolha um modelo pronto inspirado na imagem 00 e troque apenas os textos.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={addLine}>
-              <Plus className="h-4 w-4" />
-              Nova linha
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                if (typeof navigator !== "undefined" && navigator.clipboard) {
-                  navigator.clipboard.writeText(exportText);
-                }
-              }}
-            >
-              Copiar texto
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              if (typeof navigator !== "undefined" && navigator.clipboard) {
+                navigator.clipboard.writeText(exportText);
+              }
+            }}
+          >
+            Copiar texto
+          </Button>
         </div>
 
         <div className="grid gap-4 2xl:grid-cols-[380px_minmax(0,1fr)]">
           <Card className="space-y-4 border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold">Linhas do layout</p>
-              <span className="text-xs text-muted-foreground">
-                {lines.length} item(ns)
-              </span>
-            </div>
-
             <div className="space-y-2">
-              {lines.map((line, index) => (
-                <button
-                  key={line.id}
-                  type="button"
-                  onClick={() => setSelectedLineId(line.id)}
-                  className={cn(
-                    "w-full rounded-xl border px-3 py-3 text-left transition-colors",
-                    selectedLineId === line.id
-                      ? "border-primary/60 bg-primary/10"
-                      : "border-white/10 bg-black/20 hover:bg-white/5"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">
-                        {line.text || `Linha ${index + 1} vazia`}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Bloco alinhado | {line.size}px
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      disabled={lines.length === 1}
-                      onClick={event => {
-                        event.stopPropagation();
-                        removeLine(line.id);
-                      }}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </button>
-              ))}
+              <Label htmlFor="preset-select">Modelo</Label>
+              <select
+                id="preset-select"
+                value={selectedPresetId}
+                onChange={event => setSelectedPresetId(event.target.value)}
+                className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
+              >
+                {TEXT_PRESETS.map(preset => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {selectedLine ? (
-              <div className="space-y-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                <div className="space-y-2">
-                  <Label htmlFor="stacked-text">Texto da linha</Label>
-                  <Textarea
-                    id="stacked-text"
-                    value={selectedLine.text}
-                    onChange={event =>
-                      updateLine(selectedLine.id, { text: event.target.value })
-                    }
-                    className="min-h-20 resize-none"
-                    placeholder="Digite o texto que voce quiser"
-                  />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="line-size">Tamanho</Label>
-                    <Input
-                      id="line-size"
-                      type="number"
-                      min="10"
-                      max="120"
-                      value={selectedLine.size}
-                      onChange={event =>
-                        updateLine(selectedLine.id, {
-                          size: Number(event.target.value) || 10,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="line-spacing">Espacamento</Label>
-                    <Input
-                      id="line-spacing"
-                      type="number"
-                      min="0"
-                      max="1.5"
-                      step="0.01"
-                      value={selectedLine.spacing}
-                      onChange={event =>
-                        updateLine(selectedLine.id, {
-                          spacing: Number(event.target.value) || 0,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="line-weight">Peso da fonte</Label>
-                    <Input
-                      id="line-weight"
-                      type="number"
-                      min="300"
-                      max="900"
-                      step="100"
-                      value={selectedLine.weight}
-                      onChange={event =>
-                        updateLine(selectedLine.id, {
-                          weight: Number(event.target.value) || 700,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="line-color">Cor</Label>
-                    <Input
-                      id="line-color"
-                      type="color"
-                      value={selectedLine.color}
-                      onChange={event =>
-                        updateLine(selectedLine.id, { color: event.target.value })
-                      }
-                      className="h-10 p-1"
-                    />
-                  </div>
-                  <div className="sm:col-span-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
-                    As linhas do preview ficam alinhadas no mesmo bloco para formar uma unica marca, como no modelo da imagem.
-                  </div>
-                </div>
-
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedLine.uppercase}
-                    onChange={event =>
-                      updateLine(selectedLine.id, {
-                        uppercase: event.target.checked,
-                      })
-                    }
-                  />
-                  Forcar maiusculas
-                </label>
+            <div className="space-y-2 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="space-y-2">
+                <Label htmlFor="top-text">Texto de cima</Label>
+                <Input
+                  id="top-text"
+                  value={topText}
+                  onChange={event => setTopText(event.target.value)}
+                  placeholder="Ex: Familia"
+                />
               </div>
-            ) : null}
+              <div className="space-y-2">
+                <Label htmlFor="bottom-text">Texto principal</Label>
+                <Input
+                  id="bottom-text"
+                  value={bottomText}
+                  onChange={event => setBottomText(event.target.value)}
+                  placeholder="Ex: Supreme"
+                />
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
+                O modelo ja define proporcao, espacamento e hierarquia visual. Voce so troca o conteudo.
+              </div>
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -552,7 +398,10 @@ export default function HomeActivePanels({
 
           <Card className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))] p-5">
             <div
-              className="relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-[2.6rem] border border-black/10 shadow-[0_18px_55px_rgba(0,0,0,0.2)]"
+              className={cn(
+                "relative flex min-h-[420px] items-center justify-center overflow-hidden border border-black/10 shadow-[0_18px_55px_rgba(0,0,0,0.2)]",
+                selectedPreset.frameClassName
+              )}
               style={{ backgroundColor: canvasBg }}
             >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.8),transparent_52%)]" />
@@ -565,34 +414,19 @@ export default function HomeActivePanels({
                 </div>
               ) : null}
 
-              <div className="relative z-10 flex w-full max-w-[74%] flex-col items-center justify-center text-center leading-none">
-                {lines.map((line, index) => (
-                  <button
-                    key={line.id}
-                    type="button"
-                    className={cn(
-                      "w-full select-none whitespace-pre-wrap bg-transparent text-center outline-none",
-                      getLinePreviewClassName(index),
-                      selectedLineId === line.id && "rounded-lg ring-2 ring-primary/50 ring-offset-2 ring-offset-transparent"
-                    )}
-                    style={{
-                      color: line.color,
-                      fontSize: `${line.size}px`,
-                      letterSpacing: `${line.spacing}em`,
-                      fontWeight: line.weight,
-                      textTransform: line.uppercase ? "uppercase" : "none",
-                    }}
-                    onClick={() => setSelectedLineId(line.id)}
-                  >
-                    {line.text || " "}
-                  </button>
-                ))}
+              <div className={cn("relative z-10 flex w-full flex-col items-center justify-center text-center leading-none", selectedPreset.contentWidth)}>
+                <div className={cn("w-full text-black uppercase", selectedPreset.topClassName, selectedPreset.topScale)}>
+                  {topText || " "}
+                </div>
+                <div className={cn("w-full text-black uppercase", selectedPreset.bottomClassName, selectedPreset.bottomScale)}>
+                  {bottomText || " "}
+                </div>
               </div>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-              <p>O preview usa proporcao de logo para deixar as linhas mais unidas.</p>
-              <p>{selectedLine ? `Selecionado: ${selectedLine.text || "sem texto"}` : "Sem selecao"}</p>
+              <p>O preview segue um modelo fixo da imagem 00.</p>
+              <p>{selectedPreset.name}</p>
             </div>
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
               <div className="mb-2 flex items-center justify-between gap-3">
