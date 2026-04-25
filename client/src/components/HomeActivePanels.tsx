@@ -135,16 +135,7 @@ export default function HomeActivePanels({
     const [cuteA, cuteB, cuteC, cuteD] = SYMBOLS.cute;
 
     return [
-      { id: "normal-stacked", name: "Normal stacked", value: joinNonEmpty(topSuper, bottomLower) },
       { id: "spaced-stacked", name: "Spaced stacked", value: stackNonEmpty(topSpaced, bottomLower) },
-      { id: "tiny-top", name: "Tiny top", value: joinNonEmpty(topSuper, bottomLower) },
-      { id: "luxury", name: "Luxury", value: joinNonEmpty(topWide, bottomUpper) },
-      { id: "minimal", name: "Minimal", value: joinNonEmpty(topSuper, bottomTitle) },
-      { id: "crown-left", name: "Coroa a esquerda", value: joinNonEmpty(`${crownA} `, topSuper, bottomLower) },
-      { id: "crown-right", name: "Coroa a direita", value: joinNonEmpty(topSuper, bottomLower, ` ${crownB}`) },
-      { id: "double-crown", name: "Coroas dos dois lados", value: joinNonEmpty(`${crownA} `, topSuper, bottomUpper, ` ${crownB}`) },
-      { id: "stars", name: "Estrelas", value: joinNonEmpty(`${starA} `, topSuper, bottomLower, ` ${starA}`) },
-      { id: "ornaments", name: "Simbolos decorativos", value: joinNonEmpty(`${luxC} `, topSuper, bottomTitle, ` ${luxC}`) },
       { id: "stacked-classic", name: "Empilhado classico", value: stackNonEmpty(topSuper, bottomLower) },
       { id: "stacked-spaced", name: "Empilhado espacado", value: stackNonEmpty(topSpaced, bottomLower) },
       { id: "stacked-luxury", name: "Empilhado luxury", value: stackNonEmpty(`${starA} ${topWide}`, bottomUpper) },
@@ -178,6 +169,25 @@ export default function HomeActivePanels({
       { id: "inline-spaced-base", name: "Inline base spaced", value: joinNonEmpty(topSuper, bottomSpaced) },
       { id: "stacked-ornament-left", name: "Empilhado ornament left", value: stackNonEmpty(`${luxC} ${topSuper}`, bottomLower) },
       { id: "stacked-ornament-right", name: "Empilhado ornament right", value: stackNonEmpty(topSpaced, `${bottomTitle} ${luxD}`) },
+      { id: "stacked-crown-frame", name: "Empilhado frame coroas", value: stackNonEmpty(`${crownA} ${topSuper} ${crownB}`, `${bottomUpper}`) },
+      { id: "stacked-star-frame", name: "Empilhado frame estrelas", value: stackNonEmpty(`${starA} ${topSpaced} ${starB}`, `${bottomLower}`) },
+      { id: "stacked-lux-frame", name: "Empilhado frame luxo", value: stackNonEmpty(`${luxA} ${topWide} ${luxB}`, `${bottomTitle}`) },
+      { id: "stacked-floral-frame", name: "Empilhado frame floral", value: stackNonEmpty(`${floralA} ${topSuper} ${floralB}`, `${bottomTitle}`) },
+      { id: "stacked-gamer-frame", name: "Empilhado frame gamer", value: stackNonEmpty(`${gamerA} ${topSpaced} ${gamerB}`, `${bottomUpper}`) },
+      { id: "stacked-cute-frame", name: "Empilhado frame cute", value: stackNonEmpty(`${cuteA} ${topSuper} ${cuteB}`, `${bottomTitle}`) },
+      { id: "stacked-soft", name: "Empilhado soft", value: stackNonEmpty(topSuper, `${minimalD} ${bottomLower}`) },
+      { id: "stacked-bold", name: "Empilhado bold", value: stackNonEmpty(topWide, bottomUpper) },
+      { id: "stacked-dotline", name: "Empilhado dotline", value: stackNonEmpty(topDotted, `${minimalC} ${bottomLower}`) },
+      { id: "stacked-starline", name: "Empilhado starline", value: stackNonEmpty(topStarred, `${starC} ${bottomUpper}`) },
+      { id: "normal-stacked", name: "Normal stacked", value: joinNonEmpty(topSuper, bottomLower) },
+      { id: "tiny-top", name: "Tiny top", value: joinNonEmpty(topSuper, bottomLower) },
+      { id: "luxury", name: "Luxury", value: joinNonEmpty(topWide, bottomUpper) },
+      { id: "minimal", name: "Minimal", value: joinNonEmpty(topSuper, bottomTitle) },
+      { id: "crown-left", name: "Coroa a esquerda", value: joinNonEmpty(`${crownA} `, topSuper, bottomLower) },
+      { id: "crown-right", name: "Coroa a direita", value: joinNonEmpty(topSuper, bottomLower, ` ${crownB}`) },
+      { id: "double-crown", name: "Coroas dos dois lados", value: joinNonEmpty(`${crownA} `, topSuper, bottomUpper, ` ${crownB}`) },
+      { id: "stars", name: "Estrelas", value: joinNonEmpty(`${starA} `, topSuper, bottomLower, ` ${starA}`) },
+      { id: "ornaments", name: "Simbolos decorativos", value: joinNonEmpty(`${luxC} `, topSuper, bottomTitle, ` ${luxC}`) },
       { id: "ornament-frame", name: "Ornament frame", value: joinNonEmpty(`${luxC} `, topWide, bottomUpper, ` ${luxD}`) },
       { id: "floral-left", name: "Floral left", value: joinNonEmpty(`${floralA} `, topSuper, bottomTitle) },
       { id: "floral-right", name: "Floral right", value: joinNonEmpty(topSuper, bottomTitle, ` ${floralB}`) },
@@ -374,7 +384,7 @@ export default function HomeActivePanels({
             </div>
           </div>
           <p className="text-sm text-muted-foreground">
-            A galeria abaixo gera automaticamente estilos com icones embutidos e variacoes realmente empilhadas.
+            A galeria abaixo gera automaticamente estilos com icones embutidos. Os primeiros cards priorizam versoes realmente empilhadas com uma linha acima da outra.
           </p>
         </Card>
 
