@@ -81,24 +81,62 @@ export default function HomeActivePanels({
     [lines, selectedLineId]
   );
 
-  const exportText = useMemo(
-    () =>
-      lines
-        .map(line => {
-          const raw = line.text.trim();
-          if (!raw) return "";
-          const content = line.uppercase ? raw.toUpperCase() : raw;
-          if (line.spacing <= 0) return content;
-          const gap = " ".repeat(Math.max(1, Math.round(line.spacing * 4)));
-          return content
-            .split("\n")
-            .map(part => part.split("").join(gap))
-            .join("\n");
-        })
-        .filter(Boolean)
-        .join("\n"),
-    [lines]
-  );
+  const exportText = useMemo(() => {
+    const builtLines = lines
+      .map((line, index) => {
+        const raw = line.text.trim();
+        if (!raw) return null;
+
+        const content = line.uppercase ? raw.toUpperCase() : raw;
+        const spacingUnits =
+          index === 0
+            ? Math.max(1, Math.round(line.spacing * 5))
+            : Math.max(0, Math.round(line.spacing * 2));
+        const gap = " ".repeat(spacingUnits);
+        const rendered = content
+          .split("\n")
+          .map(part => part.split("").join(gap))
+          .join("\n");
+
+        const visualWidth = Math.max(
+          1,
+          Math.round(
+            rendered.length +
+              line.size * (index === 0 ? 0.18 : 0.34) +
+              line.weight / 300
+          )
+        );
+
+        return {
+          rendered,
+          visualWidth,
+          index,
+        };
+      })
+      .filter(
+        (item): item is { rendered: string; visualWidth: number; index: number } =>
+          Boolean(item)
+      );
+
+    if (builtLines.length === 0) return "";
+
+    if (builtLines.length === 2) {
+      const [topLine, bottomLine] = builtLines;
+      const baseWidth = Math.max(bottomLine.visualWidth, topLine.visualWidth + 6);
+      const topPad = Math.max(0, Math.floor((baseWidth - topLine.visualWidth) / 2));
+      const bottomPad = Math.max(0, Math.floor((baseWidth - bottomLine.visualWidth) / 2));
+      return `${" ".repeat(topPad)}${topLine.rendered}\n${" ".repeat(bottomPad)}${bottomLine.rendered}`;
+    }
+
+    const maxWidth = Math.max(...builtLines.map(item => item.visualWidth));
+
+    return builtLines
+      .map(item => {
+        const leftPad = Math.max(0, Math.floor((maxWidth - item.visualWidth) / 2));
+        return `${" ".repeat(leftPad)}${item.rendered}`;
+      })
+      .join("\n");
+  }, [lines]);
 
   const updateLine = (lineId: string, updates: Partial<StackedTextLine>) => {
     setLines(current =>
