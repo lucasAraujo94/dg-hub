@@ -33,56 +33,44 @@ type HomeActivePanelsProps = {
 type TextPreset = {
   id: string;
   name: string;
-  topSpacing: number;
   topClassName: string;
   bottomClassName: string;
   topScale: string;
   bottomScale: string;
   frameClassName: string;
   contentWidth: string;
-  outputTopGap: number;
-  outputBottomGap: number;
 };
 
 const TEXT_PRESETS: TextPreset[] = [
   {
     id: "supreme-classic",
     name: "Modelo Supreme",
-    topSpacing: 3,
     topClassName: "max-w-[74%]",
     bottomClassName: "-mt-2 max-w-full",
     topScale: "text-[18px] font-bold tracking-[0.52em]",
     bottomScale: "text-[46px] font-black tracking-[0.05em]",
     frameClassName: "rounded-[2.6rem]",
     contentWidth: "max-w-[74%]",
-    outputTopGap: 3,
-    outputBottomGap: 0,
   },
   {
     id: "supreme-wide",
     name: "Modelo Wide",
-    topSpacing: 4,
     topClassName: "max-w-[70%]",
     bottomClassName: "-mt-3 max-w-full",
     topScale: "text-[16px] font-bold tracking-[0.62em]",
     bottomScale: "text-[44px] font-black tracking-[0.08em]",
     frameClassName: "rounded-[2.8rem]",
     contentWidth: "max-w-[76%]",
-    outputTopGap: 4,
-    outputBottomGap: 1,
   },
   {
     id: "supreme-tight",
     name: "Modelo Tight",
-    topSpacing: 2,
     topClassName: "max-w-[80%]",
     bottomClassName: "-mt-1 max-w-full",
     topScale: "text-[19px] font-semibold tracking-[0.38em]",
     bottomScale: "text-[48px] font-black tracking-[0.03em]",
     frameClassName: "rounded-[2.5rem]",
     contentWidth: "max-w-[72%]",
-    outputTopGap: 2,
-    outputBottomGap: 0,
   },
 ];
 
@@ -108,23 +96,21 @@ export default function HomeActivePanels({
   );
 
   const exportText = useMemo(() => {
-    const top = topText.trim().toUpperCase();
+    const top = topText.trim().split(/\s+/)[0]?.toUpperCase() ?? "";
     const bottom = bottomText.trim().toUpperCase();
     if (!top && !bottom) return "";
 
-    const topRendered = top.split("").join(" ".repeat(selectedPreset.outputTopGap));
-    const bottomRendered = bottom.split("").join(" ".repeat(selectedPreset.outputBottomGap));
-    const width = Math.max(bottomRendered.length, topRendered.length + 6);
-    const topPad = Math.max(0, Math.floor((width - topRendered.length) / 2));
-    const bottomPad = Math.max(0, Math.floor((width - bottomRendered.length) / 2));
+    const width = Math.max(bottom.length, top.length + 4);
+    const topPad = Math.max(0, Math.floor((width - top.length) / 2));
+    const bottomPad = Math.max(0, Math.floor((width - bottom.length) / 2));
 
     return [
-      top ? `${" ".repeat(topPad)}${topRendered}` : "",
-      bottom ? `${" ".repeat(bottomPad)}${bottomRendered}` : "",
+      top ? `${" ".repeat(topPad)}${top}` : "",
+      bottom ? `${" ".repeat(bottomPad)}${bottom}` : "",
     ]
       .filter(Boolean)
       .join("\n");
-  }, [bottomText, selectedPreset, topText]);
+  }, [bottomText, topText]);
 
   const renderIcon = (variant: string) => {
     if (variant === "none") return null;
@@ -331,6 +317,9 @@ export default function HomeActivePanels({
                   onChange={event => setTopText(event.target.value)}
                   placeholder="Ex: Familia"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Use uma unica palavra menor, como no modelo da imagem 00.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bottom-text">Texto principal</Label>
