@@ -88,6 +88,19 @@ const toSuperscript = (value: string) =>
     .map(char => SUPERSCRIPT_MAP[char] ?? SUPERSCRIPT_MAP[char.toLowerCase()] ?? char)
     .join("");
 
+const joinNonEmpty = (...parts: string[]) => parts.filter(Boolean).join("");
+const stackNonEmpty = (...parts: string[]) => parts.filter(Boolean).join("\n");
+
+const SYMBOLS = {
+  coroas: ["♕", "♛", "♔"],
+  estrelas: ["✦", "✧", "⋆", "✶"],
+  luxo: ["◇", "◆", "❖", "◈"],
+  floral: ["❀", "✿", "❁", "⚘"],
+  minimal: ["•", "¦", "·", "˖"],
+  gamer: ["⚔", "⚡", "✘", "▣"],
+  cute: ["♡", "♥", "ღ", "୨୧"],
+} as const;
+
 export default function HomeActivePanels({
   activeSection,
   campeonatos,
@@ -105,27 +118,79 @@ export default function HomeActivePanels({
     const topSuper = toSuperscript(top);
     const topSpaced = topSuper.split("").join(" ");
     const topWide = topSuper.split("").join("  ");
+    const topDotted = topSuper.split("").join(" · ");
+    const topStarred = topSuper.split("").join(" ✦ ");
     const bottomLower = bottom.toLowerCase();
     const bottomUpper = bottom.toUpperCase();
     const bottomTitle = bottom
       ? `${bottom.charAt(0).toUpperCase()}${bottom.slice(1).toLowerCase()}`
       : "";
+    const bottomSpaced = bottomLower.split("").join(" ");
+    const [crownA, crownB, crownC] = SYMBOLS.coroas;
+    const [starA, starB, starC, starD] = SYMBOLS.estrelas;
+    const [luxA, luxB, luxC, luxD] = SYMBOLS.luxo;
+    const [floralA, floralB, floralC, floralD] = SYMBOLS.floral;
+    const [minimalA, minimalB, minimalC, minimalD] = SYMBOLS.minimal;
+    const [gamerA, gamerB, gamerC, gamerD] = SYMBOLS.gamer;
+    const [cuteA, cuteB, cuteC, cuteD] = SYMBOLS.cute;
 
     return [
-      { id: "normal-stacked", name: "Normal stacked", value: `${topSuper}${bottomLower}` },
-      { id: "spaced-stacked", name: "Spaced stacked", value: [topSpaced, bottomLower].filter(Boolean).join("\n") },
-      { id: "tiny-top", name: "Tiny top", value: `${topSuper}${bottomLower}` },
-      { id: "luxury", name: "Luxury", value: `${topWide}${bottomUpper}` },
-      { id: "minimal", name: "Minimal", value: `${topSuper}${bottomTitle}` },
-      { id: "crown-left", name: "Coroa a esquerda", value: `♕ ${topSuper}${bottomLower}` },
-      { id: "crown-right", name: "Coroa a direita", value: `${topSuper}${bottomLower} ♛` },
-      { id: "double-crown", name: "Coroas dos dois lados", value: `♕ ${topSuper}${bottomUpper} ♛` },
-      { id: "stars", name: "Estrelas", value: `✦ ${topSuper}${bottomLower} ✦` },
-      { id: "ornaments", name: "Simbolos decorativos", value: `❖ ${topSuper}${bottomTitle} ❖` },
-      { id: "stacked-classic", name: "Empilhado classico", value: [topSuper, bottomLower].filter(Boolean).join("\n") },
-      { id: "stacked-spaced", name: "Empilhado espacado", value: [topSpaced, bottomLower].filter(Boolean).join("\n") },
-      { id: "stacked-luxury", name: "Empilhado luxury", value: [`✦ ${topWide}`, bottomUpper].filter(Boolean).join("\n") },
-      { id: "stacked-minimal", name: "Empilhado minimal", value: [topSuper, bottomTitle].filter(Boolean).join("\n") },
+      { id: "normal-stacked", name: "Normal stacked", value: joinNonEmpty(topSuper, bottomLower) },
+      { id: "spaced-stacked", name: "Spaced stacked", value: stackNonEmpty(topSpaced, bottomLower) },
+      { id: "tiny-top", name: "Tiny top", value: joinNonEmpty(topSuper, bottomLower) },
+      { id: "luxury", name: "Luxury", value: joinNonEmpty(topWide, bottomUpper) },
+      { id: "minimal", name: "Minimal", value: joinNonEmpty(topSuper, bottomTitle) },
+      { id: "crown-left", name: "Coroa a esquerda", value: joinNonEmpty(`${crownA} `, topSuper, bottomLower) },
+      { id: "crown-right", name: "Coroa a direita", value: joinNonEmpty(topSuper, bottomLower, ` ${crownB}`) },
+      { id: "double-crown", name: "Coroas dos dois lados", value: joinNonEmpty(`${crownA} `, topSuper, bottomUpper, ` ${crownB}`) },
+      { id: "stars", name: "Estrelas", value: joinNonEmpty(`${starA} `, topSuper, bottomLower, ` ${starA}`) },
+      { id: "ornaments", name: "Simbolos decorativos", value: joinNonEmpty(`${luxC} `, topSuper, bottomTitle, ` ${luxC}`) },
+      { id: "stacked-classic", name: "Empilhado classico", value: stackNonEmpty(topSuper, bottomLower) },
+      { id: "stacked-spaced", name: "Empilhado espacado", value: stackNonEmpty(topSpaced, bottomLower) },
+      { id: "stacked-luxury", name: "Empilhado luxury", value: stackNonEmpty(`${starA} ${topWide}`, bottomUpper) },
+      { id: "stacked-minimal", name: "Empilhado minimal", value: stackNonEmpty(topSuper, bottomTitle) },
+      { id: "stacked-wide", name: "Empilhado wide", value: stackNonEmpty(topWide, bottomLower) },
+      { id: "stacked-dotted", name: "Empilhado dotted", value: stackNonEmpty(topDotted, bottomLower) },
+      { id: "stacked-stars", name: "Empilhado stars", value: stackNonEmpty(topStarred, bottomUpper) },
+      { id: "stacked-crown-left", name: "Empilhado coroa esquerda", value: stackNonEmpty(`${crownA} ${topSuper}`, bottomLower) },
+      { id: "stacked-crown-right", name: "Empilhado coroa direita", value: stackNonEmpty(topSpaced, `${bottomLower} ${crownB}`) },
+      { id: "stacked-double-crown", name: "Empilhado coroas", value: stackNonEmpty(`${crownA} ${topWide}`, `${bottomUpper} ${crownB}`) },
+      { id: "inline-star-left", name: "Star left", value: joinNonEmpty(`${starA} `, topSuper, bottomTitle) },
+      { id: "inline-star-right", name: "Star right", value: joinNonEmpty(topSuper, bottomTitle, ` ${starB}`) },
+      { id: "inline-double-star", name: "Double star", value: joinNonEmpty(`${starA} `, topSuper, bottomTitle, ` ${starC}`) },
+      { id: "inline-diamond-left", name: "Diamond left", value: joinNonEmpty(`${luxA} `, topSuper, bottomLower) },
+      { id: "inline-diamond-right", name: "Diamond right", value: joinNonEmpty(topSuper, bottomLower, ` ${luxA}`) },
+      { id: "inline-diamonds", name: "Diamonds", value: joinNonEmpty(`${luxA} `, topSuper, bottomLower, ` ${luxB}`) },
+      { id: "inline-bullet", name: "Minimal bullet", value: joinNonEmpty(`${minimalA} `, topSuper, bottomTitle) },
+      { id: "inline-wave", name: "Wave", value: joinNonEmpty("~ ", topSuper, bottomLower, " ~") },
+      { id: "inline-hearts", name: "Hearts", value: joinNonEmpty(`${cuteA} `, topSuper, bottomTitle, ` ${cuteB}`) },
+      { id: "inline-sparkles", name: "Sparkles", value: joinNonEmpty(`${starC} `, topWide, bottomUpper, ` ${starD}`) },
+      { id: "inline-bars", name: "Bars", value: joinNonEmpty(`${minimalB} `, topSuper, bottomLower, ` ${minimalB}`) },
+      { id: "stacked-bars", name: "Empilhado bars", value: stackNonEmpty(`${minimalB} ${topSuper} ${minimalB}`, bottomLower) },
+      { id: "stacked-diamonds", name: "Empilhado diamonds", value: stackNonEmpty(`${luxA} ${topSpaced}`, `${bottomLower} ${luxB}`) },
+      { id: "stacked-hearts", name: "Empilhado hearts", value: stackNonEmpty(`${cuteA} ${topSuper}`, `${bottomTitle} ${cuteB}`) },
+      { id: "stacked-sparkles", name: "Empilhado sparkles", value: stackNonEmpty(`${starC} ${topWide}`, `${bottomUpper} ${starD}`) },
+      { id: "stacked-mini", name: "Empilhado mini", value: stackNonEmpty(topSuper, bottomSpaced) },
+      { id: "stacked-clean-upper", name: "Empilhado upper", value: stackNonEmpty(topSpaced, bottomUpper) },
+      { id: "stacked-clean-title", name: "Empilhado title", value: stackNonEmpty(topSuper, bottomTitle) },
+      { id: "inline-upper", name: "Inline upper", value: joinNonEmpty(topSuper, bottomUpper) },
+      { id: "inline-title", name: "Inline title", value: joinNonEmpty(topWide, bottomTitle) },
+      { id: "inline-spaced-base", name: "Inline base spaced", value: joinNonEmpty(topSuper, bottomSpaced) },
+      { id: "stacked-ornament-left", name: "Empilhado ornament left", value: stackNonEmpty(`${luxC} ${topSuper}`, bottomLower) },
+      { id: "stacked-ornament-right", name: "Empilhado ornament right", value: stackNonEmpty(topSpaced, `${bottomTitle} ${luxD}`) },
+      { id: "ornament-frame", name: "Ornament frame", value: joinNonEmpty(`${luxC} `, topWide, bottomUpper, ` ${luxD}`) },
+      { id: "floral-left", name: "Floral left", value: joinNonEmpty(`${floralA} `, topSuper, bottomTitle) },
+      { id: "floral-right", name: "Floral right", value: joinNonEmpty(topSuper, bottomTitle, ` ${floralB}`) },
+      { id: "floral-frame", name: "Floral frame", value: joinNonEmpty(`${floralA} `, topWide, bottomLower, ` ${floralB}`) },
+      { id: "stacked-floral", name: "Empilhado floral", value: stackNonEmpty(`${floralC} ${topSpaced}`, `${bottomTitle} ${floralD}`) },
+      { id: "cute-double", name: "Cute dupla", value: joinNonEmpty(`${cuteC} `, topSuper, bottomTitle, ` ${cuteD}`) },
+      { id: "stacked-cute", name: "Empilhado cute", value: stackNonEmpty(`${cuteA} ${topSuper}`, `${bottomTitle} ${cuteD}`) },
+      { id: "gamer-left", name: "Gamer left", value: joinNonEmpty(`${gamerA} `, topSuper, bottomUpper) },
+      { id: "gamer-right", name: "Gamer right", value: joinNonEmpty(topSuper, bottomUpper, ` ${gamerB}`) },
+      { id: "gamer-frame", name: "Gamer frame", value: joinNonEmpty(`${gamerA} `, topWide, bottomUpper, ` ${gamerB}`) },
+      { id: "stacked-gamer", name: "Empilhado gamer", value: stackNonEmpty(`${gamerC} ${topSpaced}`, `${bottomUpper} ${gamerD}`) },
+      { id: "minimal-dots", name: "Minimal dots", value: joinNonEmpty(`${minimalC} `, topSuper, bottomTitle, ` ${minimalC}`) },
+      { id: "minimal-soft", name: "Minimal soft", value: joinNonEmpty(`${minimalD} `, topWide, bottomLower) },
     ].filter(item => item.value.trim().length > 0);
   }, [bottomText, topText]);
 
