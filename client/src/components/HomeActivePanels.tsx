@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { Crown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
 
@@ -30,18 +28,11 @@ type HomeActivePanelsProps = {
   onMarkChatAsRead: () => void;
 };
 
-type TextPreset = {
+type GeneratedStyle = {
   id: string;
   name: string;
+  value: string;
 };
-
-const TEXT_PRESETS: TextPreset[] = [
-  { id: "normal-stacked", name: "Normal stacked" },
-  { id: "spaced-stacked", name: "Spaced stacked" },
-  { id: "tiny-top", name: "Tiny top" },
-  { id: "luxury", name: "Luxury" },
-  { id: "minimal", name: "Minimal" },
-];
 
 const SUPERSCRIPT_MAP: Record<string, string> = {
   a: "ᵃ",
@@ -105,48 +96,38 @@ export default function HomeActivePanels({
   onRegister,
   onMarkChatAsRead,
 }: HomeActivePanelsProps) {
-  const [selectedPresetId, setSelectedPresetId] = useState(TEXT_PRESETS[0].id);
   const [topText, setTopText] = useState("");
   const [bottomText, setBottomText] = useState("");
-  const [canvasBg, setCanvasBg] = useState("#f7f7f5");
-  const [showIcons, setShowIcons] = useState(true);
-  const [leftIcon, setLeftIcon] = useState("crown");
-  const [rightIcon, setRightIcon] = useState("queen");
 
-  const selectedPreset = useMemo(
-    () => TEXT_PRESETS.find(preset => preset.id === selectedPresetId) ?? TEXT_PRESETS[0],
-    [selectedPresetId]
-  );
-
-  const exportText = useMemo(() => {
+  const generatedStyles = useMemo<GeneratedStyle[]>(() => {
     const top = topText.trim();
     const bottom = bottomText.trim();
-    if (!top && !bottom) return "";
-
     const topSuper = toSuperscript(top);
-    const spacedTop = topSuper.split("").join(" ");
+    const topSpaced = topSuper.split("").join(" ");
+    const topWide = topSuper.split("").join("  ");
+    const bottomLower = bottom.toLowerCase();
+    const bottomUpper = bottom.toUpperCase();
+    const bottomTitle = bottom
+      ? `${bottom.charAt(0).toUpperCase()}${bottom.slice(1).toLowerCase()}`
+      : "";
 
-    switch (selectedPreset.id) {
-      case "spaced-stacked":
-        return [spacedTop, bottom.toLowerCase()].filter(Boolean).join("\n");
-      case "tiny-top":
-        return `${topSuper}${bottom.toLowerCase()}`;
-      case "luxury":
-        return `${spacedTop}${bottom.toUpperCase()}`;
-      case "minimal":
-        return `${topSuper}${bottom ? `${bottom.charAt(0).toUpperCase()}${bottom.slice(1).toLowerCase()}` : ""}`;
-      case "normal-stacked":
-      default:
-        return `${topSuper}${bottom.toLowerCase()}`;
-    }
-  }, [bottomText, selectedPreset.id, topText]);
-
-  const renderIcon = (variant: string) => {
-    if (variant === "none") return null;
-    if (variant === "queen") return <span className="text-[2rem] leading-none">♛</span>;
-    if (variant === "king") return <span className="text-[2rem] leading-none">♔</span>;
-    return <Crown className="h-8 w-8" strokeWidth={1.8} />;
-  };
+    return [
+      { id: "normal-stacked", name: "Normal stacked", value: `${topSuper}${bottomLower}` },
+      { id: "spaced-stacked", name: "Spaced stacked", value: [topSpaced, bottomLower].filter(Boolean).join("\n") },
+      { id: "tiny-top", name: "Tiny top", value: `${topSuper}${bottomLower}` },
+      { id: "luxury", name: "Luxury", value: `${topWide}${bottomUpper}` },
+      { id: "minimal", name: "Minimal", value: `${topSuper}${bottomTitle}` },
+      { id: "crown-left", name: "Coroa a esquerda", value: `♕ ${topSuper}${bottomLower}` },
+      { id: "crown-right", name: "Coroa a direita", value: `${topSuper}${bottomLower} ♛` },
+      { id: "double-crown", name: "Coroas dos dois lados", value: `♕ ${topSuper}${bottomUpper} ♛` },
+      { id: "stars", name: "Estrelas", value: `✦ ${topSuper}${bottomLower} ✦` },
+      { id: "ornaments", name: "Simbolos decorativos", value: `❖ ${topSuper}${bottomTitle} ❖` },
+      { id: "stacked-classic", name: "Empilhado classico", value: [topSuper, bottomLower].filter(Boolean).join("\n") },
+      { id: "stacked-spaced", name: "Empilhado espacado", value: [topSpaced, bottomLower].filter(Boolean).join("\n") },
+      { id: "stacked-luxury", name: "Empilhado luxury", value: [`✦ ${topWide}`, bottomUpper].filter(Boolean).join("\n") },
+      { id: "stacked-minimal", name: "Empilhado minimal", value: [topSuper, bottomTitle].filter(Boolean).join("\n") },
+    ].filter(item => item.value.trim().length > 0);
+  }, [bottomText, topText]);
 
   if (activeSection === "campeonatos") {
     return (
@@ -299,170 +280,61 @@ export default function HomeActivePanels({
   if (activeSection === "textos") {
     return (
       <section className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold">Criador de textos empilhados</h2>
-            <p className="text-sm text-muted-foreground">
-              Escolha um modelo pronto inspirado na imagem 00 e troque apenas os textos.
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              if (typeof navigator !== "undefined" && navigator.clipboard) {
-                navigator.clipboard.writeText(exportText);
-              }
-            }}
-          >
-            Copiar texto
-          </Button>
+        <div>
+          <h2 className="text-xl font-semibold">Galeria de stacked text</h2>
+          <p className="text-sm text-muted-foreground">
+            Digite uma vez e receba varias opcoes prontas, cada uma com copia individual.
+          </p>
         </div>
 
-        <div className="grid gap-4 2xl:grid-cols-[380px_minmax(0,1fr)]">
-          <Card className="space-y-4 border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+        <Card className="space-y-4 border-white/10 bg-white/5 p-5 backdrop-blur-sm">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="preset-select">Modelo</Label>
-              <select
-                id="preset-select"
-                value={selectedPresetId}
-                onChange={event => setSelectedPresetId(event.target.value)}
-                className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
-              >
-                {TEXT_PRESETS.map(preset => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.name}
-                  </option>
-                ))}
-              </select>
+              <Label htmlFor="top-text">Texto de cima</Label>
+              <Input
+                id="top-text"
+                value={topText}
+                onChange={event => setTopText(event.target.value)}
+                placeholder="Ex: familia"
+              />
             </div>
-
-            <div className="space-y-2 rounded-2xl border border-white/10 bg-black/20 p-4">
-              <div className="space-y-2">
-                <Label htmlFor="top-text">Texto de cima</Label>
-                <Input
-                  id="top-text"
-                  value={topText}
-                  onChange={event => setTopText(event.target.value)}
-                  placeholder="Ex: familia"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Esse texto sera convertido para Unicode pequeno.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bottom-text">Texto de baixo</Label>
-                <Input
-                  id="bottom-text"
-                  value={bottomText}
-                  onChange={event => setBottomText(event.target.value)}
-                  placeholder="Ex: supreme"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Esse texto sera mantido como base principal do stacked text.
-                </p>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
-                O resultado final e uma unica string Unicode copiavel, sem duas divs e sem quebra por br.
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="bottom-text">Texto de baixo</Label>
+              <Input
+                id="bottom-text"
+                value={bottomText}
+                onChange={event => setBottomText(event.target.value)}
+                placeholder="Ex: supreme"
+              />
             </div>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            A galeria abaixo gera automaticamente estilos com icones embutidos e variacoes realmente empilhadas.
+          </p>
+        </Card>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="canvas-bg">Fundo</Label>
-                <Input
-                  id="canvas-bg"
-                  type="color"
-                  value={canvasBg}
-                  onChange={event => setCanvasBg(event.target.value)}
-                  className="h-10 p-1"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="left-icon">Icone esquerdo</Label>
-                <select
-                  id="left-icon"
-                  value={leftIcon}
-                  onChange={event => setLeftIcon(event.target.value)}
-                  className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
-                >
-                  <option value="crown">Coroa</option>
-                  <option value="king">Rei</option>
-                  <option value="queen">Rainha</option>
-                  <option value="none">Sem icone</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="right-icon">Icone direito</Label>
-                <select
-                  id="right-icon"
-                  value={rightIcon}
-                  onChange={event => setRightIcon(event.target.value)}
-                  className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
-                >
-                  <option value="queen">Rainha</option>
-                  <option value="king">Rei</option>
-                  <option value="crown">Coroa</option>
-                  <option value="none">Sem icone</option>
-                </select>
-              </div>
-              <label className="flex items-center gap-2 self-end text-sm">
-                <input
-                  type="checkbox"
-                  checked={showIcons}
-                  onChange={event => setShowIcons(event.target.checked)}
-                />
-                Mostrar icones laterais
-              </label>
-            </div>
-          </Card>
-
-          <Card className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))] p-5">
-            <div
-              className={cn(
-                "relative min-h-[420px] overflow-hidden rounded-[2.6rem] border border-black/10 shadow-[0_18px_55px_rgba(0,0,0,0.2)]"
-              )}
-              style={{ backgroundColor: canvasBg }}
-            >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.8),transparent_52%)]" />
-              <div className="absolute inset-[14%_6%] rounded-[2.4rem] border border-black/8" />
-
-              {showIcons ? (
-                <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between px-8 text-black">
-                  <div>{renderIcon(leftIcon)}</div>
-                  <div>{renderIcon(rightIcon)}</div>
-                </div>
-              ) : null}
-
-              <pre className="absolute inset-0 z-10 flex items-center justify-center px-16 text-center text-black whitespace-pre-wrap break-words font-semibold">
-                {exportText || "Preview do stacked text"}
-              </pre>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-              <p>O preview mostra a string Unicode unica do estilo escolhido.</p>
-              <p>{selectedPreset.name}</p>
-            </div>
-            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-foreground">Resultado final em texto</p>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {generatedStyles.map(style => (
+            <Card key={style.id} className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))] p-5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-foreground">{style.name}</p>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
                     if (typeof navigator !== "undefined" && navigator.clipboard) {
-                      navigator.clipboard.writeText(exportText);
+                      navigator.clipboard.writeText(style.value);
                     }
                   }}
                 >
-                  Copiar resultado
+                  Copiar
                 </Button>
               </div>
-              <pre className="min-h-24 whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-background/60 p-3 text-sm text-foreground">
-                {exportText || "O resultado em texto vai aparecer aqui quando voce preencher as linhas."}
+              <pre className="min-h-32 whitespace-pre-wrap break-words rounded-2xl border border-black/10 bg-[#f7f7f5] px-5 py-6 text-center text-lg font-semibold text-black shadow-[0_18px_55px_rgba(0,0,0,0.12)]">
+                {style.value || "Digite os textos para gerar os modelos."}
               </pre>
-            </div>
-          </Card>
+            </Card>
+          ))}
         </div>
       </section>
     );
