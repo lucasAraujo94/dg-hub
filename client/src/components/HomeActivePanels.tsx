@@ -33,46 +33,69 @@ type HomeActivePanelsProps = {
 type TextPreset = {
   id: string;
   name: string;
-  topClassName: string;
-  bottomClassName: string;
-  topScale: string;
-  bottomScale: string;
-  frameClassName: string;
-  contentWidth: string;
 };
 
 const TEXT_PRESETS: TextPreset[] = [
-  {
-    id: "supreme-classic",
-    name: "Modelo Supreme",
-    topClassName: "max-w-[74%]",
-    bottomClassName: "-mt-2 max-w-full",
-    topScale: "text-[18px] font-bold tracking-[0.52em]",
-    bottomScale: "text-[46px] font-black tracking-[0.05em]",
-    frameClassName: "rounded-[2.6rem]",
-    contentWidth: "max-w-[74%]",
-  },
-  {
-    id: "supreme-wide",
-    name: "Modelo Wide",
-    topClassName: "max-w-[70%]",
-    bottomClassName: "-mt-3 max-w-full",
-    topScale: "text-[16px] font-bold tracking-[0.62em]",
-    bottomScale: "text-[44px] font-black tracking-[0.08em]",
-    frameClassName: "rounded-[2.8rem]",
-    contentWidth: "max-w-[76%]",
-  },
-  {
-    id: "supreme-tight",
-    name: "Modelo Tight",
-    topClassName: "max-w-[80%]",
-    bottomClassName: "-mt-1 max-w-full",
-    topScale: "text-[19px] font-semibold tracking-[0.38em]",
-    bottomScale: "text-[48px] font-black tracking-[0.03em]",
-    frameClassName: "rounded-[2.5rem]",
-    contentWidth: "max-w-[72%]",
-  },
+  { id: "normal-stacked", name: "Normal stacked" },
+  { id: "spaced-stacked", name: "Spaced stacked" },
+  { id: "tiny-top", name: "Tiny top" },
+  { id: "luxury", name: "Luxury" },
+  { id: "minimal", name: "Minimal" },
 ];
+
+const SUPERSCRIPT_MAP: Record<string, string> = {
+  a: "ᵃ",
+  b: "ᵇ",
+  c: "ᶜ",
+  d: "ᵈ",
+  e: "ᵉ",
+  f: "ᶠ",
+  g: "ᵍ",
+  h: "ʰ",
+  i: "ⁱ",
+  j: "ʲ",
+  k: "ᵏ",
+  l: "ˡ",
+  m: "ᵐ",
+  n: "ⁿ",
+  o: "ᵒ",
+  p: "ᵖ",
+  q: "ᵠ",
+  r: "ʳ",
+  s: "ˢ",
+  t: "ᵗ",
+  u: "ᵘ",
+  v: "ᵛ",
+  w: "ʷ",
+  x: "ˣ",
+  y: "ʸ",
+  z: "ᶻ",
+  A: "ᴬ",
+  B: "ᴮ",
+  D: "ᴰ",
+  E: "ᴱ",
+  G: "ᴳ",
+  H: "ᴴ",
+  I: "ᴵ",
+  J: "ᴶ",
+  K: "ᴷ",
+  L: "ᴸ",
+  M: "ᴹ",
+  N: "ᴺ",
+  O: "ᴼ",
+  P: "ᴾ",
+  R: "ᴿ",
+  T: "ᵀ",
+  U: "ᵁ",
+  V: "ⱽ",
+  W: "ᵂ",
+};
+
+const toSuperscript = (value: string) =>
+  value
+    .split("")
+    .map(char => SUPERSCRIPT_MAP[char] ?? SUPERSCRIPT_MAP[char.toLowerCase()] ?? char)
+    .join("");
 
 export default function HomeActivePanels({
   activeSection,
@@ -83,8 +106,8 @@ export default function HomeActivePanels({
   onMarkChatAsRead,
 }: HomeActivePanelsProps) {
   const [selectedPresetId, setSelectedPresetId] = useState(TEXT_PRESETS[0].id);
-  const [wordText, setWordText] = useState("");
-  const [breakIndex, setBreakIndex] = useState(0);
+  const [topText, setTopText] = useState("");
+  const [bottomText, setBottomText] = useState("");
   const [canvasBg, setCanvasBg] = useState("#f7f7f5");
   const [showIcons, setShowIcons] = useState(true);
   const [leftIcon, setLeftIcon] = useState("crown");
@@ -95,34 +118,28 @@ export default function HomeActivePanels({
     [selectedPresetId]
   );
 
-  const normalizedWord = useMemo(
-    () => wordText.replace(/\s+/g, "").toUpperCase(),
-    [wordText]
-  );
-
-  const effectiveBreakIndex = useMemo(() => {
-    if (normalizedWord.length <= 1) return normalizedWord.length;
-    if (breakIndex <= 1) return Math.ceil(normalizedWord.length * 0.38);
-    return Math.min(Math.max(1, breakIndex), normalizedWord.length - 1);
-  }, [breakIndex, normalizedWord]);
-
-  const topSegment = normalizedWord.slice(0, effectiveBreakIndex);
-  const bottomSegment = normalizedWord;
-
   const exportText = useMemo(() => {
-    if (!normalizedWord) return "";
+    const top = topText.trim();
+    const bottom = bottomText.trim();
+    if (!top && !bottom) return "";
 
-    const width = Math.max(normalizedWord.length, topSegment.length + 4);
-    const topPad = Math.max(0, Math.floor((width - topSegment.length) / 2));
-    const bottomPad = Math.max(0, Math.floor((width - normalizedWord.length) / 2));
+    const topSuper = toSuperscript(top);
+    const spacedTop = topSuper.split("").join(" ");
 
-    return [
-      topSegment ? `${" ".repeat(topPad)}${topSegment}` : "",
-      `${" ".repeat(bottomPad)}${normalizedWord}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
-  }, [normalizedWord, topSegment]);
+    switch (selectedPreset.id) {
+      case "spaced-stacked":
+        return [spacedTop, bottom.toLowerCase()].filter(Boolean).join("\n");
+      case "tiny-top":
+        return `${topSuper}${bottom.toLowerCase()}`;
+      case "luxury":
+        return `${spacedTop}${bottom.toUpperCase()}`;
+      case "minimal":
+        return `${topSuper}${bottom ? `${bottom.charAt(0).toUpperCase()}${bottom.slice(1).toLowerCase()}` : ""}`;
+      case "normal-stacked":
+      default:
+        return `${topSuper}${bottom.toLowerCase()}`;
+    }
+  }, [bottomText, selectedPreset.id, topText]);
 
   const renderIcon = (variant: string) => {
     if (variant === "none") return null;
@@ -322,45 +339,31 @@ export default function HomeActivePanels({
 
             <div className="space-y-2 rounded-2xl border border-white/10 bg-black/20 p-4">
               <div className="space-y-2">
-                <Label htmlFor="word-text">Palavra</Label>
+                <Label htmlFor="top-text">Texto de cima</Label>
                 <Input
-                  id="word-text"
-                  value={wordText}
-                  onChange={event => {
-                    const nextValue = event.target.value;
-                    const nextNormalized = nextValue.replace(/\s+/g, "");
-                    setWordText(nextValue);
-                    setBreakIndex(current => {
-                      if (nextNormalized.length <= 1) return nextNormalized.length;
-                      if (current <= 1 || current >= nextNormalized.length) {
-                        return Math.ceil(nextNormalized.length * 0.38);
-                      }
-                      return current;
-                    });
-                  }}
-                  placeholder="Ex: Familia"
+                  id="top-text"
+                  value={topText}
+                  onChange={event => setTopText(event.target.value)}
+                  placeholder="Ex: familia"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use uma unica palavra. O topo mostra apenas o prefixo; a base mostra a palavra completa.
+                  Esse texto sera convertido para Unicode pequeno.
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="break-index">Quebra interna</Label>
+                <Label htmlFor="bottom-text">Texto de baixo</Label>
                 <Input
-                  id="break-index"
-                  type="number"
-                  min="1"
-                  max={Math.max(1, normalizedWord.length - 1)}
-                  value={normalizedWord.length <= 1 ? 1 : effectiveBreakIndex}
-                  onChange={event => setBreakIndex(Number(event.target.value) || 1)}
-                  disabled={normalizedWord.length <= 1}
+                  id="bottom-text"
+                  value={bottomText}
+                  onChange={event => setBottomText(event.target.value)}
+                  placeholder="Ex: supreme"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Define quantas letras sobem para o detalhe tipografico superior.
+                  Esse texto sera mantido como base principal do stacked text.
                 </p>
               </div>
               <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
-                O modelo define a hierarquia tipografica: prefixo menor em cima, palavra completa dominante embaixo.
+                O resultado final e uma unica string Unicode copiavel, sem duas divs e sem quebra por br.
               </div>
             </div>
 
@@ -417,8 +420,7 @@ export default function HomeActivePanels({
           <Card className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))] p-5">
             <div
               className={cn(
-                "relative flex min-h-[420px] items-center justify-center overflow-hidden border border-black/10 shadow-[0_18px_55px_rgba(0,0,0,0.2)]",
-                selectedPreset.frameClassName
+                "relative min-h-[420px] overflow-hidden rounded-[2.6rem] border border-black/10 shadow-[0_18px_55px_rgba(0,0,0,0.2)]"
               )}
               style={{ backgroundColor: canvasBg }}
             >
@@ -432,18 +434,13 @@ export default function HomeActivePanels({
                 </div>
               ) : null}
 
-              <div className={cn("relative z-10 flex w-full flex-col items-center justify-center text-center leading-none", selectedPreset.contentWidth)}>
-                <div className={cn("w-full text-black uppercase", selectedPreset.topClassName, selectedPreset.topScale)}>
-                  {topSegment || " "}
-                </div>
-                <div className={cn("w-full text-black uppercase", selectedPreset.bottomClassName, selectedPreset.bottomScale)}>
-                  {bottomSegment || " "}
-                </div>
-              </div>
+              <pre className="absolute inset-0 z-10 flex items-center justify-center px-16 text-center text-black whitespace-pre-wrap break-words font-semibold">
+                {exportText || "Preview do stacked text"}
+              </pre>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-              <p>O preview segue um modelo fixo da imagem 00.</p>
+              <p>O preview mostra a string Unicode unica do estilo escolhido.</p>
               <p>{selectedPreset.name}</p>
             </div>
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
