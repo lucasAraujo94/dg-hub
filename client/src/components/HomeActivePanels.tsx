@@ -58,8 +58,8 @@ const createLine = (id: string, overrides?: Partial<StackedTextLine>): StackedTe
 });
 
 const STARTER_LINES: StackedTextLine[] = [
-  createLine("top", { text: "TaMiLiA", y: 34, size: 22, spacing: 0.55, weight: 700 }),
-  createLine("main", { text: "SUPREME", y: 52, size: 54, spacing: 0.12, weight: 900 }),
+  createLine("line-1", { text: "", y: 38, size: 22, spacing: 0.4, weight: 700 }),
+  createLine("line-2", { text: "", y: 54, size: 42, spacing: 0.12, weight: 900 }),
 ];
 
 export default function HomeActivePanels({
@@ -85,7 +85,21 @@ export default function HomeActivePanels({
   );
 
   const exportText = useMemo(
-    () => lines.map(line => line.text.trim()).filter(Boolean).join("\n"),
+    () =>
+      lines
+        .map(line => {
+          const raw = line.text.trim();
+          if (!raw) return "";
+          const content = line.uppercase ? raw.toUpperCase() : raw;
+          if (line.spacing <= 0) return content;
+          const gap = " ".repeat(Math.max(1, Math.round(line.spacing * 4)));
+          return content
+            .split("\n")
+            .map(part => part.split("").join(gap))
+            .join("\n");
+        })
+        .filter(Boolean)
+        .join("\n"),
     [lines]
   );
 
@@ -324,8 +338,8 @@ export default function HomeActivePanels({
           <div>
             <h2 className="text-xl font-semibold">Criador de textos empilhados</h2>
             <p className="text-sm text-muted-foreground">
-              Agora voce pode criar do seu jeito: varias linhas, tamanhos diferentes,
-              espacamento, cor e posicao livre no preview.
+              Modelo vazio para voce montar um texto empilhado parecido com a referencia,
+              mas com o conteudo que quiser.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -372,10 +386,10 @@ export default function HomeActivePanels({
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">
-                        {line.text || `Linha ${index + 1}`}
+                        {line.text || `Linha ${index + 1} vazia`}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        X {Math.round(line.x)}% • Y {Math.round(line.y)}% • {line.size}px
+                        X {Math.round(line.x)}% | Y {Math.round(line.y)}% | {line.size}px
                       </p>
                     </div>
                     <Button
@@ -406,6 +420,7 @@ export default function HomeActivePanels({
                       updateLine(selectedLine.id, { text: event.target.value })
                     }
                     className="min-h-20 resize-none"
+                    placeholder="Digite o texto que voce quiser"
                   />
                 </div>
 
@@ -613,6 +628,25 @@ export default function HomeActivePanels({
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
               <p>Arraste os textos no preview para posicionar livremente.</p>
               <p>{selectedLine ? `Selecionado: ${selectedLine.text || "sem texto"}` : "Sem selecao"}</p>
+            </div>
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-foreground">Resultado final em texto</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (typeof navigator !== "undefined" && navigator.clipboard) {
+                      navigator.clipboard.writeText(exportText);
+                    }
+                  }}
+                >
+                  Copiar resultado
+                </Button>
+              </div>
+              <pre className="min-h-24 whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-background/60 p-3 text-sm text-foreground">
+                {exportText || "O resultado em texto vai aparecer aqui quando voce preencher as linhas."}
+              </pre>
             </div>
           </Card>
         </div>
