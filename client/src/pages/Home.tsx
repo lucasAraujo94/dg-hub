@@ -15,6 +15,7 @@ import {
   MessageCircle,
   ShieldCheck,
   Cake,
+  Type,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -46,7 +47,7 @@ export default function Home() {
   };
 
   const [activeSection, setActiveSection] = useState<
-    "overview" | "campeonatos" | "rankings" | "perfil" | "chat" | "enquetes" | null
+    "overview" | "campeonatos" | "rankings" | "perfil" | "chat" | "textos" | "enquetes" | null
   >(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuCollapsed, setMenuCollapsed] = useState(false);
@@ -431,6 +432,7 @@ export default function Home() {
               },
               { key: "perfil", label: "Perfil", href: "/perfil", icon: User },
               { key: "chat", label: "Chat", href: "/chat", icon: MessageCircle },
+              { key: "textos", label: "Textos", icon: Type },
               ...(user?.role === "admin" ? [{ key: "admin", label: "Admin", href: "/admin", icon: ShieldCheck }] : []),
               ...(user?.role === "admin" ? [{ key: "enquetes", label: "Enquetes (Admin)", icon: ShieldCheck }] : []),
             ].map(item => {
@@ -570,7 +572,7 @@ export default function Home() {
           ) : null}
 
 
-          {activeSection === "campeonatos" || activeSection === "perfil" || activeSection === "chat" ? (
+          {activeSection === "campeonatos" || activeSection === "perfil" || activeSection === "chat" || activeSection === "textos" ? (
             <Suspense
               fallback={
                 <Card className="border-border/70 bg-card/60 p-5">
