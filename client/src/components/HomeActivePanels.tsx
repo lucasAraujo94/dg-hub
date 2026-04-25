@@ -83,8 +83,8 @@ export default function HomeActivePanels({
   onMarkChatAsRead,
 }: HomeActivePanelsProps) {
   const [selectedPresetId, setSelectedPresetId] = useState(TEXT_PRESETS[0].id);
-  const [topText, setTopText] = useState("");
-  const [bottomText, setBottomText] = useState("");
+  const [wordText, setWordText] = useState("");
+  const [breakIndex, setBreakIndex] = useState(0);
   const [canvasBg, setCanvasBg] = useState("#f7f7f5");
   const [showIcons, setShowIcons] = useState(true);
   const [leftIcon, setLeftIcon] = useState("crown");
@@ -95,9 +95,23 @@ export default function HomeActivePanels({
     [selectedPresetId]
   );
 
+  const normalizedWord = useMemo(
+    () => wordText.replace(/\s+/g, "").toUpperCase(),
+    [wordText]
+  );
+
+  const effectiveBreakIndex = useMemo(() => {
+    if (normalizedWord.length <= 1) return normalizedWord.length;
+    if (breakIndex <= 1) return Math.ceil(normalizedWord.length * 0.38);
+    return Math.min(Math.max(1, breakIndex), normalizedWord.length - 1);
+  }, [breakIndex, normalizedWord]);
+
+  const topSegment = normalizedWord.slice(0, effectiveBreakIndex);
+  const bottomSegment = normalizedWord.slice(effectiveBreakIndex);
+
   const exportText = useMemo(() => {
-    const top = topText.trim().split(/\s+/)[0]?.toUpperCase() ?? "";
-    const bottom = bottomText.trim().toUpperCase();
+    const top = topSegment;
+    const bottom = bottomSegment;
     if (!top && !bottom) return "";
 
     const width = Math.max(bottom.length, top.length + 4);
@@ -110,7 +124,7 @@ export default function HomeActivePanels({
     ]
       .filter(Boolean)
       .join("\n");
-  }, [bottomText, topText]);
+  }, [bottomSegment, topSegment]);
 
   const renderIcon = (variant: string) => {
     if (variant === "none") return null;
@@ -310,28 +324,45 @@ export default function HomeActivePanels({
 
             <div className="space-y-2 rounded-2xl border border-white/10 bg-black/20 p-4">
               <div className="space-y-2">
-                <Label htmlFor="top-text">Texto de cima</Label>
+                <Label htmlFor="word-text">Palavra</Label>
                 <Input
-                  id="top-text"
-                  value={topText}
-                  onChange={event => setTopText(event.target.value)}
+                  id="word-text"
+                  value={wordText}
+                  onChange={event => {
+                    const nextValue = event.target.value;
+                    const nextNormalized = nextValue.replace(/\s+/g, "");
+                    setWordText(nextValue);
+                    setBreakIndex(current => {
+                      if (nextNormalized.length <= 1) return nextNormalized.length;
+                      if (current <= 1 || current >= nextNormalized.length) {
+                        return Math.ceil(nextNormalized.length * 0.38);
+                      }
+                      return current;
+                    });
+                  }}
                   placeholder="Ex: Familia"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use uma unica palavra menor, como no modelo da imagem 00.
+                  Use uma unica palavra. A quebra acontece dentro dela, nao entre duas palavras.
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bottom-text">Texto principal</Label>
+                <Label htmlFor="break-index">Quebra interna</Label>
                 <Input
-                  id="bottom-text"
-                  value={bottomText}
-                  onChange={event => setBottomText(event.target.value)}
-                  placeholder="Ex: Supreme"
+                  id="break-index"
+                  type="number"
+                  min="1"
+                  max={Math.max(1, normalizedWord.length - 1)}
+                  value={normalizedWord.length <= 1 ? 1 : effectiveBreakIndex}
+                  onChange={event => setBreakIndex(Number(event.target.value) || 1)}
+                  disabled={normalizedWord.length <= 1}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Define em qual letra a palavra sera dividida em duas linhas.
+                </p>
               </div>
               <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
-                O modelo ja define proporcao, espacamento e hierarquia visual. Voce so troca o conteudo.
+                O modelo define a tipografia. Voce informa a palavra e o ponto da quebra.
               </div>
             </div>
 
@@ -405,10 +436,10 @@ export default function HomeActivePanels({
 
               <div className={cn("relative z-10 flex w-full flex-col items-center justify-center text-center leading-none", selectedPreset.contentWidth)}>
                 <div className={cn("w-full text-black uppercase", selectedPreset.topClassName, selectedPreset.topScale)}>
-                  {topText || " "}
+                  {topSegment || " "}
                 </div>
                 <div className={cn("w-full text-black uppercase", selectedPreset.bottomClassName, selectedPreset.bottomScale)}>
-                  {bottomText || " "}
+                  {bottomSegment || " "}
                 </div>
               </div>
             </div>
