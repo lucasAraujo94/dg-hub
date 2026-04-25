@@ -5,8 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Minus, Plus, Crown } from "lucide-react";
-import type { PointerEvent as ReactPointerEvent } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "wouter";
 
 type OnlinePlayer = {
@@ -58,8 +57,8 @@ const createLine = (id: string, overrides?: Partial<StackedTextLine>): StackedTe
 });
 
 const STARTER_LINES: StackedTextLine[] = [
-  createLine("line-1", { text: "", y: 38, size: 22, spacing: 0.4, weight: 700 }),
-  createLine("line-2", { text: "", y: 54, size: 42, spacing: 0.12, weight: 900 }),
+  createLine("line-1", { text: "", y: 38, size: 18, spacing: 0.52, weight: 700 }),
+  createLine("line-2", { text: "", y: 54, size: 46, spacing: 0.05, weight: 900 }),
 ];
 
 export default function HomeActivePanels({
@@ -76,8 +75,6 @@ export default function HomeActivePanels({
   const [showIcons, setShowIcons] = useState(true);
   const [leftIcon, setLeftIcon] = useState("crown");
   const [rightIcon, setRightIcon] = useState("queen");
-  const previewRef = useRef<HTMLDivElement | null>(null);
-  const dragOffsetRef = useRef<{ x: number; y: number } | null>(null);
 
   const selectedLine = useMemo(
     () => lines.find(line => line.id === selectedLineId) ?? lines[0] ?? null,
@@ -131,49 +128,10 @@ export default function HomeActivePanels({
     }
   };
 
-  const clamp = (value: number, min: number, max: number) =>
-    Math.max(min, Math.min(max, value));
-
-  const getPointerPosition = (event: PointerEvent | ReactPointerEvent) => {
-    const canvas = previewRef.current;
-    if (!canvas) return null;
-    const rect = canvas.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    return {
-      x: clamp(x, 4, 96),
-      y: clamp(y, 8, 92),
-    };
-  };
-
-  const startDrag = (event: ReactPointerEvent, lineId: string) => {
-    const position = getPointerPosition(event);
-    const line = lines.find(item => item.id === lineId);
-    if (!position || !line) return;
-
-    setSelectedLineId(lineId);
-    dragOffsetRef.current = {
-      x: position.x - line.x,
-      y: position.y - line.y,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const handleDrag = (event: ReactPointerEvent, lineId: string) => {
-    if (!dragOffsetRef.current) return;
-    const position = getPointerPosition(event);
-    if (!position) return;
-    updateLine(lineId, {
-      x: clamp(position.x - dragOffsetRef.current.x, 4, 96),
-      y: clamp(position.y - dragOffsetRef.current.y, 8, 92),
-    });
-  };
-
-  const endDrag = (event: ReactPointerEvent) => {
-    dragOffsetRef.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
+  const getLinePreviewClassName = (index: number) => {
+    if (index === 0) return "max-w-[78%]";
+    if (index === 1) return "-mt-2 max-w-full";
+    return "-mt-1 max-w-[90%]";
   };
 
   const renderIcon = (variant: string) => {
@@ -389,7 +347,7 @@ export default function HomeActivePanels({
                         {line.text || `Linha ${index + 1} vazia`}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        X {Math.round(line.x)}% | Y {Math.round(line.y)}% | {line.size}px
+                        Bloco alinhado | {line.size}px
                       </p>
                     </div>
                     <Button
@@ -484,35 +442,8 @@ export default function HomeActivePanels({
                       className="h-10 p-1"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="line-x">Posicao X (%)</Label>
-                    <Input
-                      id="line-x"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={Math.round(selectedLine.x)}
-                      onChange={event =>
-                        updateLine(selectedLine.id, {
-                          x: Number(event.target.value) || 0,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="line-y">Posicao Y (%)</Label>
-                    <Input
-                      id="line-y"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={Math.round(selectedLine.y)}
-                      onChange={event =>
-                        updateLine(selectedLine.id, {
-                          y: Number(event.target.value) || 0,
-                        })
-                      }
-                    />
+                  <div className="sm:col-span-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
+                    As linhas do preview ficam alinhadas no mesmo bloco para formar uma unica marca, como no modelo da imagem.
                   </div>
                 </div>
 
@@ -583,50 +514,46 @@ export default function HomeActivePanels({
 
           <Card className="border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))] p-5">
             <div
-              ref={previewRef}
-              className="relative min-h-[420px] overflow-hidden rounded-[2.2rem] border border-black/10 shadow-[0_18px_55px_rgba(0,0,0,0.2)]"
+              className="relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-[2.6rem] border border-black/10 shadow-[0_18px_55px_rgba(0,0,0,0.2)]"
               style={{ backgroundColor: canvasBg }}
             >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.7),transparent_55%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.8),transparent_52%)]" />
+              <div className="absolute inset-[14%_6%] rounded-[2.4rem] border border-black/8" />
 
               {showIcons ? (
-                <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between px-7 text-black">
+                <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between px-8 text-black">
                   <div>{renderIcon(leftIcon)}</div>
                   <div>{renderIcon(rightIcon)}</div>
                 </div>
               ) : null}
 
-              {lines.map(line => (
-                <button
-                  key={line.id}
-                  type="button"
-                  className={cn(
-                    "absolute -translate-x-1/2 -translate-y-1/2 cursor-move select-none whitespace-pre-wrap bg-transparent text-center leading-none outline-none",
-                    selectedLineId === line.id &&
-                      "rounded-lg ring-2 ring-primary/50 ring-offset-2 ring-offset-transparent"
-                  )}
-                  style={{
-                    left: `${line.x}%`,
-                    top: `${line.y}%`,
-                    color: line.color,
-                    fontSize: `${line.size}px`,
-                    letterSpacing: `${line.spacing}em`,
-                    fontWeight: line.weight,
-                    textTransform: line.uppercase ? "uppercase" : "none",
-                  }}
-                  onClick={() => setSelectedLineId(line.id)}
-                  onPointerDown={event => startDrag(event, line.id)}
-                  onPointerMove={event => handleDrag(event, line.id)}
-                  onPointerUp={endDrag}
-                  onPointerCancel={endDrag}
-                >
-                  {line.text}
-                </button>
-              ))}
+              <div className="relative z-10 flex w-full max-w-[74%] flex-col items-center justify-center text-center leading-none">
+                {lines.map((line, index) => (
+                  <button
+                    key={line.id}
+                    type="button"
+                    className={cn(
+                      "w-full select-none whitespace-pre-wrap bg-transparent text-center outline-none",
+                      getLinePreviewClassName(index),
+                      selectedLineId === line.id && "rounded-lg ring-2 ring-primary/50 ring-offset-2 ring-offset-transparent"
+                    )}
+                    style={{
+                      color: line.color,
+                      fontSize: `${line.size}px`,
+                      letterSpacing: `${line.spacing}em`,
+                      fontWeight: line.weight,
+                      textTransform: line.uppercase ? "uppercase" : "none",
+                    }}
+                    onClick={() => setSelectedLineId(line.id)}
+                  >
+                    {line.text || " "}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-              <p>Arraste os textos no preview para posicionar livremente.</p>
+              <p>O preview usa proporcao de logo para deixar as linhas mais unidas.</p>
               <p>{selectedLine ? `Selecionado: ${selectedLine.text || "sem texto"}` : "Sem selecao"}</p>
             </div>
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4">
