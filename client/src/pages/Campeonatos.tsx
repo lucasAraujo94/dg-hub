@@ -72,6 +72,7 @@ export default function Campeonatos() {
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "futuro" | "finalizado">("todos");
   const [selectedCampId, setSelectedCampId] = useState<number | null>(null);
   const [manualUserId, setManualUserId] = useState<number | null>(null);
+  const [bracketSearch, setBracketSearch] = useState("");
 
   const utils = trpc.useUtils();
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -533,6 +534,14 @@ export default function Campeonatos() {
       ? "Concluido"
       : "Aguardando";
   const progressoPercentual = partidasTotais > 0 ? Math.round((partidasDefinidas / partidasTotais) * 100) : 0;
+  const normalizedBracketSearch = bracketSearch.trim().toLowerCase();
+  const matchContainsSearchedPlayer = (match: Match) => {
+    if (!normalizedBracketSearch) return false;
+    return [match.jogador1, match.jogador2, match.vencedor]
+      .filter(Boolean)
+      .some(name => exibirApelido(String(name), displayPref).toLowerCase().includes(normalizedBracketSearch));
+  };
+  const roundContainsSearchedPlayer = (round: Match[]) => round.some(match => matchContainsSearchedPlayer(match));
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -730,6 +739,27 @@ export default function Campeonatos() {
               </div>
             </div>
           ) : null}
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Busca no bracket</p>
+                <p className="text-sm text-muted-foreground">Digite um jogador para destacar o caminho dele nas fases.</p>
+              </div>
+              <div className="flex w-full gap-2 sm:max-w-md">
+                <input
+                  value={bracketSearch}
+                  onChange={event => setBracketSearch(event.target.value)}
+                  placeholder="Buscar jogador"
+                  className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40"
+                />
+                {bracketSearch ? (
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setBracketSearch("")}>
+                    Limpar
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Participantes</p>
@@ -792,6 +822,10 @@ export default function Campeonatos() {
                   <div key={roundIndex} className="relative flex w-[85vw] max-w-[320px] min-w-[260px] shrink-0 snap-center items-stretch sm:w-[320px] sm:snap-start">
                   <div
                     className={`relative w-full rounded-[28px] border p-4 space-y-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md ${
+                      normalizedBracketSearch && roundContainsSearchedPlayer(round)
+                        ? "ring-1 ring-cyan-300/35"
+                        : ""
+                    } ${
                       faseAtualIndex === roundIndex
                         ? "border-cyan-300/35 bg-[linear-gradient(180deg,rgba(34,211,238,0.14),rgba(255,255,255,0.05))]"
                         : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
@@ -818,6 +852,10 @@ export default function Campeonatos() {
                         <div
                           key={`${roundIndex}-${matchIndex}`}
                           className={`relative rounded-2xl border p-3 space-y-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
+                            normalizedBracketSearch && matchContainsSearchedPlayer(match)
+                              ? "ring-1 ring-cyan-300/40 shadow-[0_0_0_1px_rgba(103,232,249,0.18),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                              : ""
+                          } ${
                             getMatchAdvanceState(roundIndex, matchIndex)
                               ? "border-emerald-400/45 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(34,197,94,0.08),rgba(59,130,246,0.12))] shadow-[0_0_0_1px_rgba(52,211,153,0.12),inset_0_1px_0_rgba(255,255,255,0.06)]"
                               : "border-white/10 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08))]"
