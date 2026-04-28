@@ -635,6 +635,7 @@ export default function Campeonatos() {
     roundFilter === "todas"
       ? "Todas as fases"
       : roundFilterOptions.find(option => option.value === roundFilter)?.label ?? "Fase filtrada";
+  const bracketEhExemplo = rounds.length === 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -783,6 +784,11 @@ export default function Campeonatos() {
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chaveamento</p>
               <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
             </div>
+            {bracketEhExemplo ? (
+              <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-amber-100">
+                Exemplo visual
+              </span>
+            ) : null}
             {roundsExibidos.length > 0 ? (
               <span className="text-sm text-muted-foreground">
                 {roundsExibidos[0].length} partida{roundsExibidos[0].length === 1 ? "" : "s"} inicial{roundsExibidos[0].length === 1 ? "" : "is"}
@@ -939,6 +945,9 @@ export default function Campeonatos() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+              Origem: {bracketEhExemplo ? "Exemplo" : "Campeonato real"}
+            </span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Visualizacao: {compactBracket ? "Compacta" : "Detalhada"}</span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Fase: {roundFilterLabel}</span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
