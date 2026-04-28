@@ -572,6 +572,13 @@ export default function Campeonatos() {
     }
     return "border-cyan-400/20 bg-cyan-400/10 text-cyan-100";
   };
+  const getMatchAriaLabel = (match: Match, roundIndex: number, matchIndex: number) => {
+    const base = `Round ${roundIndex + 1}, partida ${matchIndex + 1}. ${exibirApelido(match.jogador1, displayPref)} versus ${exibirApelido(match.jogador2, displayPref)}.`;
+    const status = match.vencedor && !isBracketPlaceholder(match.vencedor)
+      ? ` Vencedor atual: ${exibirApelido(match.vencedor, displayPref)}.`
+      : ` Status: ${getMatchStatusLabel(match)}.`;
+    return `${base}${status}`;
+  };
   const totalParticipantesExibidos = roundsExibidos[0]?.length ? roundsExibidos[0].length * 2 : 0;
   const partidasDefinidas = roundsExibidos.reduce(
     (acc, round) => acc + round.filter(match => match.vencedor && !isBracketPlaceholder(match.vencedor)).length,
@@ -831,13 +838,15 @@ export default function Campeonatos() {
                   value={bracketSearch}
                   onChange={event => setBracketSearch(event.target.value)}
                   placeholder="Buscar jogador"
-                  className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40"
+                  aria-label="Buscar jogador no bracket"
+                  className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20"
                 />
                 <div className="flex gap-2">
                   <select
                     value={roundFilter}
                     onChange={event => setRoundFilter(event.target.value)}
-                    className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40"
+                    aria-label="Filtrar fase do bracket"
+                    className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20"
                   >
                     <option value="todas">Todas as fases</option>
                     {roundFilterOptions.map(option => (
@@ -983,6 +992,8 @@ export default function Campeonatos() {
                       {round.map((match, matchIndex) => (
                         <div
                           key={`${roundIndex}-${matchIndex}`}
+                          role="group"
+                          aria-label={getMatchAriaLabel(match, roundIndex, matchIndex)}
                           className={`relative rounded-2xl border p-3 space-y-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
                             normalizedBracketSearch && matchContainsSearchedPlayer(match)
                               ? "ring-1 ring-cyan-300/40 shadow-[0_0_0_1px_rgba(103,232,249,0.18),inset_0_1px_0_rgba(255,255,255,0.06)]"
@@ -1032,6 +1043,7 @@ export default function Campeonatos() {
                             <Button
                               size="sm"
                               variant={rounds.length > 0 && match.vencedor === match.jogador1 ? "default" : "outline"}
+                              aria-label={`Selecionar ${exibirApelido(match.jogador1, displayPref)} como vencedor da partida ${matchIndex + 1} do round ${roundIndex + 1}`}
                               className={`justify-between ${compactBracket ? "h-9 px-2" : ""} ${isBracketPlaceholder(match.jogador1) ? "border-dashed text-muted-foreground" : ""}`}
                               disabled={isBracketPlaceholder(match.jogador1)}
                               onClick={() => {
@@ -1050,6 +1062,7 @@ export default function Campeonatos() {
                             <Button
                               size="sm"
                               variant={rounds.length > 0 && match.vencedor === match.jogador2 ? "default" : "outline"}
+                              aria-label={`Selecionar ${exibirApelido(match.jogador2, displayPref)} como vencedor da partida ${matchIndex + 1} do round ${roundIndex + 1}`}
                               className={`justify-between ${compactBracket ? "h-9 px-2" : ""} ${isBracketPlaceholder(match.jogador2) ? "border-dashed text-muted-foreground" : ""}`}
                               disabled={isBracketPlaceholder(match.jogador2)}
                               onClick={() => {
