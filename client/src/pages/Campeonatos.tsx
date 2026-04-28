@@ -19,6 +19,8 @@ import { getLoginUrl } from "@/const";
 
 const BYE = "W.O";
 type Match = { jogador1: string; jogador2: string; vencedor?: string };
+const BRACKET_MATCH_HEIGHT = 132;
+const BRACKET_BASE_GAP = 14;
 const EXEMPLO_CHAVEAMENTO_16: Match[][] = [
   [
     { jogador1: "Jogador 01", jogador2: "Jogador 02" },
@@ -465,6 +467,23 @@ export default function Campeonatos() {
     if (roundsRestantes === 3) return "Oitavas";
     return `${matchesCount * 2} jogadores`;
   };
+  const getRoundStackStyle = (roundIndex: number) => {
+    if (roundIndex === 0) {
+      return { paddingTop: "0px", gap: `${BRACKET_BASE_GAP}px` };
+    }
+    const unit = BRACKET_MATCH_HEIGHT + BRACKET_BASE_GAP;
+    const paddingTop = (unit * (Math.pow(2, roundIndex) - 1)) / 2;
+    const gap = unit * (Math.pow(2, roundIndex) - 1) + BRACKET_BASE_GAP;
+    return { paddingTop: `${paddingTop}px`, gap: `${gap}px` };
+  };
+  const isBracketPlaceholder = (name: string) => name === BYE || name === "Aguardando";
+  const getMatchAdvanceState = (roundIndex: number, matchIndex: number) => {
+    if (roundIndex >= roundsExibidos.length - 1) return false;
+    const match = roundsExibidos[roundIndex]?.[matchIndex];
+    if (!match?.vencedor || isBracketPlaceholder(match.vencedor)) return false;
+    const nextMatch = roundsExibidos[roundIndex + 1]?.[Math.floor(matchIndex / 2)];
+    return nextMatch?.jogador1 === match.vencedor || nextMatch?.jogador2 === match.vencedor;
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -640,18 +659,31 @@ export default function Campeonatos() {
                         {rounds.length > 0 ? "Eliminacao" : "Exemplo"}
                       </span>
                     </div>
-                    <div className="space-y-3">
+                    <div className="flex flex-col" style={getRoundStackStyle(roundIndex)}>
                       {round.map((match, matchIndex) => (
                         <div
                           key={`${roundIndex}-${matchIndex}`}
-                          className="relative rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08))] p-3 space-y-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+                          className={`relative rounded-2xl border p-3 space-y-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
+                            getMatchAdvanceState(roundIndex, matchIndex)
+                              ? "border-emerald-400/45 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(34,197,94,0.08),rgba(59,130,246,0.12))] shadow-[0_0_0_1px_rgba(52,211,153,0.12),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                              : "border-white/10 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08))]"
+                          }`}
+                          style={{ minHeight: `${BRACKET_MATCH_HEIGHT}px` }}
                         >
                           <div className="absolute -left-2 top-1/2 hidden h-px w-2 -translate-y-1/2 bg-gradient-to-r from-cyan-400/0 to-cyan-400/60 sm:block" />
                           {roundIndex < roundsExibidos.length - 1 ? (
                             <>
-                              <div className="absolute -right-4 top-1/2 hidden h-px w-4 -translate-y-1/2 bg-gradient-to-r from-cyan-300/70 to-cyan-300/20 sm:block" />
                               <div
-                                className={`absolute -right-4 hidden w-px bg-cyan-300/35 sm:block ${
+                                className={`absolute -right-4 top-1/2 hidden h-px w-4 -translate-y-1/2 sm:block ${
+                                  getMatchAdvanceState(roundIndex, matchIndex)
+                                    ? "bg-gradient-to-r from-emerald-300/90 to-emerald-300/35"
+                                    : "bg-gradient-to-r from-cyan-300/70 to-cyan-300/20"
+                                }`}
+                              />
+                              <div
+                                className={`absolute -right-4 hidden w-px sm:block ${
+                                  getMatchAdvanceState(roundIndex, matchIndex) ? "bg-emerald-300/55" : "bg-cyan-300/35"
+                                } ${
                                   matchIndex % 2 === 0 ? "top-1/2 h-[calc(50%+0.75rem)]" : "bottom-1/2 h-[calc(50%+0.75rem)]"
                                 }`}
                               />
@@ -672,7 +704,8 @@ export default function Campeonatos() {
                             <Button
                               size="sm"
                               variant={rounds.length > 0 && match.vencedor === match.jogador1 ? "default" : "outline"}
-                              className="justify-between"
+                              className={`justify-between ${isBracketPlaceholder(match.jogador1) ? "border-dashed text-muted-foreground" : ""}`}
+                              disabled={isBracketPlaceholder(match.jogador1)}
                               onClick={() => {
                                 if (rounds.length === 0) return;
                                 handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1);
@@ -684,7 +717,8 @@ export default function Campeonatos() {
                             <Button
                               size="sm"
                               variant={rounds.length > 0 && match.vencedor === match.jogador2 ? "default" : "outline"}
-                              className="justify-between"
+                              className={`justify-between ${isBracketPlaceholder(match.jogador2) ? "border-dashed text-muted-foreground" : ""}`}
+                              disabled={isBracketPlaceholder(match.jogador2)}
                               onClick={() => {
                                 if (rounds.length === 0) return;
                                 handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2);
