@@ -72,9 +72,18 @@ export default function Campeonatos() {
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "ativo" | "futuro" | "finalizado">("todos");
   const [selectedCampId, setSelectedCampId] = useState<number | null>(null);
   const [manualUserId, setManualUserId] = useState<number | null>(null);
-  const [bracketSearch, setBracketSearch] = useState("");
-  const [compactBracket, setCompactBracket] = useState(false);
-  const [roundFilter, setRoundFilter] = useState("todas");
+  const [bracketSearch, setBracketSearch] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("dg-bracket-search") || "";
+  });
+  const [compactBracket, setCompactBracket] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("dg-bracket-compact") === "1";
+  });
+  const [roundFilter, setRoundFilter] = useState(() => {
+    if (typeof window === "undefined") return "todas";
+    return localStorage.getItem("dg-bracket-round-filter") || "todas";
+  });
 
   const utils = trpc.useUtils();
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -95,6 +104,26 @@ export default function Campeonatos() {
     window.addEventListener("storage", syncPrefs);
     return () => window.removeEventListener("storage", syncPrefs);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("dg-bracket-search", bracketSearch);
+  }, [bracketSearch]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("dg-bracket-compact", compactBracket ? "1" : "0");
+  }, [compactBracket]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const validFilters = new Set(["todas", ...roundsExibidos.map((_, index) => String(index))]);
+    if (!validFilters.has(roundFilter)) {
+      setRoundFilter("todas");
+      return;
+    }
+    localStorage.setItem("dg-bracket-round-filter", roundFilter);
+  }, [roundFilter, roundsExibidos]);
 
   const resolveDisplayName = (usuario?: { name?: string | null; email?: string | null; nickname?: string | null }) => {
     const baseName = usuario?.name || usuario?.email || "Jogador";
