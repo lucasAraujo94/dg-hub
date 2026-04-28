@@ -234,6 +234,10 @@ export default function Campeonatos() {
     if (filtroStatus === "todos") return mapped;
     return mapped.filter(camp => camp.status === filtroStatus);
   }, [campeonatosQuery.data, filtroStatus]);
+  const campeonatoSelecionado = useMemo(
+    () => campeonatos.find(camp => camp.id === selectedCampId) ?? null,
+    [campeonatos, selectedCampId]
+  );
 
   useEffect(() => {
     if (!campeonatos.length) {
@@ -687,6 +691,43 @@ export default function Campeonatos() {
           {rounds.length === 0 ? (
             <div className="card-elegant p-4 text-sm text-muted-foreground">
               Exibindo um chaveamento de exemplo com 16 participantes. Quando o sorteio real acontecer, este modelo sera substituido automaticamente.
+            </div>
+          ) : null}
+          {campeonatoSelecionado ? (
+            <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.10))] px-4 py-4 shadow-[0_18px_50px_-35px_rgba(0,0,0,0.6)]">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] ${getStatusColor(campeonatoSelecionado.status)}`}>
+                      {getStatusLabel(campeonatoSelecionado.status)}
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                      {campeonatoSelecionado.fase}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.24em] text-cyan-200/70">Campeonato em foco</p>
+                    <h3 className="text-2xl font-semibold text-white">{campeonatoSelecionado.nome}</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {campeonatoSelecionado.jogo} • Inicio {campeonatoSelecionado.inicio}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-black/10 px-3 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Premio</p>
+                    <p className="mt-2 text-lg font-semibold text-amber-300">R$ {campeonatoSelecionado.premio}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-black/10 px-3 py-3">
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Inscritos</p>
+                    <p className="mt-2 text-lg font-semibold">{campeonatoSelecionado.participantes}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-black/10 px-3 py-3 col-span-2 sm:col-span-1">
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Chave</p>
+                    <p className="mt-2 text-lg font-semibold">{totalParticipantesExibidos} vagas visuais</p>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : null}
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
