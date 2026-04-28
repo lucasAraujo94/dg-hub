@@ -653,7 +653,7 @@ export default function Campeonatos() {
         </div>
       ) : null}
 
-      <section className="py-6 border-b border-border">
+      <section className="py-6 border-b border-border print:hidden">
         <div className="container space-y-4">
           <div className="flex items-center gap-3 flex-wrap">
             <Button variant="outline" size="sm" className="gap-2" disabled>
@@ -706,7 +706,7 @@ export default function Campeonatos() {
         </div>
       </section>
 
-      <section className="py-8 border-t border-border bg-card/40">
+      <section className="py-8 border-t border-border bg-card/40 print:hidden">
         <div className="container space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -764,9 +764,9 @@ export default function Campeonatos() {
         </div>
       </section>
 
-      <section className="py-8 border-t border-border bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.12),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_40%)]">
+      <section className="py-8 border-t border-border bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.12),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_40%)] print:border-0 print:bg-none print:py-4">
         <div className="container space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between print:block">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chaveamento</p>
               <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
@@ -784,7 +784,7 @@ export default function Campeonatos() {
             </div>
           ) : null}
           {campeonatoSelecionado ? (
-            <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.10))] px-4 py-4 shadow-[0_18px_50px_-35px_rgba(0,0,0,0.6)]">
+            <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.10))] px-4 py-4 shadow-[0_18px_50px_-35px_rgba(0,0,0,0.6)] print:rounded-none print:border-black/20 print:bg-none print:shadow-none">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
@@ -820,7 +820,7 @@ export default function Campeonatos() {
               </div>
             </div>
           ) : null}
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 print:hidden">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Busca no bracket</p>
@@ -917,8 +917,8 @@ export default function Campeonatos() {
               <p className="text-xs text-muted-foreground">Partidas com vencedor definido</p>
             </div>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-black/10 p-3 sm:p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="rounded-3xl border border-white/10 bg-black/10 p-3 sm:p-4 print:rounded-none print:border-black/20 print:bg-transparent print:p-0">
+            <div className="mb-3 flex items-center justify-between gap-3 print:hidden">
               <div className="flex gap-2 overflow-x-auto pb-1 text-[11px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
                 {roundsFiltrados.map((round, filteredIndex) => {
                   const roundIndex = roundFilter === "todas" ? filteredIndex : Number(roundFilter);
@@ -944,10 +944,10 @@ export default function Campeonatos() {
               </span>
             </div>
             <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background via-background/75 to-transparent sm:w-12" />
-              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background via-background/75 to-transparent sm:w-12" />
-              <div className="overflow-x-auto pb-4 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <div className="flex min-w-max items-start gap-4 px-1 sm:gap-6">
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background via-background/75 to-transparent sm:w-12 print:hidden" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background via-background/75 to-transparent sm:w-12 print:hidden" />
+              <div className="overflow-x-auto pb-4 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden print:overflow-visible print:pb-0">
+                <div className="flex min-w-max items-start gap-4 px-1 sm:gap-6 print:min-w-0 print:gap-3 print:px-0">
               {roundsFiltrados.map((round, filteredIndex) => {
                 const roundIndex = roundFilter === "todas" ? filteredIndex : Number(roundFilter);
                 return (
