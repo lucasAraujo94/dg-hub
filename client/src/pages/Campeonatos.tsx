@@ -117,13 +117,14 @@ export default function Campeonatos() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const validFilters = new Set(["todas", ...roundsExibidos.map((_, index) => String(index))]);
+    const roundsAtuais = rounds.length > 0 ? rounds : EXEMPLO_CHAVEAMENTO_16;
+    const validFilters = new Set(["todas", ...roundsAtuais.map((_, index) => String(index))]);
     if (!validFilters.has(roundFilter)) {
       setRoundFilter("todas");
       return;
     }
     localStorage.setItem("dg-bracket-round-filter", roundFilter);
-  }, [roundFilter, roundsExibidos]);
+  }, [roundFilter, rounds]);
 
   const resolveDisplayName = (usuario?: { name?: string | null; email?: string | null; nickname?: string | null }) => {
     const baseName = usuario?.name || usuario?.email || "Jogador";
