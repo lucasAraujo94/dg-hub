@@ -74,6 +74,7 @@ export default function Campeonatos() {
   const [manualUserId, setManualUserId] = useState<number | null>(null);
   const [bracketSearch, setBracketSearch] = useState("");
   const [compactBracket, setCompactBracket] = useState(false);
+  const [roundFilter, setRoundFilter] = useState("todas");
 
   const utils = trpc.useUtils();
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -564,6 +565,12 @@ export default function Campeonatos() {
     const gap = unit * (Math.pow(2, roundIndex) - 1) + BRACKET_BASE_GAP;
     return { paddingTop: `${paddingTop}px`, gap: `${gap}px` };
   };
+  const roundFilterOptions = roundsExibidos.map((round, roundIndex) => ({
+    value: String(roundIndex),
+    label: getRoundLabel(roundIndex, totalRoundsExibidos, round.length),
+  }));
+  const roundsFiltrados =
+    roundFilter === "todas" ? roundsExibidos : roundsExibidos.filter((_, roundIndex) => String(roundIndex) === roundFilter);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -775,6 +782,18 @@ export default function Campeonatos() {
                   className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40"
                 />
                 <div className="flex gap-2">
+                  <select
+                    value={roundFilter}
+                    onChange={event => setRoundFilter(event.target.value)}
+                    className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40"
+                  >
+                    <option value="todas">Todas as fases</option>
+                    {roundFilterOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                   <Button
                     variant={compactBracket ? "default" : "outline"}
                     size="sm"
@@ -836,7 +855,9 @@ export default function Campeonatos() {
           <div className="rounded-3xl border border-white/10 bg-black/10 p-3 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex gap-2 overflow-x-auto pb-1 text-[11px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
-                {roundsExibidos.map((round, roundIndex) => (
+                {roundsFiltrados.map((round, filteredIndex) => {
+                  const roundIndex = roundFilter === "todas" ? filteredIndex : Number(roundFilter);
+                  return (
                   <span
                     key={`round-pill-${roundIndex}`}
                     className={`shrink-0 rounded-full border px-3 py-1 tracking-wide ${
@@ -847,7 +868,8 @@ export default function Campeonatos() {
                   >
                     {getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}
                   </span>
-                ))}
+                  );
+                })}
               </div>
               <p className="hidden text-[11px] text-muted-foreground sm:block">
                 Deslize horizontalmente para acompanhar o fluxo completo do bracket.
@@ -861,7 +883,9 @@ export default function Campeonatos() {
               <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background via-background/75 to-transparent sm:w-12" />
               <div className="overflow-x-auto pb-4 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <div className="flex min-w-max items-start gap-4 px-1 sm:gap-6">
-              {roundsExibidos.map((round, roundIndex) => (
+              {roundsFiltrados.map((round, filteredIndex) => {
+                const roundIndex = roundFilter === "todas" ? filteredIndex : Number(roundFilter);
+                return (
                   <div key={roundIndex} className="relative flex w-[85vw] max-w-[320px] min-w-[260px] shrink-0 snap-center items-stretch sm:w-[320px] sm:snap-start">
                   <div
                     className={`relative w-full rounded-[28px] border p-4 space-y-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md ${
@@ -906,7 +930,7 @@ export default function Campeonatos() {
                           style={{ minHeight: `${bracketMatchHeight}px` }}
                         >
                           <div className="absolute -left-2 top-1/2 hidden h-px w-2 -translate-y-1/2 bg-gradient-to-r from-cyan-400/0 to-cyan-400/60 sm:block" />
-                          {roundIndex < roundsExibidos.length - 1 ? (
+                          {roundIndex < roundsExibidos.length - 1 && roundFilter === "todas" ? (
                             <>
                               <div
                                 className={`absolute -right-4 top-1/2 hidden h-px w-4 -translate-y-1/2 sm:block ${
@@ -987,14 +1011,15 @@ export default function Campeonatos() {
                       ))}
                     </div>
                   </div>
-                  {roundIndex < roundsExibidos.length - 1 ? (
+                  {roundIndex < roundsExibidos.length - 1 && roundFilter === "todas" ? (
                     <div className="pointer-events-none absolute -right-5 top-1/2 hidden h-px w-5 -translate-y-1/2 sm:block">
                       <div className="h-px w-full bg-gradient-to-r from-cyan-300/55 to-cyan-300/10" />
                       <div className="absolute right-0 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-r border-t border-cyan-300/60 bg-transparent" />
                     </div>
                   ) : null}
                 </div>
-              ))}
+                );
+              })}
                 </div>
               </div>
             </div>
