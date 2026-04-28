@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ import { getLoginUrl } from "@/const";
 
 const BYE = "W.O";
 type Match = { jogador1: string; jogador2: string; vencedor?: string };
+type MatchActivity = { winner: string; updatedAt: string; score: string };
 const BRACKET_MATCH_HEIGHT = 132;
 const BRACKET_BASE_GAP = 14;
 const EXEMPLO_CHAVEAMENTO_16: Match[][] = [
@@ -84,6 +85,18 @@ export default function Campeonatos() {
     if (typeof window === "undefined") return "todas";
     return localStorage.getItem("dg-bracket-round-filter") || "todas";
   });
+  const [presentationMode, setPresentationMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("dg-bracket-presentation") === "1";
+  });
+  const [collapsedResolvedRounds, setCollapsedResolvedRounds] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("dg-bracket-collapse-resolved") === "1";
+  });
+  const [matchActivity, setMatchActivity] = useState<Record<string, MatchActivity>>({});
+  const bracketViewportRef = useRef<HTMLDivElement | null>(null);
+  const bracketContentRef = useRef<HTMLDivElement | null>(null);
+  const roundRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const utils = trpc.useUtils();
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -114,6 +127,16 @@ export default function Campeonatos() {
     if (typeof window === "undefined") return;
     localStorage.setItem("dg-bracket-compact", compactBracket ? "1" : "0");
   }, [compactBracket]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("dg-bracket-presentation", presentationMode ? "1" : "0");
+  }, [presentationMode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("dg-bracket-collapse-resolved", collapsedResolvedRounds ? "1" : "0");
+  }, [collapsedResolvedRounds]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -407,6 +430,8 @@ export default function Campeonatos() {
   };
 
   const handleRegistrarVencedor = (roundIndex: number, matchIndex: number, vencedor: string) => {
+    const activityKey = `${roundIndex}-${matchIndex}`;
+    const updatedAt = new Date().toLocaleString("pt-BR");
     setRounds(prev => {
       const clone = prev.map(r => r.map(m => ({ ...m })));
       const partida = clone[roundIndex][matchIndex];
@@ -421,6 +446,14 @@ export default function Campeonatos() {
       }
       return propagado;
     });
+    setMatchActivity(prev => ({
+      ...prev,
+      [activityKey]: {
+        winner: vencedor,
+        updatedAt,
+        score: "1 x 0",
+      },
+    }));
   };
 
   const registrarInscricao = async (campeonatoId?: number) => {
@@ -501,6 +534,8 @@ export default function Campeonatos() {
     setBracketSearch("");
     setCompactBracket(false);
     setRoundFilter("todas");
+    setPresentationMode(false);
+    setCollapsedResolvedRounds(false);
   };
   const copiarResumoBusca = async () => {
     if (typeof navigator === "undefined" || !navigator.clipboard || !normalizedBracketSearch) return;
@@ -579,12 +614,34 @@ export default function Campeonatos() {
       : ` Status: ${getMatchStatusLabel(match)}.`;
     return `${base}${status}`;
   };
+  const getSeedLabel = (roundIndex: number, slotIndex: number) => {
+    if (roundIndex !== 0) return null;
+    return `#${slotIndex + 1}`;
+  };
   const totalParticipantesExibidos = roundsExibidos[0]?.length ? roundsExibidos[0].length * 2 : 0;
   const partidasDefinidas = roundsExibidos.reduce(
     (acc, round) => acc + round.filter(match => match.vencedor && !isBracketPlaceholder(match.vencedor)).length,
     0
   );
   const partidasTotais = roundsExibidos.reduce((acc, round) => acc + round.length, 0);
+  const woCount = roundsExibidos.reduce(
+    (acc, round) => acc + round.filter(match => match.jogador1 === BYE || match.jogador2 === BYE).length,
+    0
+  );
+  const pendingMatches = roundsExibidos.reduce(
+    (acc, round) =>
+      acc +
+      round.filter(match => !match.vencedor && !isBracketPlaceholder(match.jogador1) && !isBracketPlaceholder(match.jogador2)).length,
+    0
+  );
+  const alivePlayers = roundsExibidos.reduce((names, round) => {
+    round.forEach(match => {
+      [match.jogador1, match.jogador2].forEach(player => {
+        if (!isBracketPlaceholder(player) && !match.vencedor) names.add(player);
+      });
+    });
+    return names;
+  }, new Set<string>()).size;
   const faseAtualIndex = roundsExibidos.findIndex(round =>
     round.some(match => !match.vencedor && !isBracketPlaceholder(match.jogador1) && !isBracketPlaceholder(match.jogador2))
   );
@@ -603,6 +660,15 @@ export default function Campeonatos() {
       .some(name => exibirApelido(String(name), displayPref).toLowerCase().includes(normalizedBracketSearch));
   };
   const roundContainsSearchedPlayer = (round: Match[]) => round.some(match => matchContainsSearchedPlayer(match));
+  const isRoundResolved = (round: Match[]) =>
+    round.every(
+      match =>
+        Boolean(match.vencedor && !isBracketPlaceholder(match.vencedor)) ||
+        match.jogador1 === BYE ||
+        match.jogador2 === BYE ||
+        isBracketPlaceholder(match.jogador1) ||
+        isBracketPlaceholder(match.jogador2)
+    );
   const searchedPlayerLastRoundIndex = normalizedBracketSearch
     ? roundsExibidos.reduce((lastIndex, round, index) => (roundContainsSearchedPlayer(round) ? index : lastIndex), -1)
     : -1;
@@ -637,6 +703,7 @@ export default function Campeonatos() {
       : roundFilterOptions.find(option => option.value === roundFilter)?.label ?? "Fase filtrada";
   const bracketEhExemplo = rounds.length === 0;
   const selectedRoundIndex = roundFilter === "todas" ? -1 : Number(roundFilter);
+  const effectiveRoundIndex = selectedRoundIndex >= 0 ? selectedRoundIndex : (searchedPlayerLastRoundIndex >= 0 ? searchedPlayerLastRoundIndex : Math.max(faseAtualIndex, 0));
   const goToPreviousRound = () => {
     if (selectedRoundIndex <= 0) return;
     setRoundFilter(String(selectedRoundIndex - 1));
@@ -645,6 +712,78 @@ export default function Campeonatos() {
     if (selectedRoundIndex < 0 || selectedRoundIndex >= roundsExibidos.length - 1) return;
     setRoundFilter(String(selectedRoundIndex + 1));
   };
+  const goToRound = (roundIndex: number) => setRoundFilter(String(roundIndex));
+  const roundViewLabel =
+    selectedRoundIndex >= 0
+      ? `Fase isolada: ${roundFilterLabel}`
+      : searchedPlayerLastRoundIndex >= 0
+      ? `Busca focada ate ${searchedPlayerRoundLabel}`
+      : faseAtualIndex >= 0
+      ? `Acompanhe a fase atual: ${faseAtualLabel}`
+      : "Visualizacao completa";
+  const exportBracketAsImage = async () => {
+    if (typeof window === "undefined" || !bracketContentRef.current) return;
+    try {
+      const sourceNode = bracketContentRef.current;
+      const clone = sourceNode.cloneNode(true) as HTMLElement;
+      clone.style.width = `${sourceNode.scrollWidth}px`;
+      clone.style.background = "#07111f";
+      clone.style.padding = "16px";
+      clone.querySelectorAll("[data-export-hidden='true']").forEach(node => node.remove());
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${sourceNode.scrollWidth + 32}" height="${sourceNode.scrollHeight + 32}">
+          <foreignObject width="100%" height="100%">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="width:${sourceNode.scrollWidth + 32}px;height:${sourceNode.scrollHeight + 32}px;background:#07111f;padding:16px;box-sizing:border-box;">
+              ${clone.outerHTML}
+            </div>
+          </foreignObject>
+        </svg>`;
+      const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = sourceNode.scrollWidth + 32;
+        canvas.height = sourceNode.scrollHeight + 32;
+        const context = canvas.getContext("2d");
+        if (!context) {
+          URL.revokeObjectURL(url);
+          toast.error("Nao foi possivel exportar o bracket.");
+          return;
+        }
+        context.fillStyle = "#07111f";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0);
+        URL.revokeObjectURL(url);
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = `bracket-${campeonatoSelecionado?.nome?.replace(/\s+/g, "-").toLowerCase() || "campeonato"}.png`;
+        link.click();
+        toast.success("Imagem do bracket exportada.");
+      };
+      image.onerror = () => {
+        URL.revokeObjectURL(url);
+        toast.error("Nao foi possivel gerar a imagem do bracket.");
+      };
+      image.src = url;
+    } catch {
+      toast.error("Nao foi possivel exportar o bracket.");
+    }
+  };
+
+  useEffect(() => {
+    if (roundFilter !== "todas") return;
+    if (searchedPlayerLastRoundIndex >= 0) {
+      setRoundFilter(String(searchedPlayerLastRoundIndex));
+    }
+  }, [normalizedBracketSearch, roundFilter, searchedPlayerLastRoundIndex]);
+
+  useEffect(() => {
+    if (!bracketViewportRef.current) return;
+    const target = roundRefs.current[effectiveRoundIndex];
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [effectiveRoundIndex, compactBracket, presentationMode]);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -854,13 +993,13 @@ export default function Campeonatos() {
               </div>
             </div>
           ) : null}
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 print:hidden">
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 print:hidden" data-export-hidden="true">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Busca no bracket</p>
-                <p className="text-sm text-muted-foreground">Digite um jogador para destacar o caminho dele nas fases.</p>
+                <p className="text-sm text-muted-foreground">{roundViewLabel}. Digite um jogador para destacar o caminho dele nas fases.</p>
               </div>
-              <div className="flex w-full flex-col gap-2 sm:max-w-xl sm:flex-row">
+              <div className="flex w-full flex-col gap-2 xl:max-w-5xl xl:flex-row">
                 <input
                   value={bracketSearch}
                   onChange={event => setBracketSearch(event.target.value)}
@@ -868,7 +1007,7 @@ export default function Campeonatos() {
                   aria-label="Buscar jogador no bracket"
                   className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20"
                 />
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <select
                     value={roundFilter}
                     onChange={event => setRoundFilter(event.target.value)}
@@ -906,6 +1045,12 @@ export default function Campeonatos() {
                       </Button>
                     </>
                   ) : null}
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setPresentationMode(prev => !prev)}>
+                    {presentationMode ? "Modo normal" : "Modo apresentacao"}
+                  </Button>
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setCollapsedResolvedRounds(prev => !prev)}>
+                    {collapsedResolvedRounds ? "Expandir resolvidas" : "Compactar resolvidas"}
+                  </Button>
                   <Button
                     variant={compactBracket ? "default" : "outline"}
                     size="sm"
@@ -914,10 +1059,13 @@ export default function Campeonatos() {
                   >
                     {compactBracket ? "Modo compacto" : "Modo detalhado"}
                   </Button>
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={exportBracketAsImage}>
+                    Exportar imagem
+                  </Button>
                   <Button variant="outline" size="sm" className="shrink-0" onClick={imprimirBracket}>
                     Imprimir
                   </Button>
-                  {(bracketSearch || compactBracket || roundFilter !== "todas") ? (
+                  {(bracketSearch || compactBracket || roundFilter !== "todas" || presentationMode || collapsedResolvedRounds) ? (
                     <Button variant="outline" size="sm" className="shrink-0" onClick={resetBracketView}>
                       Resetar
                     </Button>
@@ -977,12 +1125,36 @@ export default function Campeonatos() {
               <p className="text-xs text-muted-foreground">Partidas com vencedor definido</p>
             </div>
           </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">W.O</p>
+              <p className="mt-2 text-2xl font-semibold text-amber-200">{woCount}</p>
+              <p className="text-xs text-muted-foreground">Confrontos com vaga automatica</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Pendentes</p>
+              <p className="mt-2 text-2xl font-semibold text-cyan-100">{pendingMatches}</p>
+              <p className="text-xs text-muted-foreground">Partidas ainda abertas na chave</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Jogadores vivos</p>
+              <p className="mt-2 text-2xl font-semibold">{alivePlayers}</p>
+              <p className="text-xs text-muted-foreground">Participantes ainda sem eliminacao definida</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Modo</p>
+              <p className="mt-2 text-2xl font-semibold">{presentationMode ? "TV" : compactBracket ? "Compacto" : "Detalhado"}</p>
+              <p className="text-xs text-muted-foreground">Layout ativo para leitura e exibicao</p>
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
               Origem: {bracketEhExemplo ? "Exemplo" : "Campeonato real"}
             </span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Visualizacao: {compactBracket ? "Compacta" : "Detalhada"}</span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Fase: {roundFilterLabel}</span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Modo TV: {presentationMode ? "ativo" : "desligado"}</span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Resolvidas: {collapsedResolvedRounds ? "compactadas" : "expandidas"}</span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
               Busca: {normalizedBracketSearch ? bracketSearch.trim() : "nenhuma"}
             </span>
@@ -990,8 +1162,32 @@ export default function Campeonatos() {
               Colunas visiveis: {roundsFiltrados.length}
             </span>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-black/10 p-3 sm:p-4 print:rounded-none print:border-black/20 print:bg-transparent print:p-0">
-            <div className="mb-3 flex items-center justify-between gap-3 print:hidden">
+          <div
+            ref={bracketContentRef}
+            className={`rounded-3xl border border-white/10 bg-black/10 p-3 sm:p-4 print:rounded-none print:border-black/20 print:bg-transparent print:p-0 ${
+              presentationMode ? "shadow-[0_30px_80px_-40px_rgba(34,211,238,0.45)]" : ""
+            }`}
+          >
+            <div className="mb-3 space-y-3 print:hidden" data-export-hidden="true">
+              <div className="flex gap-2 overflow-x-auto pb-1 text-[11px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {roundsExibidos.map((round, roundIndex) => (
+                  <button
+                    key={`round-jump-${roundIndex}`}
+                    type="button"
+                    onClick={() => goToRound(roundIndex)}
+                    className={`shrink-0 rounded-full border px-3 py-1 tracking-wide transition ${
+                      effectiveRoundIndex === roundIndex
+                        ? "border-cyan-300/45 bg-cyan-400/15 text-cyan-100"
+                        : faseAtualIndex === roundIndex
+                        ? "border-emerald-300/35 bg-emerald-400/10 text-emerald-100"
+                        : "border-white/10 bg-white/5 text-muted-foreground"
+                    }`}
+                  >
+                    {getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center justify-between gap-3">
               <div className="flex gap-2 overflow-x-auto pb-1 text-[11px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
                 {roundsFiltrados.map((round, filteredIndex) => {
                   const roundIndex = roundFilter === "todas" ? filteredIndex : Number(roundFilter);
@@ -1010,23 +1206,38 @@ export default function Campeonatos() {
                 })}
               </div>
               <p className="hidden text-[11px] text-muted-foreground sm:block">
-                Deslize horizontalmente para acompanhar o fluxo completo do bracket.
+                Deslize horizontalmente para acompanhar o fluxo completo do bracket. A fase em foco recebe scroll automatico.
               </p>
               <span className="shrink-0 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-cyan-100 sm:hidden">
                 {totalRoundsExibidos} fases
               </span>
             </div>
+            </div>
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background via-background/75 to-transparent sm:w-12 print:hidden" />
               <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background via-background/75 to-transparent sm:w-12 print:hidden" />
-              <div className="overflow-x-auto pb-4 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden print:overflow-visible print:pb-0">
-                <div className="flex min-w-max items-start gap-4 px-1 sm:gap-6 print:min-w-0 print:gap-3 print:px-0">
+              <div
+                ref={bracketViewportRef}
+                className="overflow-x-auto overscroll-x-contain scroll-smooth pb-4 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden print:overflow-visible print:pb-0"
+                style={{ touchAction: "pan-x" }}
+              >
+                <div className={`flex min-w-max items-start gap-4 px-1 sm:gap-6 print:min-w-0 print:gap-3 print:px-0 ${presentationMode ? "sm:gap-8" : ""}`}>
               {roundsFiltrados.map((round, filteredIndex) => {
                 const roundIndex = roundFilter === "todas" ? filteredIndex : Number(roundFilter);
+                const roundResolved = isRoundResolved(round);
+                const collapseRound = collapsedResolvedRounds && roundResolved && roundIndex !== faseAtualIndex && roundIndex !== effectiveRoundIndex;
                 return (
-                  <div key={roundIndex} className="relative flex w-[85vw] max-w-[320px] min-w-[260px] shrink-0 snap-center items-stretch sm:w-[320px] sm:snap-start">
                   <div
-                    className={`relative w-full rounded-[28px] border p-4 space-y-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md ${
+                    key={roundIndex}
+                    ref={node => {
+                      roundRefs.current[roundIndex] = node;
+                    }}
+                    className={`relative flex shrink-0 snap-center items-stretch sm:snap-start ${
+                      presentationMode ? "w-[92vw] max-w-[380px] min-w-[300px] sm:w-[380px]" : "w-[85vw] max-w-[320px] min-w-[260px] sm:w-[320px]"
+                    }`}
+                  >
+                  <div
+                    className={`relative w-full rounded-[28px] border p-4 space-y-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md transition-all ${
                       roundIndex === roundsExibidos.length - 1 && campeaoAtual && !isBracketPlaceholder(campeaoAtual)
                         ? "ring-1 ring-emerald-300/35"
                         : ""
@@ -1045,6 +1256,7 @@ export default function Campeonatos() {
                       <div>
                         <p className="text-[10px] uppercase tracking-[0.26em] text-cyan-200/70">Round {roundIndex + 1}</p>
                         <h3 className="text-base font-semibold">{getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}</h3>
+                        <p className="text-[11px] text-muted-foreground">{round.length} partida{round.length === 1 ? "" : "s"}</p>
                       </div>
                       <span
                         className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] ${
@@ -1053,7 +1265,7 @@ export default function Campeonatos() {
                             : "border-white/10 bg-white/5 text-muted-foreground"
                         }`}
                       >
-                        {faseAtualIndex === roundIndex ? "Em foco" : rounds.length > 0 ? "Eliminacao" : "Exemplo"}
+                        {collapseRound ? "Compacta" : faseAtualIndex === roundIndex ? "Em foco" : rounds.length > 0 ? "Eliminacao" : "Exemplo"}
                       </span>
                     </div>
                     <div className="flex flex-col" style={getResponsiveRoundStackStyle(roundIndex)}>
@@ -1062,7 +1274,7 @@ export default function Campeonatos() {
                           key={`${roundIndex}-${matchIndex}`}
                           role="group"
                           aria-label={getMatchAriaLabel(match, roundIndex, matchIndex)}
-                          className={`relative rounded-2xl border p-3 space-y-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
+                          className={`relative rounded-2xl border p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
                             normalizedBracketSearch && matchContainsSearchedPlayer(match)
                               ? "ring-1 ring-cyan-300/40 shadow-[0_0_0_1px_rgba(103,232,249,0.18),inset_0_1px_0_rgba(255,255,255,0.06)]"
                               : ""
@@ -1070,8 +1282,8 @@ export default function Campeonatos() {
                             getMatchAdvanceState(roundIndex, matchIndex)
                               ? "border-emerald-400/45 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(34,197,94,0.08),rgba(59,130,246,0.12))] shadow-[0_0_0_1px_rgba(52,211,153,0.12),inset_0_1px_0_rgba(255,255,255,0.06)]"
                               : "border-white/10 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08))]"
-                          }`}
-                          style={{ minHeight: `${bracketMatchHeight}px` }}
+                          } ${collapseRound ? "space-y-1.5" : "space-y-2"} ${presentationMode ? "p-4" : ""}`}
+                          style={{ minHeight: `${collapseRound ? Math.max(80, bracketMatchHeight - 28) : presentationMode ? bracketMatchHeight + 20 : bracketMatchHeight}px` }}
                         >
                           <div className="absolute -left-2 top-1/2 hidden h-px w-2 -translate-y-1/2 bg-gradient-to-r from-cyan-400/0 to-cyan-400/60 sm:block" />
                           {roundIndex < roundsExibidos.length - 1 && roundFilter === "todas" ? (
@@ -1096,13 +1308,18 @@ export default function Campeonatos() {
                             <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                               Partida {matchIndex + 1}
                             </h4>
-                            <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full border ${getMatchStatusClassName(match)}`}
-                            >
-                              {getMatchStatusLabel(match)}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-muted-foreground">
+                                {getSeedLabel(roundIndex, matchIndex * 2) ?? `M${matchIndex + 1}`}
+                              </span>
+                              <span
+                                className={`text-[10px] px-2 py-0.5 rounded-full border ${getMatchStatusClassName(match)}`}
+                              >
+                                {getMatchStatusLabel(match)}
+                              </span>
+                            </div>
                           </div>
-                          {!compactBracket ? (
+                          {!compactBracket && !collapseRound ? (
                             <p className="text-[11px] text-muted-foreground">
                               {rounds.length > 0 ? "Toque no nome para marcar o vencedor." : "Modelo ilustrativo de eliminacao."}
                             </p>
@@ -1123,6 +1340,11 @@ export default function Campeonatos() {
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-[10px] font-semibold text-foreground/80">
                                   {getPlayerBadge(match.jogador1)}
                                 </span>
+                                {getSeedLabel(roundIndex, matchIndex * 2) ? (
+                                  <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                                    {getSeedLabel(roundIndex, matchIndex * 2)}
+                                  </span>
+                                ) : null}
                                 <span className="truncate text-left">{exibirApelido(match.jogador1, displayPref)}</span>
                               </span>
                               {rounds.length > 0 && match.vencedor === match.jogador1 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
@@ -1142,11 +1364,25 @@ export default function Campeonatos() {
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-[10px] font-semibold text-foreground/80">
                                   {getPlayerBadge(match.jogador2)}
                                 </span>
+                                {getSeedLabel(roundIndex, matchIndex * 2 + 1) ? (
+                                  <span className="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] text-muted-foreground">
+                                    {getSeedLabel(roundIndex, matchIndex * 2 + 1)}
+                                  </span>
+                                ) : null}
                                 <span className="truncate text-left">{exibirApelido(match.jogador2, displayPref)}</span>
                               </span>
                               {rounds.length > 0 && match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                             </Button>
                           </div>
+                          {matchActivity[`${roundIndex}-${matchIndex}`] ? (
+                            <div className="rounded-xl border border-white/10 bg-black/10 px-2.5 py-2 text-[11px] text-muted-foreground">
+                              <div className="flex items-center justify-between gap-2">
+                                <span>Placar estimado: {matchActivity[`${roundIndex}-${matchIndex}`].score}</span>
+                                <span>{matchActivity[`${roundIndex}-${matchIndex}`].updatedAt}</span>
+                              </div>
+                              <p className="mt-1 text-foreground/80">Ultima atualizacao: {exibirApelido(matchActivity[`${roundIndex}-${matchIndex}`].winner, displayPref)}</p>
+                            </div>
+                          ) : null}
                           {!isAdmin && rounds.length > 0 && match.vencedor ? (
                             <p className="text-xs text-muted-foreground">Vencedor: {exibirApelido(match.vencedor, displayPref)}</p>
                           ) : null}
