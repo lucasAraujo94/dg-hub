@@ -492,6 +492,15 @@ export default function Campeonatos() {
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   };
+  const imprimirBracket = () => {
+    if (typeof window === "undefined") return;
+    window.print();
+  };
+  const resetBracketView = () => {
+    setBracketSearch("");
+    setCompactBracket(false);
+    setRoundFilter("todas");
+  };
 
   const roundsExibidos = rounds.length > 0 ? rounds : EXEMPLO_CHAVEAMENTO_16;
   const totalRoundsExibidos = roundsExibidos.length;
@@ -831,6 +840,14 @@ export default function Campeonatos() {
                   >
                     {compactBracket ? "Modo compacto" : "Modo detalhado"}
                   </Button>
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={imprimirBracket}>
+                    Imprimir
+                  </Button>
+                  {(bracketSearch || compactBracket || roundFilter !== "todas") ? (
+                    <Button variant="outline" size="sm" className="shrink-0" onClick={resetBracketView}>
+                      Resetar
+                    </Button>
+                  ) : null}
                   {bracketSearch ? (
                     <Button variant="outline" size="sm" className="shrink-0" onClick={() => setBracketSearch("")}>
                       Limpar
