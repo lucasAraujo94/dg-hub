@@ -501,6 +501,19 @@ export default function Campeonatos() {
     setCompactBracket(false);
     setRoundFilter("todas");
   };
+  const copiarResumoBusca = async () => {
+    if (typeof navigator === "undefined" || !navigator.clipboard || !normalizedBracketSearch) return;
+    const resumo =
+      searchedPlayerLastRoundIndex >= 0
+        ? `Jogador: ${bracketSearch.trim()}\nMelhor fase: ${searchedPlayerRoundLabel}\nCampeonato: ${campeonatoSelecionado?.nome ?? "Bracket atual"}`
+        : `Jogador: ${bracketSearch.trim()}\nResultado: nao encontrado no bracket atual\nCampeonato: ${campeonatoSelecionado?.nome ?? "Bracket atual"}`;
+    try {
+      await navigator.clipboard.writeText(resumo);
+      toast.success("Resumo copiado.");
+    } catch {
+      toast.error("Nao foi possivel copiar o resumo.");
+    }
+  };
 
   const roundsExibidos = rounds.length > 0 ? rounds : EXEMPLO_CHAVEAMENTO_16;
   const totalRoundsExibidos = roundsExibidos.length;
@@ -846,6 +859,11 @@ export default function Campeonatos() {
                   {(bracketSearch || compactBracket || roundFilter !== "todas") ? (
                     <Button variant="outline" size="sm" className="shrink-0" onClick={resetBracketView}>
                       Resetar
+                    </Button>
+                  ) : null}
+                  {bracketSearch ? (
+                    <Button variant="outline" size="sm" className="shrink-0" onClick={copiarResumoBusca}>
+                      Copiar resumo
                     </Button>
                   ) : null}
                   {bracketSearch ? (
