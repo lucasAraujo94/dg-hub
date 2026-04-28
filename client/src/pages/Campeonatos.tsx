@@ -631,6 +631,10 @@ export default function Campeonatos() {
   }));
   const roundsFiltrados =
     roundFilter === "todas" ? roundsExibidos : roundsExibidos.filter((_, roundIndex) => String(roundIndex) === roundFilter);
+  const roundFilterLabel =
+    roundFilter === "todas"
+      ? "Todas as fases"
+      : roundFilterOptions.find(option => option.value === roundFilter)?.label ?? "Fase filtrada";
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -933,6 +937,16 @@ export default function Campeonatos() {
               </div>
               <p className="text-xs text-muted-foreground">Partidas com vencedor definido</p>
             </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Visualizacao: {compactBracket ? "Compacta" : "Detalhada"}</span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Fase: {roundFilterLabel}</span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+              Busca: {normalizedBracketSearch ? bracketSearch.trim() : "nenhuma"}
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
+              Colunas visiveis: {roundsFiltrados.length}
+            </span>
           </div>
           <div className="rounded-3xl border border-white/10 bg-black/10 p-3 sm:p-4 print:rounded-none print:border-black/20 print:bg-transparent print:p-0">
             <div className="mb-3 flex items-center justify-between gap-3 print:hidden">
