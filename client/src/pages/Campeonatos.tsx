@@ -636,6 +636,15 @@ export default function Campeonatos() {
       ? "Todas as fases"
       : roundFilterOptions.find(option => option.value === roundFilter)?.label ?? "Fase filtrada";
   const bracketEhExemplo = rounds.length === 0;
+  const selectedRoundIndex = roundFilter === "todas" ? -1 : Number(roundFilter);
+  const goToPreviousRound = () => {
+    if (selectedRoundIndex <= 0) return;
+    setRoundFilter(String(selectedRoundIndex - 1));
+  };
+  const goToNextRound = () => {
+    if (selectedRoundIndex < 0 || selectedRoundIndex >= roundsExibidos.length - 1) return;
+    setRoundFilter(String(selectedRoundIndex + 1));
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -873,6 +882,30 @@ export default function Campeonatos() {
                       </option>
                     ))}
                   </select>
+                  {roundFilter !== "todas" ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                        aria-label="Ir para a fase anterior do bracket"
+                        onClick={goToPreviousRound}
+                        disabled={selectedRoundIndex <= 0}
+                      >
+                        Anterior
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                        aria-label="Ir para a proxima fase do bracket"
+                        onClick={goToNextRound}
+                        disabled={selectedRoundIndex < 0 || selectedRoundIndex >= roundsExibidos.length - 1}
+                      >
+                        Proxima
+                      </Button>
+                    </>
+                  ) : null}
                   <Button
                     variant={compactBracket ? "default" : "outline"}
                     size="sm"
