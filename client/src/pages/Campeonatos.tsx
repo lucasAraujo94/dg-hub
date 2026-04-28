@@ -543,6 +543,17 @@ export default function Campeonatos() {
       .some(name => exibirApelido(String(name), displayPref).toLowerCase().includes(normalizedBracketSearch));
   };
   const roundContainsSearchedPlayer = (round: Match[]) => round.some(match => matchContainsSearchedPlayer(match));
+  const searchedPlayerLastRoundIndex = normalizedBracketSearch
+    ? roundsExibidos.reduce((lastIndex, round, index) => (roundContainsSearchedPlayer(round) ? index : lastIndex), -1)
+    : -1;
+  const searchedPlayerRoundLabel =
+    searchedPlayerLastRoundIndex >= 0
+      ? getRoundLabel(
+          searchedPlayerLastRoundIndex,
+          totalRoundsExibidos,
+          roundsExibidos[searchedPlayerLastRoundIndex]?.length ?? 0
+        )
+      : null;
   const bracketMatchHeight = compactBracket ? 96 : BRACKET_MATCH_HEIGHT;
   const getResponsiveRoundStackStyle = (roundIndex: number) => {
     if (roundIndex === 0) {
@@ -780,6 +791,17 @@ export default function Campeonatos() {
                 </div>
               </div>
             </div>
+            {normalizedBracketSearch ? (
+              <div className="mt-3 rounded-xl border border-white/10 bg-black/10 px-3 py-2 text-sm">
+                {searchedPlayerLastRoundIndex >= 0 ? (
+                  <span className="text-cyan-100">
+                    Jogador encontrado. Melhor fase destacada: <span className="font-semibold">{searchedPlayerRoundLabel}</span>.
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Nenhum jogador encontrado com esse nome no bracket atual.</span>
+                )}
+              </div>
+            ) : null}
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
