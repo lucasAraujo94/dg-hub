@@ -73,6 +73,7 @@ export default function Campeonatos() {
   const [selectedCampId, setSelectedCampId] = useState<number | null>(null);
   const [manualUserId, setManualUserId] = useState<number | null>(null);
   const [bracketSearch, setBracketSearch] = useState("");
+  const [compactBracket, setCompactBracket] = useState(false);
 
   const utils = trpc.useUtils();
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -542,6 +543,16 @@ export default function Campeonatos() {
       .some(name => exibirApelido(String(name), displayPref).toLowerCase().includes(normalizedBracketSearch));
   };
   const roundContainsSearchedPlayer = (round: Match[]) => round.some(match => matchContainsSearchedPlayer(match));
+  const bracketMatchHeight = compactBracket ? 96 : BRACKET_MATCH_HEIGHT;
+  const getResponsiveRoundStackStyle = (roundIndex: number) => {
+    if (roundIndex === 0) {
+      return { paddingTop: "0px", gap: `${BRACKET_BASE_GAP}px` };
+    }
+    const unit = bracketMatchHeight + BRACKET_BASE_GAP;
+    const paddingTop = (unit * (Math.pow(2, roundIndex) - 1)) / 2;
+    const gap = unit * (Math.pow(2, roundIndex) - 1) + BRACKET_BASE_GAP;
+    return { paddingTop: `${paddingTop}px`, gap: `${gap}px` };
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -745,18 +756,28 @@ export default function Campeonatos() {
                 <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Busca no bracket</p>
                 <p className="text-sm text-muted-foreground">Digite um jogador para destacar o caminho dele nas fases.</p>
               </div>
-              <div className="flex w-full gap-2 sm:max-w-md">
+              <div className="flex w-full flex-col gap-2 sm:max-w-xl sm:flex-row">
                 <input
                   value={bracketSearch}
                   onChange={event => setBracketSearch(event.target.value)}
                   placeholder="Buscar jogador"
                   className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40"
                 />
-                {bracketSearch ? (
-                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setBracketSearch("")}>
-                    Limpar
+                <div className="flex gap-2">
+                  <Button
+                    variant={compactBracket ? "default" : "outline"}
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => setCompactBracket(prev => !prev)}
+                  >
+                    {compactBracket ? "Modo compacto" : "Modo detalhado"}
                   </Button>
-                ) : null}
+                  {bracketSearch ? (
+                    <Button variant="outline" size="sm" className="shrink-0" onClick={() => setBracketSearch("")}>
+                      Limpar
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
@@ -847,7 +868,7 @@ export default function Campeonatos() {
                         {faseAtualIndex === roundIndex ? "Em foco" : rounds.length > 0 ? "Eliminacao" : "Exemplo"}
                       </span>
                     </div>
-                    <div className="flex flex-col" style={getRoundStackStyle(roundIndex)}>
+                    <div className="flex flex-col" style={getResponsiveRoundStackStyle(roundIndex)}>
                       {round.map((match, matchIndex) => (
                         <div
                           key={`${roundIndex}-${matchIndex}`}
@@ -860,7 +881,7 @@ export default function Campeonatos() {
                               ? "border-emerald-400/45 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(34,197,94,0.08),rgba(59,130,246,0.12))] shadow-[0_0_0_1px_rgba(52,211,153,0.12),inset_0_1px_0_rgba(255,255,255,0.06)]"
                               : "border-white/10 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08))]"
                           }`}
-                          style={{ minHeight: `${BRACKET_MATCH_HEIGHT}px` }}
+                          style={{ minHeight: `${bracketMatchHeight}px` }}
                         >
                           <div className="absolute -left-2 top-1/2 hidden h-px w-2 -translate-y-1/2 bg-gradient-to-r from-cyan-400/0 to-cyan-400/60 sm:block" />
                           {roundIndex < roundsExibidos.length - 1 ? (
@@ -891,14 +912,16 @@ export default function Campeonatos() {
                               {getMatchStatusLabel(match)}
                             </span>
                           </div>
-                          <p className="text-[11px] text-muted-foreground">
-                            {rounds.length > 0 ? "Toque no nome para marcar o vencedor." : "Modelo ilustrativo de eliminacao."}
-                          </p>
+                          {!compactBracket ? (
+                            <p className="text-[11px] text-muted-foreground">
+                              {rounds.length > 0 ? "Toque no nome para marcar o vencedor." : "Modelo ilustrativo de eliminacao."}
+                            </p>
+                          ) : null}
                           <div className="flex flex-col gap-2">
                             <Button
                               size="sm"
                               variant={rounds.length > 0 && match.vencedor === match.jogador1 ? "default" : "outline"}
-                              className={`justify-between ${isBracketPlaceholder(match.jogador1) ? "border-dashed text-muted-foreground" : ""}`}
+                              className={`justify-between ${compactBracket ? "h-9 px-2" : ""} ${isBracketPlaceholder(match.jogador1) ? "border-dashed text-muted-foreground" : ""}`}
                               disabled={isBracketPlaceholder(match.jogador1)}
                               onClick={() => {
                                 if (rounds.length === 0) return;
@@ -916,7 +939,7 @@ export default function Campeonatos() {
                             <Button
                               size="sm"
                               variant={rounds.length > 0 && match.vencedor === match.jogador2 ? "default" : "outline"}
-                              className={`justify-between ${isBracketPlaceholder(match.jogador2) ? "border-dashed text-muted-foreground" : ""}`}
+                              className={`justify-between ${compactBracket ? "h-9 px-2" : ""} ${isBracketPlaceholder(match.jogador2) ? "border-dashed text-muted-foreground" : ""}`}
                               disabled={isBracketPlaceholder(match.jogador2)}
                               onClick={() => {
                                 if (rounds.length === 0) return;
