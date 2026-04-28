@@ -614,6 +614,7 @@ export default function Campeonatos() {
           roundsExibidos[searchedPlayerLastRoundIndex]?.length ?? 0
         )
       : null;
+  const campeaoAtual = roundsExibidos[roundsExibidos.length - 1]?.[0]?.vencedor;
   const bracketMatchHeight = compactBracket ? 96 : BRACKET_MATCH_HEIGHT;
   const getResponsiveRoundStackStyle = (roundIndex: number) => {
     if (roundIndex === 0) {
@@ -790,6 +791,13 @@ export default function Campeonatos() {
               Exibindo um chaveamento de exemplo com 16 participantes. Quando o sorteio real acontecer, este modelo sera substituido automaticamente.
             </div>
           ) : null}
+          {campeaoAtual && !isBracketPlaceholder(campeaoAtual) ? (
+            <div className="rounded-2xl border border-emerald-400/35 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(250,204,21,0.12))] px-4 py-3 shadow-[0_18px_45px_-35px_rgba(16,185,129,0.55)]">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-emerald-100/80">Campeao atual</p>
+              <p className="mt-2 text-2xl font-semibold text-emerald-50">{exibirApelido(campeaoAtual, displayPref)}</p>
+              <p className="text-sm text-emerald-100/80">A chave ja tem um vencedor definido no confronto final.</p>
+            </div>
+          ) : null}
           {campeonatoSelecionado ? (
             <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.10))] px-4 py-4 shadow-[0_18px_50px_-35px_rgba(0,0,0,0.6)] print:rounded-none print:border-black/20 print:bg-none print:shadow-none">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -963,6 +971,10 @@ export default function Campeonatos() {
                   <div key={roundIndex} className="relative flex w-[85vw] max-w-[320px] min-w-[260px] shrink-0 snap-center items-stretch sm:w-[320px] sm:snap-start">
                   <div
                     className={`relative w-full rounded-[28px] border p-4 space-y-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md ${
+                      roundIndex === roundsExibidos.length - 1 && campeaoAtual && !isBracketPlaceholder(campeaoAtual)
+                        ? "ring-1 ring-emerald-300/35"
+                        : ""
+                    } ${
                       normalizedBracketSearch && roundContainsSearchedPlayer(round)
                         ? "ring-1 ring-cyan-300/35"
                         : ""
