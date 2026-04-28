@@ -9,7 +9,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Trophy, Users, Clock, DollarSign, Filter, Volume2 } from "lucide-react";
 import { Link } from "wouter";
@@ -19,7 +18,7 @@ import { getLoginUrl } from "@/const";
 
 const BYE = "W.O";
 type Match = { jogador1: string; jogador2: string; vencedor?: string };
-type MatchActivity = { winner: string; updatedAt: string; score: string };
+type MatchActivity = { winner: string; updatedAt: string; score: string; note?: string };
 const BRACKET_MATCH_HEIGHT = 132;
 const BRACKET_BASE_GAP = 14;
 const EXEMPLO_CHAVEAMENTO_16: Match[][] = [
@@ -81,6 +80,11 @@ export default function Campeonatos() {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("dg-bracket-compact") === "1";
   });
+  const [bracketDensity, setBracketDensity] = useState<"detalhado" | "compacto" | "ultracompacto">(() => {
+    if (typeof window === "undefined") return "detalhado";
+    const stored = localStorage.getItem("dg-bracket-density");
+    return stored === "compacto" || stored === "ultracompacto" ? stored : "detalhado";
+  });
   const [roundFilter, setRoundFilter] = useState(() => {
     if (typeof window === "undefined") return "todas";
     return localStorage.getItem("dg-bracket-round-filter") || "todas";
@@ -89,11 +93,23 @@ export default function Campeonatos() {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("dg-bracket-presentation") === "1";
   });
+  const [presentationAutoplay, setPresentationAutoplay] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("dg-bracket-presentation-autoplay") === "1";
+  });
   const [collapsedResolvedRounds, setCollapsedResolvedRounds] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("dg-bracket-collapse-resolved") === "1";
   });
   const [matchActivity, setMatchActivity] = useState<Record<string, MatchActivity>>({});
+  const [loadedBracketCampId, setLoadedBracketCampId] = useState<number | null>(null);
+  const [spectatorMode, setSpectatorMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("dg-bracket-spectator") === "1";
+  });
+  const [editingMatchKey, setEditingMatchKey] = useState<string | null>(null);
+  const [manualScoreInput, setManualScoreInput] = useState("1 x 0");
+  const [manualNoteInput, setManualNoteInput] = useState("");
   const bracketViewportRef = useRef<HTMLDivElement | null>(null);
   const bracketContentRef = useRef<HTMLDivElement | null>(null);
   const roundRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -130,13 +146,28 @@ export default function Campeonatos() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    localStorage.setItem("dg-bracket-density", bracketDensity);
+  }, [bracketDensity]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     localStorage.setItem("dg-bracket-presentation", presentationMode ? "1" : "0");
   }, [presentationMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    localStorage.setItem("dg-bracket-presentation-autoplay", presentationAutoplay ? "1" : "0");
+  }, [presentationAutoplay]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     localStorage.setItem("dg-bracket-collapse-resolved", collapsedResolvedRounds ? "1" : "0");
   }, [collapsedResolvedRounds]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("dg-bracket-spectator", spectatorMode ? "1" : "0");
+  }, [spectatorMode]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -148,6 +179,55 @@ export default function Campeonatos() {
     }
     localStorage.setItem("dg-bracket-round-filter", roundFilter);
   }, [roundFilter, rounds]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !selectedCampId) {
+      setLoadedBracketCampId(null);
+      return;
+    }
+    const savedRounds = localStorage.getItem(`dg-bracket-rounds-${selectedCampId}`);
+    const savedActivity = localStorage.getItem(`dg-bracket-activity-${selectedCampId}`);
+    if (savedRounds) {
+      try {
+        const parsed = JSON.parse(savedRounds) as Match[][];
+        if (Array.isArray(parsed)) setRounds(parsed);
+      } catch {
+        localStorage.removeItem(`dg-bracket-rounds-${selectedCampId}`);
+      }
+    } else {
+      setRounds([]);
+    }
+    if (savedActivity) {
+      try {
+        const parsed = JSON.parse(savedActivity) as Record<string, MatchActivity>;
+        setMatchActivity(parsed && typeof parsed === "object" ? parsed : {});
+      } catch {
+        setMatchActivity({});
+        localStorage.removeItem(`dg-bracket-activity-${selectedCampId}`);
+      }
+    } else {
+      setMatchActivity({});
+    }
+    setLoadedBracketCampId(selectedCampId);
+  }, [selectedCampId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !selectedCampId || loadedBracketCampId !== selectedCampId) return;
+    if (rounds.length > 0) {
+      localStorage.setItem(`dg-bracket-rounds-${selectedCampId}`, JSON.stringify(rounds));
+    } else {
+      localStorage.removeItem(`dg-bracket-rounds-${selectedCampId}`);
+    }
+  }, [loadedBracketCampId, rounds, selectedCampId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !selectedCampId || loadedBracketCampId !== selectedCampId) return;
+    if (Object.keys(matchActivity).length > 0) {
+      localStorage.setItem(`dg-bracket-activity-${selectedCampId}`, JSON.stringify(matchActivity));
+    } else {
+      localStorage.removeItem(`dg-bracket-activity-${selectedCampId}`);
+    }
+  }, [loadedBracketCampId, matchActivity, selectedCampId]);
 
   const resolveDisplayName = (usuario?: { name?: string | null; email?: string | null; nickname?: string | null }) => {
     const baseName = usuario?.name || usuario?.email || "Jogador";
@@ -452,6 +532,7 @@ export default function Campeonatos() {
         winner: vencedor,
         updatedAt,
         score: "1 x 0",
+        note: "Resultado definido manualmente",
       },
     }));
   };
@@ -533,9 +614,12 @@ export default function Campeonatos() {
   const resetBracketView = () => {
     setBracketSearch("");
     setCompactBracket(false);
+    setBracketDensity("detalhado");
     setRoundFilter("todas");
     setPresentationMode(false);
+    setPresentationAutoplay(false);
     setCollapsedResolvedRounds(false);
+    setSpectatorMode(false);
   };
   const copiarResumoBusca = async () => {
     if (typeof navigator === "undefined" || !navigator.clipboard || !normalizedBracketSearch) return;
@@ -614,6 +698,7 @@ export default function Campeonatos() {
       : ` Status: ${getMatchStatusLabel(match)}.`;
     return `${base}${status}`;
   };
+  const formatRoundStory = (roundIndexes: number[]) => roundIndexes.map(index => getRoundLabel(index, totalRoundsExibidos, roundsExibidos[index]?.length ?? 0)).join(" > ");
   const getSeedLabel = (roundIndex: number, slotIndex: number) => {
     if (roundIndex !== 0) return null;
     return `#${slotIndex + 1}`;
@@ -680,8 +765,15 @@ export default function Campeonatos() {
           roundsExibidos[searchedPlayerLastRoundIndex]?.length ?? 0
         )
       : null;
+  const searchedPlayerRoundTrail = normalizedBracketSearch
+    ? roundsExibidos.reduce<number[]>((acc, round, index) => {
+        if (roundContainsSearchedPlayer(round)) acc.push(index);
+        return acc;
+      }, [])
+    : [];
   const campeaoAtual = roundsExibidos[roundsExibidos.length - 1]?.[0]?.vencedor;
-  const bracketMatchHeight = compactBracket ? 96 : BRACKET_MATCH_HEIGHT;
+  const bracketMatchHeight =
+    bracketDensity === "ultracompacto" ? 74 : bracketDensity === "compacto" || compactBracket ? 96 : BRACKET_MATCH_HEIGHT;
   const getResponsiveRoundStackStyle = (roundIndex: number) => {
     if (roundIndex === 0) {
       return { paddingTop: "0px", gap: `${BRACKET_BASE_GAP}px` };
@@ -721,6 +813,62 @@ export default function Campeonatos() {
       : faseAtualIndex >= 0
       ? `Acompanhe a fase atual: ${faseAtualLabel}`
       : "Visualizacao completa";
+  const phaseSizeSummary = roundsExibidos.map(round => round.length * 2).join(" > ");
+  const currentPhaseCounter = `${Math.max(effectiveRoundIndex + 1, 1)} de ${Math.max(totalRoundsExibidos, 1)}`;
+  const orderedActivities = Object.entries(matchActivity)
+    .map(([key, value]) => {
+      const [roundIndex, matchIndex] = key.split("-").map(Number);
+      return { key, roundIndex, matchIndex, ...value };
+    })
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const copyRoundSummary = async (roundIndex: number) => {
+    if (typeof navigator === "undefined" || !navigator.clipboard) return;
+    const round = roundsExibidos[roundIndex];
+    if (!round) return;
+    const summary = [
+      `${campeonatoSelecionado?.nome ?? "Bracket atual"} - ${getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}`,
+      ...round.map(
+        (match, index) =>
+          `Partida ${index + 1}: ${exibirApelido(match.jogador1, displayPref)} x ${exibirApelido(match.jogador2, displayPref)}${
+            match.vencedor ? ` | vencedor: ${exibirApelido(match.vencedor, displayPref)}` : ""
+          }`
+      ),
+    ].join("\n");
+    await navigator.clipboard.writeText(summary);
+    toast.success("Resumo da fase copiado.");
+  };
+  const openMatchEditor = (roundIndex: number, matchIndex: number, winner: string) => {
+    const key = `${roundIndex}-${matchIndex}`;
+    setEditingMatchKey(key);
+    setManualScoreInput(matchActivity[key]?.score || "1 x 0");
+    setManualNoteInput(matchActivity[key]?.note || `Resultado confirmado para ${exibirApelido(winner, displayPref)}`);
+  };
+  const saveMatchEditor = () => {
+    if (!editingMatchKey) return;
+    setMatchActivity(prev => ({
+      ...prev,
+      [editingMatchKey]: {
+        ...(prev[editingMatchKey] ?? { winner: "", updatedAt: new Date().toLocaleString("pt-BR"), score: "1 x 0" }),
+        updatedAt: new Date().toLocaleString("pt-BR"),
+        score: manualScoreInput.trim() || "1 x 0",
+        note: manualNoteInput.trim() || "Atualizacao manual de placar",
+      },
+    }));
+    setEditingMatchKey(null);
+    toast.success("Placar local atualizado.");
+  };
+  const toggleBracketFullscreen = async () => {
+    if (typeof document === "undefined") return;
+    try {
+      if (!document.fullscreenElement) {
+        await bracketContentRef.current?.requestFullscreen?.();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {
+      toast.error("Nao foi possivel alternar a tela cheia do bracket.");
+    }
+  };
   const exportBracketAsImage = async () => {
     if (typeof window === "undefined" || !bracketContentRef.current) return;
     try {
@@ -729,30 +877,45 @@ export default function Campeonatos() {
       clone.style.width = `${sourceNode.scrollWidth}px`;
       clone.style.background = "#07111f";
       clone.style.padding = "16px";
+      clone.style.fontFamily = "system-ui, sans-serif";
       clone.querySelectorAll("[data-export-hidden='true']").forEach(node => node.remove());
-      const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${sourceNode.scrollWidth + 32}" height="${sourceNode.scrollHeight + 32}">
-          <foreignObject width="100%" height="100%">
-            <div xmlns="http://www.w3.org/1999/xhtml" style="width:${sourceNode.scrollWidth + 32}px;height:${sourceNode.scrollHeight + 32}px;background:#07111f;padding:16px;box-sizing:border-box;">
-              ${clone.outerHTML}
-            </div>
-          </foreignObject>
-        </svg>`;
+      const wrapper = document.createElement("div");
+      wrapper.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+      wrapper.style.width = `${sourceNode.scrollWidth + 32}px`;
+      wrapper.style.height = `${sourceNode.scrollHeight + 32}px`;
+      wrapper.style.background = "#07111f";
+      wrapper.style.padding = "16px";
+      wrapper.style.boxSizing = "border-box";
+      wrapper.appendChild(clone);
+      const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+      foreignObject.setAttribute("width", "100%");
+      foreignObject.setAttribute("height", "100%");
+      foreignObject.appendChild(wrapper);
+      const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      svgElement.setAttribute("width", String(sourceNode.scrollWidth + 32));
+      svgElement.setAttribute("height", String(sourceNode.scrollHeight + 32));
+      svgElement.appendChild(foreignObject);
+      const svg = new XMLSerializer().serializeToString(svgElement);
       const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const image = new Image();
       image.onload = () => {
         const canvas = document.createElement("canvas");
-        canvas.width = sourceNode.scrollWidth + 32;
-        canvas.height = sourceNode.scrollHeight + 32;
+        const ratio = Math.max(2, Math.ceil(window.devicePixelRatio || 1));
+        canvas.width = (sourceNode.scrollWidth + 32) * ratio;
+        canvas.height = (sourceNode.scrollHeight + 32) * ratio;
+        canvas.style.width = `${sourceNode.scrollWidth + 32}px`;
+        canvas.style.height = `${sourceNode.scrollHeight + 32}px`;
         const context = canvas.getContext("2d");
         if (!context) {
           URL.revokeObjectURL(url);
           toast.error("Nao foi possivel exportar o bracket.");
           return;
         }
+        context.scale(ratio, ratio);
         context.fillStyle = "#07111f";
-        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.fillRect(0, 0, sourceNode.scrollWidth + 32, sourceNode.scrollHeight + 32);
         context.drawImage(image, 0, 0);
         URL.revokeObjectURL(url);
         const link = document.createElement("a");
@@ -784,6 +947,18 @@ export default function Campeonatos() {
     if (!target) return;
     target.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }, [effectiveRoundIndex, compactBracket, presentationMode]);
+
+  useEffect(() => {
+    if (!presentationMode || !presentationAutoplay || roundsExibidos.length <= 1) return;
+    const interval = window.setInterval(() => {
+      setRoundFilter(current => {
+        if (current === "todas") return "0";
+        const next = Number(current) + 1;
+        return String(next >= roundsExibidos.length ? 0 : next);
+      });
+    }, 4500);
+    return () => window.clearInterval(interval);
+  }, [presentationMode, presentationAutoplay, roundsExibidos.length]);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -946,7 +1121,17 @@ export default function Campeonatos() {
           </div>
           {rounds.length === 0 ? (
             <div className="card-elegant p-4 text-sm text-muted-foreground">
-              Exibindo um chaveamento de exemplo com 16 participantes. Quando o sorteio real acontecer, este modelo sera substituido automaticamente.
+              <p>Exibindo um chaveamento de exemplo com 16 participantes. Quando o sorteio real acontecer, este modelo sera substituido automaticamente.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {isAdmin ? (
+                  <Button size="sm" variant="outline" onClick={handleSortearConfrontos} disabled={sorteando || !selectedCampId || !inscritosNomes.length}>
+                    {sorteando ? "Sorteando..." : "Gerar sorteio real"}
+                  </Button>
+                ) : null}
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs">
+                  {isAdmin ? "Aguardando definicao do admin" : "Aguardando sorteio do admin"}
+                </span>
+              </div>
             </div>
           ) : null}
           {campeaoAtual && !isBracketPlaceholder(campeaoAtual) ? (
@@ -1048,8 +1233,21 @@ export default function Campeonatos() {
                   <Button variant="outline" size="sm" className="shrink-0" onClick={() => setPresentationMode(prev => !prev)}>
                     {presentationMode ? "Modo normal" : "Modo apresentacao"}
                   </Button>
+                  {presentationMode ? (
+                    <>
+                      <Button variant="outline" size="sm" className="shrink-0" onClick={() => setPresentationAutoplay(prev => !prev)}>
+                        {presentationAutoplay ? "Pausar rotacao" : "Rotacao automatica"}
+                      </Button>
+                      <Button variant="outline" size="sm" className="shrink-0" onClick={toggleBracketFullscreen}>
+                        Tela cheia
+                      </Button>
+                    </>
+                  ) : null}
                   <Button variant="outline" size="sm" className="shrink-0" onClick={() => setCollapsedResolvedRounds(prev => !prev)}>
                     {collapsedResolvedRounds ? "Expandir resolvidas" : "Compactar resolvidas"}
+                  </Button>
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setSpectatorMode(prev => !prev)}>
+                    {spectatorMode ? "Modo operador" : "Modo espectador"}
                   </Button>
                   <Button
                     variant={compactBracket ? "default" : "outline"}
@@ -1059,6 +1257,16 @@ export default function Campeonatos() {
                   >
                     {compactBracket ? "Modo compacto" : "Modo detalhado"}
                   </Button>
+                  <select
+                    value={bracketDensity}
+                    onChange={event => setBracketDensity(event.target.value as "detalhado" | "compacto" | "ultracompacto")}
+                    aria-label="Escolher densidade visual do bracket"
+                    className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20"
+                  >
+                    <option value="detalhado">Detalhado</option>
+                    <option value="compacto">Compacto</option>
+                    <option value="ultracompacto">Ultracompacto</option>
+                  </select>
                   <Button variant="outline" size="sm" className="shrink-0" onClick={exportBracketAsImage}>
                     Exportar imagem
                   </Button>
@@ -1086,14 +1294,51 @@ export default function Campeonatos() {
             {normalizedBracketSearch ? (
               <div className="mt-3 rounded-xl border border-white/10 bg-black/10 px-3 py-2 text-sm">
                 {searchedPlayerLastRoundIndex >= 0 ? (
-                  <span className="text-cyan-100">
-                    Jogador encontrado. Melhor fase destacada: <span className="font-semibold">{searchedPlayerRoundLabel}</span>.
-                  </span>
+                  <div className="space-y-1">
+                    <span className="text-cyan-100">
+                      Jogador encontrado. Melhor fase destacada: <span className="font-semibold">{searchedPlayerRoundLabel}</span>.
+                    </span>
+                    <p className="text-xs text-cyan-100/80">Caminho: {formatRoundStory(searchedPlayerRoundTrail)}</p>
+                  </div>
                 ) : (
                   <span className="text-muted-foreground">Nenhum jogador encontrado com esse nome no bracket atual.</span>
                 )}
               </div>
             ) : null}
+          </div>
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Resumo da chave</p>
+                  <p className="text-sm text-foreground">Fluxo de participantes: {phaseSizeSummary}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => copyRoundSummary(effectiveRoundIndex)}>
+                    Copiar fase atual
+                  </Button>
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => goToRound(effectiveRoundIndex)}>
+                    Focar fase atual
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                <span className="rounded-full border border-cyan-300/35 bg-cyan-400/10 px-3 py-1">Fase atual: {faseAtualLabel}</span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Contador mobile: {currentPhaseCounter}</span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Densidade: {bracketDensity}</span>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Legenda</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-cyan-100">Em aberto</span>
+                <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-emerald-200">Definida</span>
+                <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-amber-100">W.O</span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-muted-foreground">Aguardando</span>
+                <span className="rounded-full border border-cyan-300/35 bg-cyan-400/15 px-3 py-1 text-cyan-100">Fase em foco</span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-foreground">Jogador buscado</span>
+              </div>
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
@@ -1154,7 +1399,9 @@ export default function Campeonatos() {
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Visualizacao: {compactBracket ? "Compacta" : "Detalhada"}</span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Fase: {roundFilterLabel}</span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Modo TV: {presentationMode ? "ativo" : "desligado"}</span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Rotacao: {presentationAutoplay ? "automatica" : "manual"}</span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Resolvidas: {collapsedResolvedRounds ? "compactadas" : "expandidas"}</span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Espectador: {spectatorMode ? "ativo" : "desligado"}</span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
               Busca: {normalizedBracketSearch ? bracketSearch.trim() : "nenhuma"}
             </span>
@@ -1162,6 +1409,7 @@ export default function Campeonatos() {
               Colunas visiveis: {roundsFiltrados.length}
             </span>
           </div>
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div
             ref={bracketContentRef}
             className={`rounded-3xl border border-white/10 bg-black/10 p-3 sm:p-4 print:rounded-none print:border-black/20 print:bg-transparent print:p-0 ${
@@ -1169,6 +1417,15 @@ export default function Campeonatos() {
             }`}
           >
             <div className="mb-3 space-y-3 print:hidden" data-export-hidden="true">
+              <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3 py-2 sm:hidden">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Fase atual</p>
+                  <p className="text-sm font-semibold text-cyan-100">{roundFilterLabel}</p>
+                </div>
+                <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-cyan-100">
+                  {currentPhaseCounter}
+                </span>
+              </div>
               <div className="flex gap-2 overflow-x-auto pb-1 text-[11px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {roundsExibidos.map((round, roundIndex) => (
                   <button
@@ -1258,15 +1515,22 @@ export default function Campeonatos() {
                         <h3 className="text-base font-semibold">{getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}</h3>
                         <p className="text-[11px] text-muted-foreground">{round.length} partida{round.length === 1 ? "" : "s"}</p>
                       </div>
-                      <span
-                        className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] ${
-                          faseAtualIndex === roundIndex
-                            ? "border-cyan-300/35 bg-cyan-400/15 text-cyan-100"
-                            : "border-white/10 bg-white/5 text-muted-foreground"
-                        }`}
-                      >
-                        {collapseRound ? "Compacta" : faseAtualIndex === roundIndex ? "Em foco" : rounds.length > 0 ? "Eliminacao" : "Exemplo"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {!spectatorMode ? (
+                          <Button variant="outline" size="sm" className="h-8 px-2 text-[11px]" onClick={() => copyRoundSummary(roundIndex)}>
+                            Copiar
+                          </Button>
+                        ) : null}
+                        <span
+                          className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] ${
+                            faseAtualIndex === roundIndex
+                              ? "border-cyan-300/35 bg-cyan-400/15 text-cyan-100"
+                              : "border-white/10 bg-white/5 text-muted-foreground"
+                          }`}
+                        >
+                          {collapseRound ? "Compacta" : faseAtualIndex === roundIndex ? "Em foco" : rounds.length > 0 ? "Eliminacao" : "Exemplo"}
+                        </span>
+                      </div>
                     </div>
                     <div className="flex flex-col" style={getResponsiveRoundStackStyle(roundIndex)}>
                       {round.map((match, matchIndex) => (
@@ -1330,7 +1594,7 @@ export default function Campeonatos() {
                               variant={rounds.length > 0 && match.vencedor === match.jogador1 ? "default" : "outline"}
                               aria-label={`Selecionar ${exibirApelido(match.jogador1, displayPref)} como vencedor da partida ${matchIndex + 1} do round ${roundIndex + 1}`}
                               className={`justify-between ${compactBracket ? "h-9 px-2" : ""} ${isBracketPlaceholder(match.jogador1) ? "border-dashed text-muted-foreground" : ""}`}
-                              disabled={isBracketPlaceholder(match.jogador1)}
+                              disabled={spectatorMode || isBracketPlaceholder(match.jogador1)}
                               onClick={() => {
                                 if (rounds.length === 0) return;
                                 handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1);
@@ -1354,7 +1618,7 @@ export default function Campeonatos() {
                               variant={rounds.length > 0 && match.vencedor === match.jogador2 ? "default" : "outline"}
                               aria-label={`Selecionar ${exibirApelido(match.jogador2, displayPref)} como vencedor da partida ${matchIndex + 1} do round ${roundIndex + 1}`}
                               className={`justify-between ${compactBracket ? "h-9 px-2" : ""} ${isBracketPlaceholder(match.jogador2) ? "border-dashed text-muted-foreground" : ""}`}
-                              disabled={isBracketPlaceholder(match.jogador2)}
+                              disabled={spectatorMode || isBracketPlaceholder(match.jogador2)}
                               onClick={() => {
                                 if (rounds.length === 0) return;
                                 handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2);
@@ -1374,6 +1638,16 @@ export default function Campeonatos() {
                               {rounds.length > 0 && match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                             </Button>
                           </div>
+                          {!spectatorMode && rounds.length > 0 && match.vencedor && !isBracketPlaceholder(match.vencedor) ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-2 text-[11px]"
+                              onClick={() => openMatchEditor(roundIndex, matchIndex, match.vencedor!)}
+                            >
+                              Editar placar
+                            </Button>
+                          ) : null}
                           {matchActivity[`${roundIndex}-${matchIndex}`] ? (
                             <div className="rounded-xl border border-white/10 bg-black/10 px-2.5 py-2 text-[11px] text-muted-foreground">
                               <div className="flex items-center justify-between gap-2">
@@ -1381,6 +1655,9 @@ export default function Campeonatos() {
                                 <span>{matchActivity[`${roundIndex}-${matchIndex}`].updatedAt}</span>
                               </div>
                               <p className="mt-1 text-foreground/80">Ultima atualizacao: {exibirApelido(matchActivity[`${roundIndex}-${matchIndex}`].winner, displayPref)}</p>
+                              {matchActivity[`${roundIndex}-${matchIndex}`].note ? (
+                                <p className="mt-1 text-muted-foreground">{matchActivity[`${roundIndex}-${matchIndex}`].note}</p>
+                              ) : null}
                             </div>
                           ) : null}
                           {!isAdmin && rounds.length > 0 && match.vencedor ? (
@@ -1406,6 +1683,32 @@ export default function Campeonatos() {
               </div>
             </div>
           </div>
+          <aside className="space-y-4 print:hidden" data-export-hidden="true">
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Timeline da chave</p>
+              <div className="mt-3 space-y-3">
+                {orderedActivities.length > 0 ? orderedActivities.slice(0, 8).map(activity => (
+                  <div key={activity.key} className="rounded-xl border border-white/10 bg-black/10 px-3 py-2 text-sm">
+                    <p className="font-medium text-foreground">{getRoundLabel(activity.roundIndex, totalRoundsExibidos, roundsExibidos[activity.roundIndex]?.length ?? 0)} • Partida {activity.matchIndex + 1}</p>
+                    <p className="text-cyan-100">{exibirApelido(activity.winner, displayPref)} • {activity.score}</p>
+                    <p className="text-xs text-muted-foreground">{activity.updatedAt}</p>
+                    {activity.note ? <p className="mt-1 text-xs text-muted-foreground">{activity.note}</p> : null}
+                  </div>
+                )) : (
+                  <p className="text-sm text-muted-foreground">Nenhuma atividade recente registrada no bracket.</p>
+                )}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Visao do espectador</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {spectatorMode
+                  ? "Controles operacionais ocultos e leitura priorizada para publico."
+                  : "Ative o modo espectador para esconder a maioria das acoes e deixar a transmissao mais limpa."}
+              </p>
+            </div>
+          </aside>
+          </div>
         </div>
       </section>
 
@@ -1421,6 +1724,41 @@ export default function Campeonatos() {
           </div>
         </div>
       </section>
+
+      <AlertDialog open={Boolean(editingMatchKey)} onOpenChange={open => !open && setEditingMatchKey(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Editar placar local</AlertDialogTitle>
+            <AlertDialogDescription>
+              Atualize o placar e uma observacao desta partida. Esse dado fica salvo localmente no dispositivo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3">
+            <label className="block space-y-1 text-sm">
+              <span className="text-muted-foreground">Placar</span>
+              <input
+                value={manualScoreInput}
+                onChange={event => setManualScoreInput(event.target.value)}
+                className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20"
+                placeholder="Ex.: 2 x 1"
+              />
+            </label>
+            <label className="block space-y-1 text-sm">
+              <span className="text-muted-foreground">Observacao</span>
+              <textarea
+                value={manualNoteInput}
+                onChange={event => setManualNoteInput(event.target.value)}
+                className="min-h-[96px] w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-foreground outline-none transition focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20"
+                placeholder="Resumo da partida, horario, observacoes..."
+              />
+            </label>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setEditingMatchKey(null)}>Cancelar</AlertDialogCancel>
+            <Button onClick={saveMatchEditor}>Salvar placar</Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
