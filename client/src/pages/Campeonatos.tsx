@@ -484,6 +484,35 @@ export default function Campeonatos() {
     const nextMatch = roundsExibidos[roundIndex + 1]?.[Math.floor(matchIndex / 2)];
     return nextMatch?.jogador1 === match.vencedor || nextMatch?.jogador2 === match.vencedor;
   };
+  const getPlayerBadge = (name: string) => {
+    if (name === BYE) return "W.O";
+    if (name === "Aguardando") return "...";
+    return exibirApelido(name, displayPref)
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0]?.toUpperCase() ?? "")
+      .join("")
+      .slice(0, 2);
+  };
+  const getMatchStatusLabel = (match: Match) => {
+    if (match.vencedor && !isBracketPlaceholder(match.vencedor)) return "Definida";
+    if (match.jogador1 === BYE || match.jogador2 === BYE) return "W.O";
+    if (isBracketPlaceholder(match.jogador1) || isBracketPlaceholder(match.jogador2)) return "Aguardando";
+    return "Aberta";
+  };
+  const getMatchStatusClassName = (match: Match) => {
+    if (match.vencedor && !isBracketPlaceholder(match.vencedor)) {
+      return "border-emerald-400/30 bg-emerald-400/10 text-emerald-200";
+    }
+    if (match.jogador1 === BYE || match.jogador2 === BYE) {
+      return "border-amber-400/30 bg-amber-400/10 text-amber-100";
+    }
+    if (isBracketPlaceholder(match.jogador1) || isBracketPlaceholder(match.jogador2)) {
+      return "border-white/10 bg-white/5 text-muted-foreground";
+    }
+    return "border-cyan-400/20 bg-cyan-400/10 text-cyan-100";
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -644,10 +673,32 @@ export default function Campeonatos() {
               Exibindo um chaveamento de exemplo com 16 participantes. Quando o sorteio real acontecer, este modelo sera substituido automaticamente.
             </div>
           ) : null}
-          <div className="overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max items-start gap-4 px-1 sm:gap-6">
+          <div className="rounded-3xl border border-white/10 bg-black/10 p-3 sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex gap-2 overflow-x-auto pb-1 text-[11px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
+                {roundsExibidos.map((round, roundIndex) => (
+                  <span
+                    key={`round-pill-${roundIndex}`}
+                    className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 tracking-wide text-muted-foreground"
+                  >
+                    {getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}
+                  </span>
+                ))}
+              </div>
+              <p className="hidden text-[11px] text-muted-foreground sm:block">
+                Deslize horizontalmente para acompanhar o fluxo completo do bracket.
+              </p>
+              <span className="shrink-0 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-cyan-100 sm:hidden">
+                {totalRoundsExibidos} fases
+              </span>
+            </div>
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background via-background/75 to-transparent sm:w-12" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background via-background/75 to-transparent sm:w-12" />
+              <div className="overflow-x-auto pb-4 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex min-w-max items-start gap-4 px-1 sm:gap-6">
               {roundsExibidos.map((round, roundIndex) => (
-                <div key={roundIndex} className="relative flex w-[85vw] max-w-[320px] min-w-[260px] shrink-0 items-stretch sm:w-[320px]">
+                  <div key={roundIndex} className="relative flex w-[85vw] max-w-[320px] min-w-[260px] shrink-0 snap-center items-stretch sm:w-[320px] sm:snap-start">
                   <div className="relative w-full rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))] p-4 space-y-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md">
                     <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
                     <div className="flex items-center justify-between">
@@ -693,8 +744,10 @@ export default function Campeonatos() {
                             <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                               Partida {matchIndex + 1}
                             </h4>
-                            <span className="text-[10px] text-muted-foreground px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
-                              vs
+                            <span
+                              className={`text-[10px] px-2 py-0.5 rounded-full border ${getMatchStatusClassName(match)}`}
+                            >
+                              {getMatchStatusLabel(match)}
                             </span>
                           </div>
                           <p className="text-[11px] text-muted-foreground">
@@ -711,7 +764,12 @@ export default function Campeonatos() {
                                 handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1);
                               }}
                             >
-                              <span className="truncate">{exibirApelido(match.jogador1, displayPref)}</span>
+                              <span className="flex min-w-0 items-center gap-2">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-[10px] font-semibold text-foreground/80">
+                                  {getPlayerBadge(match.jogador1)}
+                                </span>
+                                <span className="truncate text-left">{exibirApelido(match.jogador1, displayPref)}</span>
+                              </span>
                               {rounds.length > 0 && match.vencedor === match.jogador1 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                             </Button>
                             <Button
@@ -724,7 +782,12 @@ export default function Campeonatos() {
                                 handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2);
                               }}
                             >
-                              <span className="truncate">{exibirApelido(match.jogador2, displayPref)}</span>
+                              <span className="flex min-w-0 items-center gap-2">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-[10px] font-semibold text-foreground/80">
+                                  {getPlayerBadge(match.jogador2)}
+                                </span>
+                                <span className="truncate text-left">{exibirApelido(match.jogador2, displayPref)}</span>
+                              </span>
                               {rounds.length > 0 && match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                             </Button>
                           </div>
@@ -746,6 +809,8 @@ export default function Campeonatos() {
                   ) : null}
                 </div>
               ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
