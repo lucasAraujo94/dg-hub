@@ -528,6 +528,7 @@ export default function Campeonatos() {
       : totalRoundsExibidos > 0
       ? "Concluido"
       : "Aguardando";
+  const progressoPercentual = partidasTotais > 0 ? Math.round((partidasDefinidas / partidasTotais) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -701,7 +702,7 @@ export default function Campeonatos() {
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Fase atual</p>
-              <p className="mt-2 text-2xl font-semibold">{faseAtualLabel}</p>
+              <p className="mt-2 text-2xl font-semibold text-cyan-100">{faseAtualLabel}</p>
               <p className="text-xs text-muted-foreground">Primeira etapa ainda com confrontos em aberto</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
@@ -709,6 +710,12 @@ export default function Campeonatos() {
               <p className="mt-2 text-2xl font-semibold">
                 {partidasDefinidas}/{partidasTotais}
               </p>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-200 transition-[width] duration-300"
+                  style={{ width: `${progressoPercentual}%` }}
+                />
+              </div>
               <p className="text-xs text-muted-foreground">Partidas com vencedor definido</p>
             </div>
           </div>
@@ -718,7 +725,11 @@ export default function Campeonatos() {
                 {roundsExibidos.map((round, roundIndex) => (
                   <span
                     key={`round-pill-${roundIndex}`}
-                    className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 tracking-wide text-muted-foreground"
+                    className={`shrink-0 rounded-full border px-3 py-1 tracking-wide ${
+                      faseAtualIndex === roundIndex
+                        ? "border-cyan-300/40 bg-cyan-400/15 text-cyan-100"
+                        : "border-white/10 bg-white/5 text-muted-foreground"
+                    }`}
                   >
                     {getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}
                   </span>
@@ -738,15 +749,27 @@ export default function Campeonatos() {
                 <div className="flex min-w-max items-start gap-4 px-1 sm:gap-6">
               {roundsExibidos.map((round, roundIndex) => (
                   <div key={roundIndex} className="relative flex w-[85vw] max-w-[320px] min-w-[260px] shrink-0 snap-center items-stretch sm:w-[320px] sm:snap-start">
-                  <div className="relative w-full rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))] p-4 space-y-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md">
+                  <div
+                    className={`relative w-full rounded-[28px] border p-4 space-y-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md ${
+                      faseAtualIndex === roundIndex
+                        ? "border-cyan-300/35 bg-[linear-gradient(180deg,rgba(34,211,238,0.14),rgba(255,255,255,0.05))]"
+                        : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
+                    }`}
+                  >
                     <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-[10px] uppercase tracking-[0.26em] text-cyan-200/70">Round {roundIndex + 1}</p>
                         <h3 className="text-base font-semibold">{getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}</h3>
                       </div>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-muted-foreground uppercase tracking-[0.22em]">
-                        {rounds.length > 0 ? "Eliminacao" : "Exemplo"}
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] ${
+                          faseAtualIndex === roundIndex
+                            ? "border-cyan-300/35 bg-cyan-400/15 text-cyan-100"
+                            : "border-white/10 bg-white/5 text-muted-foreground"
+                        }`}
+                      >
+                        {faseAtualIndex === roundIndex ? "Em foco" : rounds.length > 0 ? "Eliminacao" : "Exemplo"}
                       </span>
                     </div>
                     <div className="flex flex-col" style={getRoundStackStyle(roundIndex)}>
