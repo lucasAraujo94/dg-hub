@@ -513,6 +513,21 @@ export default function Campeonatos() {
     }
     return "border-cyan-400/20 bg-cyan-400/10 text-cyan-100";
   };
+  const totalParticipantesExibidos = roundsExibidos[0]?.length ? roundsExibidos[0].length * 2 : 0;
+  const partidasDefinidas = roundsExibidos.reduce(
+    (acc, round) => acc + round.filter(match => match.vencedor && !isBracketPlaceholder(match.vencedor)).length,
+    0
+  );
+  const partidasTotais = roundsExibidos.reduce((acc, round) => acc + round.length, 0);
+  const faseAtualIndex = roundsExibidos.findIndex(round =>
+    round.some(match => !match.vencedor && !isBracketPlaceholder(match.jogador1) && !isBracketPlaceholder(match.jogador2))
+  );
+  const faseAtualLabel =
+    faseAtualIndex >= 0
+      ? getRoundLabel(faseAtualIndex, totalRoundsExibidos, roundsExibidos[faseAtualIndex]?.length ?? 0)
+      : totalRoundsExibidos > 0
+      ? "Concluido"
+      : "Aguardando";
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -673,6 +688,30 @@ export default function Campeonatos() {
               Exibindo um chaveamento de exemplo com 16 participantes. Quando o sorteio real acontecer, este modelo sera substituido automaticamente.
             </div>
           ) : null}
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Participantes</p>
+              <p className="mt-2 text-2xl font-semibold">{totalParticipantesExibidos}</p>
+              <p className="text-xs text-muted-foreground">Capacidade visual adaptada ao total da chave</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Fases</p>
+              <p className="mt-2 text-2xl font-semibold">{totalRoundsExibidos}</p>
+              <p className="text-xs text-muted-foreground">Eliminacao simples com rounds progressivos</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Fase atual</p>
+              <p className="mt-2 text-2xl font-semibold">{faseAtualLabel}</p>
+              <p className="text-xs text-muted-foreground">Primeira etapa ainda com confrontos em aberto</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Progresso</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {partidasDefinidas}/{partidasTotais}
+              </p>
+              <p className="text-xs text-muted-foreground">Partidas com vencedor definido</p>
+            </div>
+          </div>
           <div className="rounded-3xl border border-white/10 bg-black/10 p-3 sm:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex gap-2 overflow-x-auto pb-1 text-[11px] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
