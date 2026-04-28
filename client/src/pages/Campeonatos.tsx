@@ -456,6 +456,15 @@ export default function Campeonatos() {
   };
 
   const roundsExibidos = rounds.length > 0 ? rounds : EXEMPLO_CHAVEAMENTO_16;
+  const totalRoundsExibidos = roundsExibidos.length;
+  const getRoundLabel = (roundIndex: number, totalRounds: number, matchesCount: number) => {
+    const roundsRestantes = totalRounds - roundIndex - 1;
+    if (roundsRestantes === 0) return "Final";
+    if (roundsRestantes === 1) return "Semifinal";
+    if (roundsRestantes === 2) return "Quartas";
+    if (roundsRestantes === 3) return "Oitavas";
+    return `${matchesCount * 2} jogadores`;
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -605,7 +614,10 @@ export default function Campeonatos() {
               <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
             </div>
             {roundsExibidos.length > 0 ? (
-              <span className="text-sm text-muted-foreground">{roundsExibidos[0].length} partida{roundsExibidos[0].length === 1 ? "" : "s"} inicial{roundsExibidos[0].length === 1 ? "" : "is"} • exemplo com 16 participantes</span>
+              <span className="text-sm text-muted-foreground">
+                {roundsExibidos[0].length} partida{roundsExibidos[0].length === 1 ? "" : "s"} inicial{roundsExibidos[0].length === 1 ? "" : "is"}
+                {rounds.length > 0 ? " • bracket responsivo para qualquer quantidade" : " • exemplo com 16 participantes"}
+              </span>
             ) : null}
           </div>
           {rounds.length === 0 ? (
@@ -613,16 +625,18 @@ export default function Campeonatos() {
               Exibindo um chaveamento de exemplo com 16 participantes. Quando o sorteio real acontecer, este modelo sera substituido automaticamente.
             </div>
           ) : null}
-          <div className="overflow-x-auto pb-2">
-            <div className="min-w-full grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
+          <div className="overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max items-start gap-4 px-1 sm:gap-6">
               {roundsExibidos.map((round, roundIndex) => (
-                  <div
-                    key={roundIndex}
-                    className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4 space-y-3 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.45)]"
-                  >
+                <div key={roundIndex} className="relative flex w-[85vw] max-w-[320px] min-w-[260px] shrink-0 items-stretch sm:w-[320px]">
+                  <div className="relative w-full rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))] p-4 space-y-4 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)] backdrop-blur-md">
+                    <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold">Round {roundIndex + 1}</h3>
-                      <span className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.26em] text-cyan-200/70">Round {roundIndex + 1}</p>
+                        <h3 className="text-base font-semibold">{getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}</h3>
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-muted-foreground uppercase tracking-[0.22em]">
                         {rounds.length > 0 ? "Eliminacao" : "Exemplo"}
                       </span>
                     </div>
@@ -630,8 +644,19 @@ export default function Campeonatos() {
                       {round.map((match, matchIndex) => (
                         <div
                           key={`${roundIndex}-${matchIndex}`}
-                          className="rounded-xl border border-white/10 bg-gradient-to-r from-purple-600/10 to-cyan-500/10 p-3 space-y-2 shadow-inner"
+                          className="relative rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08))] p-3 space-y-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
                         >
+                          <div className="absolute -left-2 top-1/2 hidden h-px w-2 -translate-y-1/2 bg-gradient-to-r from-cyan-400/0 to-cyan-400/60 sm:block" />
+                          {roundIndex < roundsExibidos.length - 1 ? (
+                            <>
+                              <div className="absolute -right-4 top-1/2 hidden h-px w-4 -translate-y-1/2 bg-gradient-to-r from-cyan-300/70 to-cyan-300/20 sm:block" />
+                              <div
+                                className={`absolute -right-4 hidden w-px bg-cyan-300/35 sm:block ${
+                                  matchIndex % 2 === 0 ? "top-1/2 h-[calc(50%+0.75rem)]" : "bottom-1/2 h-[calc(50%+0.75rem)]"
+                                }`}
+                              />
+                            </>
+                          ) : null}
                           <div className="flex items-center justify-between">
                             <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                               Partida {matchIndex + 1}
@@ -679,9 +704,16 @@ export default function Campeonatos() {
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
+                  {roundIndex < roundsExibidos.length - 1 ? (
+                    <div className="pointer-events-none absolute -right-5 top-1/2 hidden h-px w-5 -translate-y-1/2 sm:block">
+                      <div className="h-px w-full bg-gradient-to-r from-cyan-300/55 to-cyan-300/10" />
+                      <div className="absolute right-0 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-r border-t border-cyan-300/60 bg-transparent" />
+                    </div>
+                  ) : null}
+                </div>
+              ))}
             </div>
+          </div>
         </div>
       </section>
 
