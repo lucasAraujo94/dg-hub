@@ -19,6 +19,29 @@ import { getLoginUrl } from "@/const";
 
 const BYE = "W.O";
 type Match = { jogador1: string; jogador2: string; vencedor?: string };
+const EXEMPLO_CHAVEAMENTO_16: Match[][] = [
+  [
+    { jogador1: "Jogador 01", jogador2: "Jogador 02" },
+    { jogador1: "Jogador 03", jogador2: "Jogador 04" },
+    { jogador1: "Jogador 05", jogador2: "Jogador 06" },
+    { jogador1: "Jogador 07", jogador2: "Jogador 08" },
+    { jogador1: "Jogador 09", jogador2: "Jogador 10" },
+    { jogador1: "Jogador 11", jogador2: "Jogador 12" },
+    { jogador1: "Jogador 13", jogador2: "Jogador 14" },
+    { jogador1: "Jogador 15", jogador2: "Jogador 16" },
+  ],
+  [
+    { jogador1: "Vencedor 1", jogador2: "Vencedor 2" },
+    { jogador1: "Vencedor 3", jogador2: "Vencedor 4" },
+    { jogador1: "Vencedor 5", jogador2: "Vencedor 6" },
+    { jogador1: "Vencedor 7", jogador2: "Vencedor 8" },
+  ],
+  [
+    { jogador1: "Vencedor Q1", jogador2: "Vencedor Q2" },
+    { jogador1: "Vencedor Q3", jogador2: "Vencedor Q4" },
+  ],
+  [{ jogador1: "Vencedor S1", jogador2: "Vencedor S2" }],
+];
 
 export default function Campeonatos() {
   const { user, isAuthenticated } = useAuth();
@@ -432,6 +455,8 @@ export default function Campeonatos() {
     window.speechSynthesis.speak(utterance);
   };
 
+  const roundsExibidos = rounds.length > 0 ? rounds : EXEMPLO_CHAVEAMENTO_16;
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
       <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
@@ -568,7 +593,6 @@ export default function Campeonatos() {
                 );
               })}
             </div>
-          )}
         </div>
       </section>
 
@@ -579,26 +603,27 @@ export default function Campeonatos() {
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chaveamento</p>
               <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
             </div>
-            {rounds.length > 0 ? (
-              <span className="text-sm text-muted-foreground">{rounds[0].length} partida{rounds[0].length === 1 ? "" : "s"} inicial{rounds[0].length === 1 ? "" : "is"} • seed fixo para todos</span>
+            {roundsExibidos.length > 0 ? (
+              <span className="text-sm text-muted-foreground">{roundsExibidos[0].length} partida{roundsExibidos[0].length === 1 ? "" : "s"} inicial{roundsExibidos[0].length === 1 ? "" : "is"} • exemplo com 16 participantes</span>
             ) : null}
           </div>
           {rounds.length === 0 ? (
             <div className="card-elegant p-4 text-sm text-muted-foreground">
-              Nenhum chaveamento gerado. Admin pode usar "Sortear chaveamento" com o campeonato selecionado; depois disso,
-              todos veem aqui automaticamente.
+              Exibindo um chaveamento de exemplo com 16 participantes. Quando o sorteio real acontecer, este modelo sera substituido automaticamente.
             </div>
-          ) : (
-            <div className="overflow-x-auto pb-2">
-              <div className="min-w-full grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
-                {rounds.map((round, roundIndex) => (
+          ) : null}
+          <div className="overflow-x-auto pb-2">
+            <div className="min-w-full grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
+              {roundsExibidos.map((round, roundIndex) => (
                   <div
                     key={roundIndex}
                     className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4 space-y-3 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.45)]"
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold">Round {roundIndex + 1}</h3>
-                      <span className="text-[11px] text-muted-foreground uppercase tracking-wide">Eliminação</span>
+                      <span className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                        {rounds.length > 0 ? "Eliminacao" : "Exemplo"}
+                      </span>
                     </div>
                     <div className="space-y-3">
                       {round.map((match, matchIndex) => (
@@ -614,31 +639,39 @@ export default function Campeonatos() {
                               vs
                             </span>
                           </div>
-                          <p className="text-[11px] text-muted-foreground">Toque no nome para marcar o vencedor.</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {rounds.length > 0 ? "Toque no nome para marcar o vencedor." : "Modelo ilustrativo de eliminacao."}
+                          </p>
                           <div className="flex flex-col gap-2">
                             <Button
                               size="sm"
-                              variant={match.vencedor === match.jogador1 ? "default" : "outline"}
+                              variant={rounds.length > 0 && match.vencedor === match.jogador1 ? "default" : "outline"}
                               className="justify-between"
-                              onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1)}
+                              onClick={() => {
+                                if (rounds.length === 0) return;
+                                handleRegistrarVencedor(roundIndex, matchIndex, match.jogador1);
+                              }}
                             >
                               <span className="truncate">{exibirApelido(match.jogador1, displayPref)}</span>
-                              {match.vencedor === match.jogador1 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
+                              {rounds.length > 0 && match.vencedor === match.jogador1 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                             </Button>
                             <Button
                               size="sm"
-                              variant={match.vencedor === match.jogador2 ? "default" : "outline"}
+                              variant={rounds.length > 0 && match.vencedor === match.jogador2 ? "default" : "outline"}
                               className="justify-between"
-                              onClick={() => handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2)}
+                              onClick={() => {
+                                if (rounds.length === 0) return;
+                                handleRegistrarVencedor(roundIndex, matchIndex, match.jogador2);
+                              }}
                             >
                               <span className="truncate">{exibirApelido(match.jogador2, displayPref)}</span>
-                              {match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
+                              {rounds.length > 0 && match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                             </Button>
                           </div>
-                          {!isAdmin && match.vencedor ? (
+                          {!isAdmin && rounds.length > 0 && match.vencedor ? (
                             <p className="text-xs text-muted-foreground">Vencedor: {exibirApelido(match.vencedor, displayPref)}</p>
                           ) : null}
-                          {!isAdmin && !match.vencedor ? (
+                          {!isAdmin && rounds.length > 0 && !match.vencedor ? (
                             <p className="text-[11px] text-muted-foreground">Aguardando resultado</p>
                           ) : null}
                         </div>
@@ -648,7 +681,6 @@ export default function Campeonatos() {
                 ))}
               </div>
             </div>
-          )}
         </div>
       </section>
 
@@ -667,4 +699,3 @@ export default function Campeonatos() {
     </div>
   );
 }
-
