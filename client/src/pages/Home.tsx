@@ -6,7 +6,6 @@ import {
   Loader2,
   Menu,
   Download,
-  TrendingUp,
   Zap,
   Home as HomeIcon,
   Trophy,
@@ -18,6 +17,9 @@ import {
   Type,
   ChevronLeft,
   ChevronRight,
+  TimerReset,
+  BellRing,
+  Wallet,
 } from "lucide-react";
 import { Link } from "wouter";
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
@@ -142,6 +144,17 @@ export default function Home() {
     const ts = new Date(latest.dataEnvio).getTime();
     return Number.isNaN(ts) ? null : ts;
   }, [chatHeadQuery.data]);
+  const latestChatPreview = useMemo(() => {
+    const latest = chatHeadQuery.data?.[0];
+    if (!latest) return null;
+    const autor = (latest as { nomeUsuario?: string | null; usuario?: { name?: string | null; nickname?: string | null } }).nomeUsuario
+      || (latest as { usuario?: { nickname?: string | null; name?: string | null } }).usuario?.nickname
+      || (latest as { usuario?: { name?: string | null } }).usuario?.name
+      || "Comunidade";
+    const texto = String((latest as { conteudo?: string | null }).conteudo ?? "").trim();
+    if (!texto) return null;
+    return `${autor}: ${texto}`;
+  }, [chatHeadQuery.data]);
 
   useEffect(() => {
     if (!latestChatTimestamp) {
@@ -219,26 +232,6 @@ export default function Home() {
     return real;
   }, [user]);
 
-  const dataSnapshot = {
-    polls: pollResultsQuery.data,
-    campeonatos: campeonatosQuery.data,
-    ranking: rankingTopQuery.data,
-  };
-  const isLoadingSnapshot = {
-    user: loading,
-    polls: pollResultsQuery.isLoading,
-    campeonatos: campeonatosQuery.isLoading,
-    ranking: rankingTopQuery.isLoading,
-  };
-  const errorSnapshot = {
-    auth: error ?? null,
-    polls: pollResultsQuery.error ?? null,
-    campeonatos: campeonatosQuery.error ?? null,
-    ranking: rankingTopQuery.error ?? null,
-  };
-
-  console.log("HOME RENDER", { dataSnapshot, isLoadingSnapshot, errorSnapshot, user });
-
   const activeChampionship = useMemo(() => {
     const list =
       (campeonatosQuery.data ?? []).map(camp => {
@@ -271,6 +264,13 @@ export default function Home() {
 
     return list.find(item => item.status === "ativo") || list.find(item => item.status === "futuro") || null;
   }, [campeonatosQuery.data]);
+  const sessionUrgency = remainingSessionMs <= 2 * 60 * 1000 ? "critica" : remainingSessionMs <= 5 * 60 * 1000 ? "atencao" : "ok";
+  const quickActions = [
+    { key: "campeonatos", label: "Campeonatos", icon: Trophy, action: () => { setActiveSection("campeonatos"); setMenuOpen(false); } },
+    { key: "chat", label: "Chat", icon: MessageCircle, action: () => { setActiveSection("chat"); setMenuOpen(false); markChatAsRead(); } },
+    { key: "ranking", label: "Ranking", icon: Star, href: "/ranking" },
+    { key: "perfil", label: "Perfil", icon: User, href: "/perfil" },
+  ] as const;
 
   const inscreverMutation = trpc.campeonatos.inscrever.useMutation({
     onSuccess: () => {
@@ -354,9 +354,11 @@ export default function Home() {
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3 text-sm w-full md:w-auto ms-auto justify-end text-left md:text-right">
-            <div className="flex flex-col items-start md:items-end max-w-[240px]">
+            <div className="flex flex-col items-start md:items-end max-w-[260px]">
               <span className="text-muted-foreground break-words">Ola, {displayName}</span>
-              <span className="text-[11px] text-muted-foreground flex items-center gap-1 flex-wrap">
+              <span className={`text-[11px] flex items-center gap-1 flex-wrap ${
+                sessionUrgency === "critica" ? "text-red-300" : sessionUrgency === "atencao" ? "text-amber-300" : "text-muted-foreground"
+              }`}>
                 Sessao expira em {formatSessionTime(remainingSessionMs)}
                 {isSessionPaused ? (
                   <span className="inline-flex items-center gap-1 text-amber-400">
@@ -511,6 +513,113 @@ export default function Home() {
 
         {/* Main content */}
         <main className="safe-stack flex-1 space-y-5 px-4 py-5 md:p-6 md:space-y-6">
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.8fr)]">
+            <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,165,233,0.16),rgba(16,185,129,0.12),rgba(255,255,255,0.04))] p-5 sm:p-6">
+              <div className="absolute inset-y-0 right-0 w-40 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.22),transparent_68%)]" />
+              <div className="relative space-y-4">
+                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-cyan-100">
+                  <BellRing className="h-3.5 w-3.5" />
+                  Central do jogador
+                </div>
+                <div className="space-y-2">
+                  <h1 className="max-w-3xl text-3xl font-semibold leading-tight text-white md:text-4xl">
+                    Acompanhe o campeonato certo, entre no chat mais rapido e aja sem procurar nada.
+                  </h1>
+                  <p className="max-w-2xl text-sm text-white/72 md:text-base">
+                    A home agora prioriza seu proximo passo: campeonato em destaque, novidades da comunidade, saldo e atalhos principais.
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Card className="border-white/10 bg-black/20 p-4">
+                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-white/55">
+                      <Wallet className="h-3.5 w-3.5" />
+                      Saldo
+                    </div>
+                    <p className="mt-2 text-2xl font-bold text-amber-300">
+                      R$ {Number((user as any)?.saldoPremio ?? (user as any)?.prizeBalance ?? 0).toFixed(2)}
+                    </p>
+                  </Card>
+                  <Card className="border-white/10 bg-black/20 p-4">
+                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-white/55">
+                      <Trophy className="h-3.5 w-3.5" />
+                      Campeonato
+                    </div>
+                    <p className="mt-2 line-clamp-2 text-sm font-semibold text-white">
+                      {activeChampionship?.nome ?? "Nenhum campeonato ativo agora"}
+                    </p>
+                  </Card>
+                  <Card className="border-white/10 bg-black/20 p-4">
+                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-white/55">
+                      <TimerReset className="h-3.5 w-3.5" />
+                      Sessao
+                    </div>
+                    <p className={`mt-2 text-sm font-semibold ${
+                      sessionUrgency === "critica" ? "text-red-300" : sessionUrgency === "atencao" ? "text-amber-300" : "text-white"
+                    }`}>
+                      {sessionUrgency === "critica" ? "Expirando em breve" : sessionUrgency === "atencao" ? "Fique atento" : "Tudo estavel"}
+                    </p>
+                  </Card>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button asChild className="rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-white">
+                    <Link href={activeChampionship?.id ? "/campeonatos" : "/campeonatos"}>
+                      {activeChampionship?.id ? "Ver campeonato em destaque" : "Explorar campeonatos"}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="rounded-2xl border-white/15 bg-white/5" onClick={() => { setActiveSection("chat"); markChatAsRead(); }}>
+                    Abrir chat
+                  </Button>
+                  <Button asChild variant="outline" className="rounded-2xl border-white/15 bg-white/5">
+                    <Link href="/ranking">Ver ranking</Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4">
+              <Card className="border-white/10 bg-black/30 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-white/50">Chat da comunidade</p>
+                    <h2 className="mt-2 text-xl font-semibold text-white">
+                      {hasNewChatMessages ? "Ha novidades no chat" : "Chat sob controle"}
+                    </h2>
+                  </div>
+                  <MessageCircle className={`h-5 w-5 ${hasNewChatMessages ? "text-cyan-300" : "text-white/45"}`} />
+                </div>
+                <p className="mt-3 line-clamp-3 text-sm text-white/70">
+                  {latestChatPreview ?? "Ainda nao ha mensagens recentes para mostrar aqui."}
+                </p>
+                <Button variant="outline" className="mt-4 w-full rounded-2xl border-white/15 bg-white/5" onClick={() => { setActiveSection("chat"); markChatAsRead(); }}>
+                  {hasNewChatMessages ? "Ler mensagens novas" : "Entrar no chat"}
+                </Button>
+              </Card>
+              <Card className="border-white/10 bg-black/30 p-4">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-white/50">Atalhos rapidos</p>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {quickActions.map(item => {
+                    const Icon = item.icon;
+                    return item.href ? (
+                      <Button key={item.key} asChild variant="outline" className="h-auto min-h-20 justify-start rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-left">
+                        <Link href={item.href}>
+                          <div className="flex flex-col items-start gap-2">
+                            <Icon className="h-4 w-4 text-cyan-200" />
+                            <span>{item.label}</span>
+                          </div>
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button key={item.key} variant="outline" className="h-auto min-h-20 justify-start rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-left" onClick={item.action}>
+                        <div className="flex flex-col items-start gap-2">
+                          <Icon className="h-4 w-4 text-cyan-200" />
+                          <span>{item.label}</span>
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </Card>
+            </div>
+          </section>
           {!activeSection ? (
             <Suspense
               fallback={
@@ -533,6 +642,8 @@ export default function Home() {
                   setMenuOpen(false);
                   markChatAsRead();
                 }}
+                latestChatPreview={latestChatPreview}
+                sessionUrgency={sessionUrgency}
                 onRegister={registrarInscricao}
                 onVote={(pollId, escolha) => {
                   if (votedPolls.has(pollId)) {
@@ -592,6 +703,30 @@ export default function Home() {
           ) : null}
 
         </main>
+      </div>
+      <div className="sticky bottom-0 z-30 border-t border-white/10 bg-black/60 px-3 py-2 backdrop-blur-xl md:hidden">
+        <div className="grid grid-cols-4 gap-2">
+          {quickActions.map(item => {
+            const Icon = item.icon;
+            return item.href ? (
+              <Button key={`mobile-${item.key}`} asChild variant="ghost" className="h-auto min-h-14 rounded-2xl border border-white/10 bg-white/5 px-2 py-2">
+                <Link href={item.href}>
+                  <div className="flex flex-col items-center gap-1 text-[11px]">
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </div>
+                </Link>
+              </Button>
+            ) : (
+              <Button key={`mobile-${item.key}`} variant="ghost" className="h-auto min-h-14 rounded-2xl border border-white/10 bg-white/5 px-2 py-2" onClick={item.action}>
+                <div className="flex flex-col items-center gap-1 text-[11px]">
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </div>
+              </Button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

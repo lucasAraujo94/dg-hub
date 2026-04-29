@@ -208,7 +208,7 @@ export default function HomeActivePanels({
     return (
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
+          <h2 className="text-xl font-semibold">Campeonatos</h2>
           <Button asChild size="sm">
             <Link href="/campeonatos">Abrir pagina</Link>
           </Button>
@@ -318,7 +318,7 @@ export default function HomeActivePanels({
     return (
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
+          <h2 className="text-xl font-semibold">Perfil</h2>
           <Button asChild size="sm">
             <Link href="/perfil">Abrir perfil</Link>
           </Button>
@@ -336,7 +336,7 @@ export default function HomeActivePanels({
     return (
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Ranking de campeoes</h2>
+          <h2 className="text-xl font-semibold">Chat</h2>
           <Button asChild size="sm">
             <Link href="/chat" onClick={onMarkChatAsRead}>
               Ir para o chat

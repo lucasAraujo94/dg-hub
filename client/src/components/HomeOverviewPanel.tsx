@@ -35,6 +35,8 @@ type HomeOverviewPanelProps = {
   votedPolls: Set<number>;
   isVoting: boolean;
   onOpenChat: () => void;
+  latestChatPreview: string | null;
+  sessionUrgency: "ok" | "atencao" | "critica";
   onRegister: (campeonatoId?: number) => void;
   onVote: (pollId: number, escolha: string) => void;
 };
@@ -49,6 +51,8 @@ export default function HomeOverviewPanel({
   votedPolls,
   isVoting,
   onOpenChat,
+  latestChatPreview,
+  sessionUrgency,
   onRegister,
   onVote,
 }: HomeOverviewPanelProps) {
@@ -73,14 +77,14 @@ export default function HomeOverviewPanel({
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-cyan-100">
                 <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.85)]" />
-                Painel do jogador
+                Panorama rapido
               </div>
               <div className="space-y-2">
-                <h1 className="text-2xl font-semibold leading-tight text-white sm:text-3xl md:text-4xl">
-                  Tudo que importa para jogar, acompanhar premios e agir rapido.
-                </h1>
+                <h2 className="text-2xl font-semibold leading-tight text-white sm:text-3xl">
+                  Sua situacao agora
+                </h2>
                 <p className="max-w-2xl text-sm text-white/75 md:text-base">
-                  Veja seu saldo, o campeonato em destaque e os atalhos principais sem precisar procurar pelo app.
+                  Depois da primeira dobra da home, este painel entra como resumo operacional: saldo, status do campeonato e sinais de retorno.
                 </p>
               </div>
 
@@ -103,7 +107,7 @@ export default function HomeOverviewPanel({
                     {hasNewChatMessages ? "Chat com novidades" : "Tudo em dia"}
                   </p>
                   <p className="mt-1 text-xs text-white/60">
-                    {hasNewChatMessages ? "Leia as mensagens novas da comunidade." : "Sem pendencias ou alertas importantes agora."}
+                    {hasNewChatMessages ? latestChatPreview ?? "Leia as mensagens novas da comunidade." : sessionUrgency === "critica" ? "Sua sessao merece atencao imediata." : "Sem pendencias ou alertas importantes agora."}
                   </p>
                 </Card>
               </div>
@@ -149,7 +153,7 @@ export default function HomeOverviewPanel({
             <div className="rounded-[24px] border border-white/10 bg-white/5 p-4 md:p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">Em destaque</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">Proxima grande acao</p>
                   <h2 className="mt-2 text-2xl font-semibold text-white">
                     {activeChampionship?.nome ?? "Nenhum campeonato em destaque"}
                   </h2>
@@ -183,6 +187,11 @@ export default function HomeOverviewPanel({
               >
                 {activeChampionship?.id ? "Participar agora" : "Aguardando proximo campeonato"}
               </Button>
+              {!activeChampionship ? (
+                <div className="mt-3 rounded-2xl border border-dashed border-white/10 bg-black/20 px-4 py-3 text-sm text-white/65">
+                  Assim que um novo torneio estiver disponivel, ele vira para este bloco com CTA principal.
+                </div>
+              ) : null}
 
               <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-white/50">Top 3 do momento</p>
