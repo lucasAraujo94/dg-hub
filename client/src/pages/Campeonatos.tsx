@@ -1638,7 +1638,6 @@ export default function Campeonatos() {
                 </div>
               </div>
             </div>
-          </div>
           <aside className="space-y-4 print:hidden" data-export-hidden="true">
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Timeline da chave</p>
