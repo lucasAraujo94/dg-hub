@@ -772,15 +772,35 @@ export default function Campeonatos() {
       }, [])
     : [];
   const campeaoAtual = roundsExibidos[roundsExibidos.length - 1]?.[0]?.vencedor;
+  const densityCompact = compactBracket || bracketDensity === "compacto" || bracketDensity === "ultracompacto";
+  const densityUltraCompact = bracketDensity === "ultracompacto";
   const bracketMatchHeight =
-    bracketDensity === "ultracompacto" ? 74 : bracketDensity === "compacto" || compactBracket ? 96 : BRACKET_MATCH_HEIGHT;
+    densityUltraCompact ? 72 : densityCompact ? 94 : BRACKET_MATCH_HEIGHT;
+  const bracketBaseGap = densityUltraCompact ? 12 : densityCompact ? 18 : BRACKET_BASE_GAP;
+  const bracketColumnWidthClassName = presentationMode
+    ? densityUltraCompact
+      ? "w-[82vw] max-w-[320px] min-w-[260px] sm:w-[320px]"
+      : densityCompact
+      ? "w-[88vw] max-w-[350px] min-w-[280px] sm:w-[350px]"
+      : "w-[92vw] max-w-[380px] min-w-[300px] sm:w-[380px]"
+    : densityUltraCompact
+    ? "w-[72vw] max-w-[248px] min-w-[216px] sm:w-[248px]"
+    : densityCompact
+    ? "w-[78vw] max-w-[284px] min-w-[236px] sm:w-[284px]"
+    : "w-[85vw] max-w-[320px] min-w-[260px] sm:w-[320px]";
+  const roundCardPaddingClassName = densityUltraCompact ? "p-3 space-y-3" : densityCompact ? "p-3.5 space-y-3.5" : "p-4 space-y-4";
+  const matchCardPaddingClassName = densityUltraCompact ? "p-2 space-y-1" : densityCompact ? "p-2.5 space-y-1.5" : "p-3 space-y-2";
+  const playerButtonSizeClassName = densityUltraCompact ? "h-8 px-2 text-[11px]" : densityCompact ? "h-9 px-2.5 text-[12px]" : "";
+  const showDensityDescription = !densityCompact;
+  const showSeedBadge = !densityUltraCompact;
+  const showWinnerLabel = !densityUltraCompact;
   const getResponsiveRoundStackStyle = (roundIndex: number) => {
     if (roundIndex === 0) {
-      return { paddingTop: "0px", gap: `${BRACKET_BASE_GAP}px` };
+      return { paddingTop: "0px", gap: `${bracketBaseGap}px` };
     }
-    const unit = bracketMatchHeight + BRACKET_BASE_GAP;
+    const unit = bracketMatchHeight + bracketBaseGap;
     const paddingTop = (unit * (Math.pow(2, roundIndex) - 1)) / 2;
-    const gap = unit * (Math.pow(2, roundIndex) - 1) + BRACKET_BASE_GAP;
+    const gap = unit * (Math.pow(2, roundIndex) - 1) + bracketBaseGap;
     return { paddingTop: `${paddingTop}px`, gap: `${gap}px` };
   };
   const roundFilterOptions = roundsExibidos.map((round, roundIndex) => ({
@@ -891,12 +911,10 @@ export default function Campeonatos() {
         ref={node => {
           roundRefs.current[roundIndex] = node;
         }}
-        className={`relative flex shrink-0 snap-center items-stretch sm:snap-start ${
-          presentationMode ? "w-[92vw] max-w-[380px] min-w-[300px] sm:w-[380px]" : "w-[85vw] max-w-[320px] min-w-[260px] sm:w-[320px]"
-        } ${side === "right" ? "xl:self-end" : ""}`}
+        className={`relative flex shrink-0 snap-center items-stretch sm:snap-start ${bracketColumnWidthClassName} ${side === "right" ? "xl:self-end" : ""}`}
       >
         <div
-          className={`relative w-full rounded-[28px] border p-4 space-y-4 backdrop-blur-md transition-all ${
+          className={`relative w-full rounded-[28px] border backdrop-blur-md transition-all ${roundCardPaddingClassName} ${
             roundIndex === roundsExibidos.length - 1 && campeaoAtual && !isBracketPlaceholder(campeaoAtual) ? "ring-1 ring-emerald-300/35" : ""
           } ${
             normalizedBracketSearch && roundContainsSearchedPlayer(round) ? "ring-1 ring-cyan-300/35" : ""
@@ -912,8 +930,8 @@ export default function Campeonatos() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] uppercase tracking-[0.26em] text-cyan-200/70">Round {roundIndex + 1}</p>
-              <h3 className="text-base font-semibold">{getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}</h3>
-              <p className="text-[11px] text-muted-foreground">{round.length} partida{round.length === 1 ? "" : "s"}</p>
+              <h3 className={`${densityUltraCompact ? "text-sm" : "text-base"} font-semibold`}>{getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}</h3>
+              {!densityUltraCompact ? <p className="text-[11px] text-muted-foreground">{round.length} partida{round.length === 1 ? "" : "s"}</p> : null}
             </div>
             <div className="flex items-center gap-2">
               {!spectatorMode ? (
@@ -936,7 +954,7 @@ export default function Campeonatos() {
                 key={`${side}-${roundIndex}-${matchIndex}`}
                 role="group"
                 aria-label={getMatchAriaLabel(match, roundIndex, matchIndex)}
-                className={`relative rounded-2xl border p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${
+                className={`relative rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${matchCardPaddingClassName} ${
                   normalizedBracketSearch && matchContainsSearchedPlayer(match)
                     ? "ring-1 ring-cyan-300/40 shadow-[0_0_0_1px_rgba(103,232,249,0.18),inset_0_1px_0_rgba(255,255,255,0.06)]"
                     : ""
@@ -946,28 +964,30 @@ export default function Campeonatos() {
                     : roundIndex === 0
                     ? "border-white/12 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(59,130,246,0.04))]"
                     : "border-white/10 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08))]"
-                } ${collapseRound ? "space-y-1.5" : "space-y-2"} ${presentationMode ? "p-4" : ""}`}
+                } ${collapseRound ? "space-y-1" : ""} ${presentationMode && !densityCompact ? "p-4" : ""}`}
                 style={{ minHeight: `${collapseRound ? Math.max(80, bracketMatchHeight - 28) : presentationMode ? bracketMatchHeight + 20 : bracketMatchHeight}px` }}
               >
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Partida {matchIndex + 1}</h4>
+                  <h4 className={`${densityUltraCompact ? "text-[10px]" : "text-xs"} font-semibold uppercase tracking-wide text-muted-foreground`}>Partida {matchIndex + 1}</h4>
                   <div className="flex items-center gap-1.5">
-                    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-muted-foreground">
-                      {getSeedLabel(roundIndex, matchIndex * 2) ?? `M${matchIndex + 1}`}
-                    </span>
+                    {showSeedBadge ? (
+                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {getSeedLabel(roundIndex, matchIndex * 2) ?? `M${matchIndex + 1}`}
+                      </span>
+                    ) : null}
                     <span className={`text-[10px] px-2 py-0.5 rounded-full border ${getMatchStatusClassName(match)}`}>{getMatchStatusLabel(match)}</span>
                   </div>
                 </div>
-                {!compactBracket && !collapseRound ? (
+                {showDensityDescription && !collapseRound ? (
                   <p className={`text-[11px] ${roundIndex === 0 ? "text-foreground/80" : "text-muted-foreground"}`}>
                     {rounds.length > 0 ? "Toque no nome para marcar o vencedor." : "Modelo ilustrativo de eliminacao."}
                   </p>
                 ) : null}
-                <div className="flex flex-col gap-2">
+                <div className={`flex flex-col ${densityUltraCompact ? "gap-1.5" : "gap-2"}`}>
                   <Button
                     size="sm"
                     variant={rounds.length > 0 && match.vencedor === match.jogador1 ? "default" : "outline"}
-                    className={`justify-between ${compactBracket ? "h-9 px-2" : ""} ${isBracketPlaceholder(match.jogador1) ? "border-dashed text-muted-foreground" : ""}`}
+                    className={`justify-between ${playerButtonSizeClassName} ${isBracketPlaceholder(match.jogador1) ? "border-dashed text-muted-foreground" : ""}`}
                     disabled={spectatorMode || isBracketPlaceholder(match.jogador1)}
                     onClick={() => {
                       if (rounds.length === 0) return;
@@ -975,17 +995,17 @@ export default function Campeonatos() {
                     }}
                   >
                     <span className="flex min-w-0 items-center gap-2">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-[10px] font-semibold text-foreground/80">
+                      <span className={`flex shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 font-semibold text-foreground/80 ${densityUltraCompact ? "h-6 w-6 text-[9px]" : "h-7 w-7 text-[10px]"}`}>
                         {getPlayerBadge(match.jogador1)}
                       </span>
                       <span className="truncate text-left">{exibirApelido(match.jogador1, displayPref)}</span>
                     </span>
-                    {rounds.length > 0 && match.vencedor === match.jogador1 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
+                    {showWinnerLabel && rounds.length > 0 && match.vencedor === match.jogador1 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                   </Button>
                   <Button
                     size="sm"
                     variant={rounds.length > 0 && match.vencedor === match.jogador2 ? "default" : "outline"}
-                    className={`justify-between ${compactBracket ? "h-9 px-2" : ""} ${isBracketPlaceholder(match.jogador2) ? "border-dashed text-muted-foreground" : ""}`}
+                    className={`justify-between ${playerButtonSizeClassName} ${isBracketPlaceholder(match.jogador2) ? "border-dashed text-muted-foreground" : ""}`}
                     disabled={spectatorMode || isBracketPlaceholder(match.jogador2)}
                     onClick={() => {
                       if (rounds.length === 0) return;
@@ -993,12 +1013,12 @@ export default function Campeonatos() {
                     }}
                   >
                     <span className="flex min-w-0 items-center gap-2">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 text-[10px] font-semibold text-foreground/80">
+                      <span className={`flex shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/10 font-semibold text-foreground/80 ${densityUltraCompact ? "h-6 w-6 text-[9px]" : "h-7 w-7 text-[10px]"}`}>
                         {getPlayerBadge(match.jogador2)}
                       </span>
                       <span className="truncate text-left">{exibirApelido(match.jogador2, displayPref)}</span>
                     </span>
-                    {rounds.length > 0 && match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
+                    {showWinnerLabel && rounds.length > 0 && match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                   </Button>
                 </div>
               </div>
