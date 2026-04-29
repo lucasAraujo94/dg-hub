@@ -813,6 +813,23 @@ export default function Campeonatos() {
     setRoundFilter(String(selectedRoundIndex + 1));
   };
   const goToRound = (roundIndex: number) => setRoundFilter(String(roundIndex));
+  const bracketSelectClassName =
+    "h-10 rounded-xl border border-cyan-400/25 bg-[linear-gradient(135deg,rgba(8,20,40,0.94),rgba(22,78,99,0.82))] px-3 text-sm text-cyan-50 outline-none transition focus:border-cyan-200/60 focus:ring-2 focus:ring-cyan-300/25";
+  const getToolbarButtonClassName = (active: boolean, palette: "cyan" | "emerald" | "amber" | "violet" = "cyan") => {
+    if (!active) {
+      return "shrink-0 border-white/12 bg-black/20 text-muted-foreground hover:border-cyan-300/30 hover:bg-cyan-400/10 hover:text-cyan-50";
+    }
+    if (palette === "emerald") {
+      return "shrink-0 border-emerald-300/45 bg-[linear-gradient(135deg,rgba(6,95,70,0.95),rgba(16,185,129,0.35))] text-emerald-50 shadow-[0_12px_28px_-18px_rgba(16,185,129,0.85)]";
+    }
+    if (palette === "amber") {
+      return "shrink-0 border-amber-300/45 bg-[linear-gradient(135deg,rgba(120,53,15,0.96),rgba(245,158,11,0.36))] text-amber-50 shadow-[0_12px_28px_-18px_rgba(245,158,11,0.85)]";
+    }
+    if (palette === "violet") {
+      return "shrink-0 border-fuchsia-300/45 bg-[linear-gradient(135deg,rgba(88,28,135,0.96),rgba(217,70,239,0.34))] text-fuchsia-50 shadow-[0_12px_28px_-18px_rgba(217,70,239,0.8)]";
+    }
+    return "shrink-0 border-cyan-300/45 bg-[linear-gradient(135deg,rgba(8,47,73,0.96),rgba(34,211,238,0.34))] text-cyan-50 shadow-[0_12px_28px_-18px_rgba(34,211,238,0.8)]";
+  };
   const roundViewLabel =
     selectedRoundIndex >= 0
       ? `Fase isolada: ${roundFilterLabel}`
@@ -885,7 +902,7 @@ export default function Campeonatos() {
             normalizedBracketSearch && roundContainsSearchedPlayer(round) ? "ring-1 ring-cyan-300/35" : ""
           } ${
             roundIndex === 0
-              ? "border-white/15 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] shadow-[0_12px_30px_-24px_rgba(0,0,0,0.28)]"
+              ? "border-slate-200/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(148,163,184,0.03))] shadow-none"
               : faseAtualIndex === roundIndex
               ? "border-cyan-300/35 bg-[linear-gradient(180deg,rgba(34,211,238,0.14),rgba(255,255,255,0.05))] shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)]"
               : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))] shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)]"
@@ -1331,7 +1348,7 @@ export default function Campeonatos() {
                     value={roundFilter}
                     onChange={event => setRoundFilter(event.target.value)}
                     aria-label="Filtrar fase do bracket"
-                    className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20"
+                    className={bracketSelectClassName}
                   >
                     <option value="todas">Todas as fases</option>
                     {roundFilterOptions.map(option => (
@@ -1345,7 +1362,7 @@ export default function Campeonatos() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="shrink-0"
+                        className={getToolbarButtonClassName(true, "cyan")}
                         aria-label="Ir para a fase anterior do bracket"
                         onClick={goToPreviousRound}
                         disabled={selectedRoundIndex <= 0}
@@ -1355,7 +1372,7 @@ export default function Campeonatos() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="shrink-0"
+                        className={getToolbarButtonClassName(true, "cyan")}
                         aria-label="Ir para a proxima fase do bracket"
                         onClick={goToNextRound}
                         disabled={selectedRoundIndex < 0 || selectedRoundIndex >= roundsExibidos.length - 1}
@@ -1364,29 +1381,49 @@ export default function Campeonatos() {
                       </Button>
                     </>
                   ) : null}
-                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setPresentationMode(prev => !prev)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={getToolbarButtonClassName(presentationMode, "violet")}
+                    onClick={() => setPresentationMode(prev => !prev)}
+                  >
                     {presentationMode ? "Modo normal" : "Modo apresentacao"}
                   </Button>
                   {presentationMode ? (
                     <>
-                      <Button variant="outline" size="sm" className="shrink-0" onClick={() => setPresentationAutoplay(prev => !prev)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={getToolbarButtonClassName(presentationAutoplay, "violet")}
+                        onClick={() => setPresentationAutoplay(prev => !prev)}
+                      >
                         {presentationAutoplay ? "Pausar rotacao" : "Rotacao automatica"}
                       </Button>
-                      <Button variant="outline" size="sm" className="shrink-0" onClick={toggleBracketFullscreen}>
+                      <Button variant="outline" size="sm" className={getToolbarButtonClassName(true, "violet")} onClick={toggleBracketFullscreen}>
                         Tela cheia
                       </Button>
                     </>
                   ) : null}
-                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setCollapsedResolvedRounds(prev => !prev)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={getToolbarButtonClassName(collapsedResolvedRounds, "amber")}
+                    onClick={() => setCollapsedResolvedRounds(prev => !prev)}
+                  >
                     {collapsedResolvedRounds ? "Expandir resolvidas" : "Compactar resolvidas"}
                   </Button>
-                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => setSpectatorMode(prev => !prev)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={getToolbarButtonClassName(spectatorMode, "emerald")}
+                    onClick={() => setSpectatorMode(prev => !prev)}
+                  >
                     {spectatorMode ? "Modo operador" : "Modo espectador"}
                   </Button>
                   <Button
-                    variant={compactBracket ? "default" : "outline"}
+                    variant="outline"
                     size="sm"
-                    className="shrink-0"
+                    className={getToolbarButtonClassName(compactBracket, "cyan")}
                     onClick={() => setCompactBracket(prev => !prev)}
                   >
                     {compactBracket ? "Modo compacto" : "Modo detalhado"}
@@ -1395,7 +1432,7 @@ export default function Campeonatos() {
                     value={bracketDensity}
                     onChange={event => setBracketDensity(event.target.value as "detalhado" | "compacto" | "ultracompacto")}
                     aria-label="Escolher densidade visual do bracket"
-                    className="h-10 rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20"
+                    className={bracketSelectClassName}
                   >
                     <option value="detalhado">Detalhado</option>
                     <option value="compacto">Compacto</option>
