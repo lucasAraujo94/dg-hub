@@ -63,7 +63,6 @@ import { sdk } from "./_core/sdk";
 import bcrypt from "bcryptjs";
 import { storagePut } from "./storage";
 import crypto from "crypto";
-import { generateImageAsset } from "./_core/imageGeneration";
 
 const { compare, hash } = bcrypt;
 
@@ -110,6 +109,67 @@ const mapAsaasPixPayment = (payment: any) => ({
   approvedAt: payment?.clientPaymentDate ? new Date(payment.clientPaymentDate) : null,
   expiresAt: payment?.dueDate ? new Date(`${payment.dueDate}T23:59:59Z`) : null,
 });
+
+const removeBackgroundWithRemoveBg = async (image: {
+  fileName: string;
+  mimeType: string;
+  dataBase64: string;
+}) => {
+  if (!ENV.removeBgApiKey) {
+    throw new Error("REMOVEBG_API_KEY is not configured");
+  }
+
+  const extension = image.fileName.includes(".")
+    ? image.fileName.split(".").pop()
+    : image.mimeType.split("/").pop() || "png";
+  const blob = new Blob([Buffer.from(image.dataBase64, "base64")], {
+    type: image.mimeType,
+  });
+  const formData = new FormData();
+  formData.append("size", "auto");
+  formData.append("format", "png");
+  formData.append("image_file", blob, `upload.${extension}`);
+
+  const response = await fetch("https://api.remove.bg/v1.0/removebg", {
+    method: "POST",
+    headers: {
+      "X-Api-Key": ENV.removeBgApiKey,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") || "";
+    let detail = "";
+
+    if (contentType.includes("application/json")) {
+      const json = (await response.json().catch(() => null)) as
+        | { errors?: Array<{ title?: string; code?: string }> }
+        | null;
+      if (json?.errors?.length) {
+        detail = json.errors
+          .map(error => error.title || error.code)
+          .filter(Boolean)
+          .join(", ");
+      }
+    } else {
+      detail = await response.text().catch(() => "");
+    }
+
+    throw new Error(
+      `remove.bg request failed (${response.status}${detail ? `: ${detail}` : ""})`
+    );
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const outputBase64 = Buffer.from(arrayBuffer).toString("base64");
+
+  return {
+    fileName: image.fileName,
+    mimeType: "image/png",
+    dataUrl: `data:image/png;base64,${outputBase64}`,
+  };
+};
 
 const detectPixKeyType = (
   rawKey: string,
@@ -718,22 +778,7 @@ export const appRouter = router({
               throw new Error(`Arquivo muito grande: ${image.fileName}`);
             }
 
-            const result = await generateImageAsset({
-              prompt:
-                "Remove the background from the provided person photo. Keep only the main subject, preserve original proportions, preserve full body and hair details, and return a clean transparent PNG without adding new objects, text, shadows, or scenery.",
-              originalImages: [
-                {
-                  b64Json: image.dataBase64,
-                  mimeType: image.mimeType,
-                },
-              ],
-            });
-
-            return {
-              fileName: image.fileName,
-              mimeType: result.mimeType,
-              dataUrl: `data:${result.mimeType};base64,${result.b64Json}`,
-            };
+            return removeBackgroundWithRemoveBg(image);
           })
         );
       }),
