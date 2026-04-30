@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
@@ -195,6 +194,7 @@ export default function TemplateBatchComposer() {
   const [processed, setProcessed] = useState<ProcessedImage[]>([]);
   const [isRendering, setIsRendering] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const processedRef = useRef<ProcessedImage[]>([]);
   const dragStateRef = useRef<{
     action: "move" | "resize";
@@ -265,6 +265,10 @@ export default function TemplateBatchComposer() {
           : item
       )
     );
+  };
+
+  const resetProcessedPlacement = async (itemId: string) => {
+    await updateProcessedPlacement(itemId, () => ({ ...DEFAULT_PLACEMENT }));
   };
 
   const handlePhotosChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -484,6 +488,7 @@ export default function TemplateBatchComposer() {
       );
 
       setProcessed(nextProcessed);
+      setActiveItemId(nextProcessed[0]?.id ?? null);
       toast.success(`${nextProcessed.length} imagens geradas`);
     } catch (error: any) {
       toast.error(error?.message || "Falha ao processar imagens");
@@ -640,93 +645,70 @@ export default function TemplateBatchComposer() {
               </div>
             </CardContent>
           </Card>
-
-          <Card className="border-white/10 bg-black/20">
-            <CardHeader>
-              <CardTitle>Posicionamento</CardTitle>
-              <CardDescription>
-                Ajuste a area de encaixe da imagem recortada dentro do template.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {[
-                { key: "x", label: "Posicao X", min: 0, max: 100 },
-                { key: "y", label: "Posicao Y", min: 0, max: 100 },
-                { key: "width", label: "Largura", min: 10, max: 100 },
-                { key: "height", label: "Altura", min: 10, max: 100 },
-              ].map(item => (
-                <div key={item.key} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>{item.label}</Label>
-                    <span className="text-xs text-muted-foreground">
-                      {placement[item.key as keyof Placement]}%
-                    </span>
-                  </div>
-                  <Slider
-                    min={item.min}
-                    max={item.max}
-                    step={1}
-                    value={[placement[item.key as keyof Placement]]}
-                    onValueChange={([value]) =>
-                      updatePlacement(item.key as keyof Placement, value)
-                    }
-                  />
-                </div>
-              ))}
-
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setPlacement(DEFAULT_PLACEMENT)}
-                >
-                  Restaurar padrao
-                </Button>
-                <Button
-                  onClick={handleProcess}
-                  disabled={isRendering || removeBackgroundMutation.isPending}
-                  className="gap-2"
-                >
-                  {isRendering || removeBackgroundMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Scissors className="h-4 w-4" />
-                  )}
-                  Processar lote
-                </Button>
-              </div>
-
-              <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4 text-sm text-cyan-50">
-                O redimensionamento mantem a proporcao automaticamente. Largura e altura definem a caixa maxima de encaixe, e a imagem e ajustada por contain dentro dela.
-              </div>
-            </CardContent>
-          </Card>
         </section>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button
+            variant="outline"
+            onClick={() => setPlacement(DEFAULT_PLACEMENT)}
+          >
+            Restaurar posicao inicial padrao
+          </Button>
+          <Button
+            onClick={handleProcess}
+            disabled={isRendering || removeBackgroundMutation.isPending}
+            className="gap-2"
+          >
+            {isRendering || removeBackgroundMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Scissors className="h-4 w-4" />
+            )}
+            Processar lote
+          </Button>
+        </div>
 
         <Card className="border-white/10 bg-black/20">
           <CardHeader>
-            <CardTitle>Resultados</CardTitle>
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-cyan-100">
+              <Package className="h-3.5 w-3.5" />
+              Studio final
+            </div>
+            <CardTitle className="text-2xl text-white">Resultados prontos para ajuste fino</CardTitle>
             <CardDescription>
-              Preview do recorte e da composicao final gerada para cada foto.
+              Revise, reposicione e redimensione cada montagem antes de exportar o lote.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {processed.length ? (
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-5 xl:grid-cols-2">
                 {processed.map(item => (
                   <div
                     key={item.id}
-                    className="grid gap-4 rounded-2xl border border-border/60 bg-card/40 p-4 md:grid-cols-2"
+                    className={`group relative overflow-hidden rounded-[28px] border p-4 shadow-[0_24px_80px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                      activeItemId === item.id
+                        ? "border-cyan-300/60 bg-[linear-gradient(145deg,rgba(8,16,28,0.98),rgba(16,24,38,0.92))] shadow-[0_24px_90px_rgba(8,145,178,0.18)]"
+                        : "border-white/10 bg-[linear-gradient(145deg,rgba(8,12,20,0.94),rgba(14,18,30,0.82))]"
+                    }`}
+                    onClick={() => setActiveItemId(item.id)}
                   >
+                    <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/55 to-transparent" />
+                    <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl transition-opacity duration-300 group-hover:opacity-100" />
+                    <div className="absolute -bottom-16 -left-12 h-36 w-36 rounded-full bg-emerald-400/10 blur-3xl transition-opacity duration-300 group-hover:opacity-100" />
                     <div>
-                      <p className="mb-2 text-sm font-medium">Sem fundo</p>
-                      <img
-                        src={item.cutoutDataUrl}
-                        alt={`${item.fileName} sem fundo`}
-                        className="w-full rounded-xl border border-white/10 bg-[linear-gradient(45deg,rgba(255,255,255,0.04)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.04)_50%,rgba(255,255,255,0.04)_75%,transparent_75%,transparent)] bg-[length:18px_18px]"
-                      />
-                    </div>
-                  <div>
-                      <p className="mb-2 text-sm font-medium">Composto final</p>
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/70">
+                            Composto final
+                          </p>
+                          <h3 className="mt-2 truncate text-lg font-semibold text-white">
+                            {item.fileName}
+                          </h3>
+                        </div>
+                        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/65">
+                          {activeItemId === item.id ? "Em edicao" : "Editavel"}
+                        </div>
+                      </div>
                       <div
                         className={`relative overflow-hidden rounded-xl border border-white/10 bg-black/20 ${
                           draggingId === item.id ? "cursor-grabbing" : "cursor-grab"
@@ -736,6 +718,7 @@ export default function TemplateBatchComposer() {
                           touchAction: "none",
                         }}
                       >
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.12),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0))]" />
                         <img
                           src={templatePreview ?? item.finalDataUrl}
                           alt={`${item.fileName} template`}
@@ -748,12 +731,13 @@ export default function TemplateBatchComposer() {
                           alt={`${item.fileName} posicionado`}
                           className="absolute select-none object-contain"
                           draggable={false}
-                          onPointerDown={event => {
-                            event.preventDefault();
-                            event.currentTarget.setPointerCapture(event.pointerId);
-                            if (typeof document !== "undefined") {
-                              document.body.style.overflow = "hidden";
-                              document.body.style.touchAction = "none";
+                        onPointerDown={event => {
+                          event.preventDefault();
+                          event.currentTarget.setPointerCapture(event.pointerId);
+                          setActiveItemId(item.id);
+                          if (typeof document !== "undefined") {
+                            document.body.style.overflow = "hidden";
+                            document.body.style.touchAction = "none";
                             }
                             const rect = event.currentTarget.parentElement?.getBoundingClientRect();
                             if (!rect) return;
@@ -781,42 +765,82 @@ export default function TemplateBatchComposer() {
                             top: `${((item.canvasHeight - item.renderedHeight) * item.placement.y) / item.canvasHeight}%`,
                           }}
                         />
-                        <div className="absolute bottom-2 right-2 flex gap-2">
+                        <div className={`absolute left-3 top-3 rounded-full border px-3 py-1 text-[11px] backdrop-blur-md transition-colors ${
+                          activeItemId === item.id
+                            ? "border-cyan-300/35 bg-cyan-400/15 text-cyan-50"
+                            : "border-white/10 bg-black/45 text-white/70"
+                        }`}>
+                          Arraste somente a foto
+                        </div>
+                        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              className="inline-flex h-10 items-center justify-center rounded-full border border-white/15 bg-black/70 px-4 text-sm text-white shadow-lg backdrop-blur-md transition-transform hover:scale-105"
+                              onClick={async event => {
+                                event.stopPropagation();
+                                setActiveItemId(item.id);
+                                await updateProcessedPlacement(item.id, currentPlacement => ({
+                                  ...currentPlacement,
+                                  width: clamp(currentPlacement.width - 5, 5, 100),
+                                  height: clamp(currentPlacement.height - 5, 5, 100),
+                                }));
+                              }}
+                              aria-label="Diminuir foto"
+                            >
+                              <Minus className="mr-2 h-4 w-4" />
+                              Diminuir
+                            </button>
+                            <button
+                              type="button"
+                              className="inline-flex h-10 items-center justify-center rounded-full border border-white/15 bg-black/70 px-4 text-sm text-white shadow-lg backdrop-blur-md transition-transform hover:scale-105"
+                              onClick={async event => {
+                                event.stopPropagation();
+                                setActiveItemId(item.id);
+                                await updateProcessedPlacement(item.id, currentPlacement => ({
+                                  ...currentPlacement,
+                                  width: clamp(currentPlacement.width + 5, 5, 100),
+                                  height: clamp(currentPlacement.height + 5, 5, 100),
+                                }));
+                              }}
+                              aria-label="Aumentar foto"
+                            >
+                              <Plus className="mr-2 h-4 w-4" />
+                              Aumentar
+                            </button>
+                          </div>
                           <button
                             type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white shadow-lg"
+                            className="inline-flex h-10 items-center justify-center rounded-full border border-white/15 bg-white/8 px-4 text-sm text-white/90 shadow-lg backdrop-blur-md transition-transform hover:scale-105"
                             onClick={async event => {
                               event.stopPropagation();
-                              await updateProcessedPlacement(item.id, currentPlacement => ({
-                                ...currentPlacement,
-                                width: clamp(currentPlacement.width - 5, 5, 100),
-                                height: clamp(currentPlacement.height - 5, 5, 100),
-                              }));
+                              setActiveItemId(item.id);
+                              await resetProcessedPlacement(item.id);
                             }}
-                            aria-label="Diminuir foto"
+                            aria-label="Resetar foto"
                           >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white shadow-lg"
-                            onClick={async event => {
-                              event.stopPropagation();
-                              await updateProcessedPlacement(item.id, currentPlacement => ({
-                                ...currentPlacement,
-                                width: clamp(currentPlacement.width + 5, 5, 100),
-                                height: clamp(currentPlacement.height + 5, 5, 100),
-                              }));
-                            }}
-                            aria-label="Aumentar foto"
-                          >
-                            <Plus className="h-4 w-4" />
+                            Resetar foto
                           </button>
                         </div>
                       </div>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Arraste para reposicionar. Use os botoes `-` e `+` para diminuir ou aumentar no PC e no celular.
-                      </p>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                          <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">
+                            Movimento
+                          </p>
+                          <p className="mt-2 text-sm text-white/80">
+                            Toque ou clique na foto e arraste para reposicionar livremente.
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                          <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">
+                            Escala
+                          </p>
+                          <p className="mt-2 text-sm text-white/80">
+                            Use os botoes de tamanho para reduzir ou ampliar sem perder proporcao.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
