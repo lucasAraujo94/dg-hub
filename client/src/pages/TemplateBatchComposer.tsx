@@ -339,6 +339,8 @@ export default function TemplateBatchComposer() {
       const dragState = dragStateRef.current;
       if (!dragState) return;
 
+      event.preventDefault();
+
       const deltaX = event.clientX - dragState.startClientX;
       const deltaY = event.clientY - dragState.startClientY;
       setProcessed(current => {
@@ -384,6 +386,10 @@ export default function TemplateBatchComposer() {
 
       dragStateRef.current = null;
       setDraggingId(null);
+      if (typeof document !== "undefined") {
+        document.body.style.overflow = "";
+        document.body.style.touchAction = "";
+      }
 
       try {
         const templateSrc = await readFileAsDataUrl(templateFile);
@@ -420,6 +426,10 @@ export default function TemplateBatchComposer() {
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
+      if (typeof document !== "undefined") {
+        document.body.style.overflow = "";
+        document.body.style.touchAction = "";
+      }
     };
   }, [processed, templateFile]);
 
@@ -723,24 +733,7 @@ export default function TemplateBatchComposer() {
                         }`}
                         style={{
                           aspectRatio: `${item.canvasWidth} / ${item.canvasHeight}`,
-                        }}
-                        onPointerDown={event => {
-                          const rect = event.currentTarget.getBoundingClientRect();
-                          dragStateRef.current = {
-                            action: "move",
-                            itemId: item.id,
-                            startClientX: event.clientX,
-                            startClientY: event.clientY,
-                            startPlacementX: item.placement.x,
-                            startPlacementY: item.placement.y,
-                            startPlacementWidth: item.placement.width,
-                            startPlacementHeight: item.placement.height,
-                            previewWidth: rect.width,
-                            previewHeight: rect.height,
-                            renderedWidth: rect.width * (item.renderedWidth / item.canvasWidth),
-                            renderedHeight: rect.height * (item.renderedHeight / item.canvasHeight),
-                          };
-                          setDraggingId(item.id);
+                          touchAction: "none",
                         }}
                       >
                         <img
@@ -748,13 +741,40 @@ export default function TemplateBatchComposer() {
                           alt={`${item.fileName} template`}
                           className="absolute inset-0 h-full w-full object-cover"
                           draggable={false}
+                          style={{ touchAction: "none" }}
                         />
                         <img
                           src={item.cutoutDataUrl}
                           alt={`${item.fileName} posicionado`}
                           className="absolute select-none object-contain"
                           draggable={false}
+                          onPointerDown={event => {
+                            event.preventDefault();
+                            event.currentTarget.setPointerCapture(event.pointerId);
+                            if (typeof document !== "undefined") {
+                              document.body.style.overflow = "hidden";
+                              document.body.style.touchAction = "none";
+                            }
+                            const rect = event.currentTarget.parentElement?.getBoundingClientRect();
+                            if (!rect) return;
+                            dragStateRef.current = {
+                              action: "move",
+                              itemId: item.id,
+                              startClientX: event.clientX,
+                              startClientY: event.clientY,
+                              startPlacementX: item.placement.x,
+                              startPlacementY: item.placement.y,
+                              startPlacementWidth: item.placement.width,
+                              startPlacementHeight: item.placement.height,
+                              previewWidth: rect.width,
+                              previewHeight: rect.height,
+                              renderedWidth: rect.width * (item.renderedWidth / item.canvasWidth),
+                              renderedHeight: rect.height * (item.renderedHeight / item.canvasHeight),
+                            };
+                            setDraggingId(item.id);
+                          }}
                           style={{
+                            touchAction: "none",
                             width: `${(item.renderedWidth / item.canvasWidth) * 100}%`,
                             height: `${(item.renderedHeight / item.canvasHeight) * 100}%`,
                             left: `${((item.canvasWidth - item.renderedWidth) * item.placement.x) / item.canvasWidth}%`,
