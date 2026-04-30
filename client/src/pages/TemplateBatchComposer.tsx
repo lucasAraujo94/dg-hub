@@ -16,6 +16,7 @@ import {
   ImagePlus,
   Loader2,
   Package,
+  ScanSearch,
   Scissors,
 } from "lucide-react";
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -194,11 +195,14 @@ export default function TemplateBatchComposer() {
   const [isRendering, setIsRendering] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const dragStateRef = useRef<{
+    action: "move" | "resize";
     itemId: string;
     startClientX: number;
     startClientY: number;
     startPlacementX: number;
     startPlacementY: number;
+    startPlacementWidth: number;
+    startPlacementHeight: number;
     previewWidth: number;
     previewHeight: number;
     renderedWidth: number;
@@ -296,23 +300,41 @@ export default function TemplateBatchComposer() {
 
       const deltaX = event.clientX - dragState.startClientX;
       const deltaY = event.clientY - dragState.startClientY;
-      const availableX = Math.max(1, dragState.previewWidth - dragState.renderedWidth);
-      const availableY = Math.max(1, dragState.previewHeight - dragState.renderedHeight);
+      setProcessed(current => {
+        return current.map(item => {
+          if (item.id !== dragState.itemId) return item;
 
-      setProcessed(current =>
-        current.map(item =>
-          item.id === dragState.itemId
-            ? {
-                ...item,
-                placement: {
-                  ...item.placement,
-                  x: clamp(dragState.startPlacementX + (deltaX / availableX) * 100, 0, 100),
-                  y: clamp(dragState.startPlacementY + (deltaY / availableY) * 100, 0, 100),
-                },
-              }
-            : item
-        )
-      );
+          if (dragState.action === "move") {
+            const availableX = Math.max(1, dragState.previewWidth - dragState.renderedWidth);
+            const availableY = Math.max(1, dragState.previewHeight - dragState.renderedHeight);
+
+            return {
+              ...item,
+              placement: {
+                ...item.placement,
+                x: clamp(dragState.startPlacementX + (deltaX / availableX) * 100, 0, 100),
+                y: clamp(dragState.startPlacementY + (deltaY / availableY) * 100, 0, 100),
+              },
+            };
+          }
+
+          const scaleDelta = Math.max(deltaX / dragState.previewWidth, deltaY / dragState.previewHeight);
+          const scale = clamp(1 + scaleDelta, 0.2, 3);
+          const nextWidth = clamp(dragState.startPlacementWidth * scale, 5, 100);
+          const nextHeight = clamp(dragState.startPlacementHeight * scale, 5, 100);
+
+          return {
+            ...item,
+            placement: {
+              ...item.placement,
+              width: nextWidth,
+              height: nextHeight,
+            },
+            renderedWidth: dragState.renderedWidth * (nextWidth / dragState.startPlacementWidth),
+            renderedHeight: dragState.renderedHeight * (nextHeight / dragState.startPlacementHeight),
+          };
+        });
+      });
     };
 
     const handlePointerUp = async () => {
@@ -664,11 +686,14 @@ export default function TemplateBatchComposer() {
                         onPointerDown={event => {
                           const rect = event.currentTarget.getBoundingClientRect();
                           dragStateRef.current = {
+                            action: "move",
                             itemId: item.id,
                             startClientX: event.clientX,
                             startClientY: event.clientY,
                             startPlacementX: item.placement.x,
                             startPlacementY: item.placement.y,
+                            startPlacementWidth: item.placement.width,
+                            startPlacementHeight: item.placement.height,
                             previewWidth: rect.width,
                             previewHeight: rect.height,
                             renderedWidth: rect.width * (item.renderedWidth / item.canvasWidth),
@@ -695,9 +720,36 @@ export default function TemplateBatchComposer() {
                             top: `${((item.canvasHeight - item.renderedHeight) * item.placement.y) / item.canvasHeight}%`,
                           }}
                         />
+                        <button
+                          type="button"
+                          className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white shadow-lg"
+                          onPointerDown={event => {
+                            event.stopPropagation();
+                            const rect = event.currentTarget.parentElement?.getBoundingClientRect();
+                            if (!rect) return;
+                            dragStateRef.current = {
+                              action: "resize",
+                              itemId: item.id,
+                              startClientX: event.clientX,
+                              startClientY: event.clientY,
+                              startPlacementX: item.placement.x,
+                              startPlacementY: item.placement.y,
+                              startPlacementWidth: item.placement.width,
+                              startPlacementHeight: item.placement.height,
+                              previewWidth: rect.width,
+                              previewHeight: rect.height,
+                              renderedWidth: rect.width * (item.renderedWidth / item.canvasWidth),
+                              renderedHeight: rect.height * (item.renderedHeight / item.canvasHeight),
+                            };
+                            setDraggingId(item.id);
+                          }}
+                          aria-label="Redimensionar foto"
+                        >
+                          <ScanSearch className="h-4 w-4" />
+                        </button>
                       </div>
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Arraste a foto sobre o template para reposicionar antes de baixar.
+                        Arraste a foto para reposicionar e use o botao no canto para aumentar ou diminuir.
                       </p>
                     </div>
                   </div>
