@@ -195,6 +195,7 @@ export default function TemplateBatchComposer() {
   const [processed, setProcessed] = useState<ProcessedImage[]>([]);
   const [isRendering, setIsRendering] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const processedRef = useRef<ProcessedImage[]>([]);
   const dragStateRef = useRef<{
     action: "move" | "resize";
     itemId: string;
@@ -210,6 +211,10 @@ export default function TemplateBatchComposer() {
     renderedHeight: number;
   } | null>(null);
   const removeBackgroundMutation = trpc.imaging.removeBackgroundBatch.useMutation();
+
+  useEffect(() => {
+    processedRef.current = processed;
+  }, [processed]);
 
   useEffect(() => {
     return () => {
@@ -233,7 +238,8 @@ export default function TemplateBatchComposer() {
   ) => {
     if (!templateFile) return;
 
-    const target = processed.find(item => item.id === itemId);
+    const latestProcessed = processedRef.current;
+    const target = latestProcessed.find(item => item.id === itemId);
     if (!target) return;
 
     const nextPlacement = updater(target.placement);
@@ -381,7 +387,7 @@ export default function TemplateBatchComposer() {
 
       try {
         const templateSrc = await readFileAsDataUrl(templateFile);
-        const target = processed.find(item => item.id === dragState.itemId);
+        const target = processedRef.current.find(item => item.id === dragState.itemId);
         if (!target) return;
         const rendered = await renderComposite(
           templateSrc,
