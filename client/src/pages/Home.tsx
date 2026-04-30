@@ -20,6 +20,7 @@ import {
   TimerReset,
   BellRing,
   Wallet,
+  Scissors,
 } from "lucide-react";
 import { Link } from "wouter";
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
@@ -31,6 +32,20 @@ import { readLastSeenChatAt, writeLastSeenChatAt } from "@/lib/chatNotifications
 const LazyHomeActivePanels = lazy(() => import("@/components/HomeActivePanels"));
 const LazyHomeAdminPollsPanel = lazy(() => import("@/components/HomeAdminPollsPanel"));
 const LazyHomeOverviewPanel = lazy(() => import("@/components/HomeOverviewPanel"));
+
+type QuickAction =
+  | {
+      key: string;
+      label: string;
+      icon: typeof Trophy;
+      action: () => void;
+    }
+  | {
+      key: string;
+      label: string;
+      icon: typeof Trophy;
+      href: string;
+    };
 
 export default function Home() {
   const { user, loading, error, logout } = useAuth({
@@ -265,12 +280,12 @@ export default function Home() {
     return list.find(item => item.status === "ativo") || list.find(item => item.status === "futuro") || null;
   }, [campeonatosQuery.data]);
   const sessionUrgency = remainingSessionMs <= 2 * 60 * 1000 ? "critica" : remainingSessionMs <= 5 * 60 * 1000 ? "atencao" : "ok";
-  const quickActions = [
+  const quickActions: QuickAction[] = [
     { key: "campeonatos", label: "Campeonatos", icon: Trophy, action: () => { setActiveSection("campeonatos"); setMenuOpen(false); } },
     { key: "chat", label: "Chat", icon: MessageCircle, action: () => { setActiveSection("chat"); setMenuOpen(false); markChatAsRead(); } },
     { key: "ranking", label: "Ranking", icon: Star, href: "/ranking" },
-    { key: "perfil", label: "Perfil", icon: User, href: "/perfil" },
-  ] as const;
+    { key: "compositor-lote", label: "Compositor", icon: Scissors, href: "/compositor-lote" },
+  ];
 
   const inscreverMutation = trpc.campeonatos.inscrever.useMutation({
     onSuccess: () => {
@@ -422,6 +437,7 @@ export default function Home() {
               { key: "overview", label: "Home", icon: HomeIcon },
               { key: "campeonatos", label: "Campeonatos", href: "/campeonatos", icon: Trophy },
               { key: "rankings", label: "Rankings", href: "/ranking", icon: Star },
+              { key: "compositor-lote", label: "Compositor", href: "/compositor-lote", icon: Scissors },
               {
                 key: "aniversariantes",
                 label: "Aniversariantes",
@@ -566,6 +582,9 @@ export default function Home() {
                       {activeChampionship?.id ? "Ver campeonato em destaque" : "Explorar campeonatos"}
                     </Link>
                   </Button>
+                  <Button asChild variant="outline" className="rounded-2xl border-white/15 bg-white/5">
+                    <Link href="/compositor-lote">Abrir compositor em lote</Link>
+                  </Button>
                   <Button variant="outline" className="rounded-2xl border-white/15 bg-white/5" onClick={() => { setActiveSection("chat"); markChatAsRead(); }}>
                     Abrir chat
                   </Button>
@@ -598,7 +617,7 @@ export default function Home() {
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   {quickActions.map(item => {
                     const Icon = item.icon;
-                    return item.href ? (
+                    return "href" in item ? (
                       <Button key={item.key} asChild variant="outline" className="h-auto min-h-20 justify-start rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-left">
                         <Link href={item.href}>
                           <div className="flex flex-col items-start gap-2">
@@ -708,7 +727,7 @@ export default function Home() {
         <div className="grid grid-cols-4 gap-2">
           {quickActions.map(item => {
             const Icon = item.icon;
-            return item.href ? (
+            return "href" in item ? (
               <Button key={`mobile-${item.key}`} asChild variant="ghost" className="h-auto min-h-14 rounded-2xl border border-white/10 bg-white/5 px-2 py-2">
                 <Link href={item.href}>
                   <div className="flex flex-col items-center gap-1 text-[11px]">

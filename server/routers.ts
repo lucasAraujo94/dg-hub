@@ -63,6 +63,7 @@ import { sdk } from "./_core/sdk";
 import bcrypt from "bcryptjs";
 import { storagePut } from "./storage";
 import crypto from "crypto";
+import { generateImageAsset } from "./_core/imageGeneration";
 
 const { compare, hash } = bcrypt;
 
@@ -683,6 +684,58 @@ export const appRouter = router({
           throw new Error("Usuario nao encontrado");
         }
         return result;
+      }),
+  }),
+
+  imaging: router({
+    removeBackgroundBatch: publicProcedure
+      .input(
+        z.object({
+          images: z
+            .array(
+              z.object({
+                fileName: z.string().min(1),
+                mimeType: z.string().min(1),
+                dataBase64: z.string().min(1),
+              })
+            )
+            .min(1)
+            .max(20),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const allowedMime = ["image/png", "image/jpeg", "image/webp"];
+
+        return Promise.all(
+          input.images.map(async image => {
+            if (!allowedMime.includes(image.mimeType.toLowerCase())) {
+              throw new Error("Apenas imagens PNG, JPEG e WEBP sao permitidas");
+            }
+
+            const approxBytes = Math.floor((image.dataBase64.length * 3) / 4);
+            const MAX_BYTES = 8 * 1024 * 1024;
+            if (approxBytes > MAX_BYTES) {
+              throw new Error(`Arquivo muito grande: ${image.fileName}`);
+            }
+
+            const result = await generateImageAsset({
+              prompt:
+                "Remove the background from the provided person photo. Keep only the main subject, preserve original proportions, preserve full body and hair details, and return a clean transparent PNG without adding new objects, text, shadows, or scenery.",
+              originalImages: [
+                {
+                  b64Json: image.dataBase64,
+                  mimeType: image.mimeType,
+                },
+              ],
+            });
+
+            return {
+              fileName: image.fileName,
+              mimeType: result.mimeType,
+              dataUrl: `data:${result.mimeType};base64,${result.b64Json}`,
+            };
+          })
+        );
       }),
   }),
 

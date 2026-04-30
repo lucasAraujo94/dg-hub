@@ -26,6 +26,7 @@ import Cadastro from "@/pages/Cadastro";
 import Login from "@/pages/Login";
 import Aniversariantes from "@/pages/Aniversariantes";
 import PerfilPublico from "@/pages/PerfilPublico";
+import TemplateBatchComposer from "@/pages/TemplateBatchComposer";
 
 function Router() {
   return (
@@ -40,6 +41,7 @@ function Router() {
       <Route path={"/cadastro"} component={Cadastro} />
       <Route path={"/perfil/:id"} component={PerfilPublico} />
       <Route path={"/aniversariantes"} component={Aniversariantes} />
+      <Route path={"/compositor-lote"} component={TemplateBatchComposer} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

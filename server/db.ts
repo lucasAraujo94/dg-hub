@@ -1,5 +1,6 @@
 import { prisma, Prisma } from "./_core/prisma";
 import { ENV } from "./_core/env";
+import type { Prisma as PrismaNamespace } from "@prisma/client";
 
 type NullableString = string | null | undefined;
 
@@ -1069,6 +1070,8 @@ export async function rejeitarSolicitacaoSaque(solicitacaoId: number) {
         usuarioId: true,
         status: true,
         valor: true,
+        providerStatus: true,
+        providerTransferId: true,
       },
     });
 
@@ -1222,27 +1225,7 @@ export async function concluirSolicitacaoSaqueComTransferencia(input: {
   });
 }
 
-export type PixPaymentRecord = {
-  id: number;
-  usuarioId: number;
-  createdByUserId: number | null;
-  provider: string;
-  externalReference: string;
-  providerPaymentId: string | null;
-  status: string;
-  valor: number | string;
-  descricao: string | null;
-  qrCode: string | null;
-  qrCodeBase64: string | null;
-  ticketUrl: string | null;
-  metadataJson: string | null;
-  rawResponseJson: string | null;
-  approvedAt: Date | null;
-  creditedAt: Date | null;
-  expiresAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type PixPaymentRecord = PrismaNamespace.PixPaymentGetPayload<Record<string, never>>;
 
 type CreatePixPaymentInput = {
   usuarioId: number;
@@ -1354,7 +1337,9 @@ export async function getPixPaymentByProviderPaymentId(providerPaymentId: string
   return rows[0] ?? null;
 }
 
-export async function syncPixPaymentRecord(input: SyncPixPaymentInput) {
+export async function syncPixPaymentRecord(
+  input: SyncPixPaymentInput
+): Promise<PixPaymentRecord | null> {
   const existing = await prisma.pixPayment.findFirst({
     where: {
       OR: [
@@ -1382,7 +1367,7 @@ export async function syncPixPaymentRecord(input: SyncPixPaymentInput) {
       approvedAt: input.approvedAt ?? undefined,
       expiresAt: input.expiresAt ?? undefined,
     },
-  }) as Promise<PixPaymentRecord | null>;
+  });
 }
 
 export async function creditPixPaymentIfNeeded(params: {
