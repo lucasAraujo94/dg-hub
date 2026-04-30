@@ -82,9 +82,10 @@ async function startServer() {
     "capacitor://localhost",
     "https://app.dggames.online",
   ]);
+  const batchUploadLimit = "30mb";
 
-  app.use(express.json({ limit: "5mb" }));
-  app.use(express.urlencoded({ limit: "5mb", extended: true }));
+  app.use(express.json({ limit: batchUploadLimit }));
+  app.use(express.urlencoded({ limit: batchUploadLimit, extended: true }));
 
   app.use((req, res, next) => {
     const origin = req.headers.origin;
@@ -259,6 +260,18 @@ async function startServer() {
         refuseReason: "Falha interna ao validar saque",
       });
     }
+  });
+
+  app.use((error: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (error?.type === "entity.too.large") {
+      return res.status(413).json({
+        error: {
+          code: "PAYLOAD_TOO_LARGE",
+          message: "O lote de imagens excede o limite permitido pelo servidor.",
+        },
+      });
+    }
+    return next(error);
   });
 
   app.use(
