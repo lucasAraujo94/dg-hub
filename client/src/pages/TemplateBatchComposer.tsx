@@ -647,26 +647,45 @@ export default function TemplateBatchComposer() {
           </Card>
         </section>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button
-            variant="outline"
-            onClick={() => setPlacement(DEFAULT_PLACEMENT)}
-          >
-            Restaurar posicao inicial padrao
-          </Button>
-          <Button
-            onClick={handleProcess}
-            disabled={isRendering || removeBackgroundMutation.isPending}
-            className="gap-2"
-          >
-            {isRendering || removeBackgroundMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Scissors className="h-4 w-4" />
-            )}
-            Processar lote
-          </Button>
-        </div>
+        <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(6,10,18,0.96),rgba(10,16,28,0.88))] shadow-[0_24px_70px_rgba(0,0,0,0.3)]">
+          <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div className="space-y-3">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-emerald-100">
+                <Scissors className="h-3.5 w-3.5" />
+                Fluxo de montagem
+              </div>
+              <div>
+                <h2 className="text-2xl font-semibold text-white">
+                  Gere o lote e refine cada resultado depois
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm text-white/70">
+                  Primeiro processe as imagens. Depois use o editor visual abaixo para reposicionar, redimensionar e exportar apenas quando tudo estiver pronto.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <Button
+                variant="outline"
+                onClick={() => setPlacement(DEFAULT_PLACEMENT)}
+                className="rounded-2xl border-white/15 bg-white/5"
+              >
+                Restaurar padrao inicial
+              </Button>
+              <Button
+                onClick={handleProcess}
+                disabled={isRendering || removeBackgroundMutation.isPending}
+                className="gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-white"
+              >
+                {isRendering || removeBackgroundMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Scissors className="h-4 w-4" />
+                )}
+                Processar lote
+              </Button>
+            </div>
+          </div>
+        </section>
 
         <Card className="border-white/10 bg-black/20">
           <CardHeader>
@@ -680,6 +699,35 @@ export default function TemplateBatchComposer() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {processed.length ? (
+              <div className="mb-5 grid gap-3 rounded-[24px] border border-white/10 bg-white/5 p-4 md:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">
+                    Etapa 1
+                  </p>
+                  <p className="mt-2 text-sm text-white/80">
+                    Toque ou clique em um card para colocá-lo em edição.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">
+                    Etapa 2
+                  </p>
+                  <p className="mt-2 text-sm text-white/80">
+                    Arraste somente a pessoa dentro do template para encontrar a posição ideal.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">
+                    Etapa 3
+                  </p>
+                  <p className="mt-2 text-sm text-white/80">
+                    Ajuste o tamanho pelos botões laterais e baixe o ZIP quando terminar.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             {processed.length ? (
               <div className="grid gap-5 xl:grid-cols-2">
                 {processed.map(item => (
@@ -695,7 +743,8 @@ export default function TemplateBatchComposer() {
                     <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/55 to-transparent" />
                     <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl transition-opacity duration-300 group-hover:opacity-100" />
                     <div className="absolute -bottom-16 -left-12 h-36 w-36 rounded-full bg-emerald-400/10 blur-3xl transition-opacity duration-300 group-hover:opacity-100" />
-                    <div>
+                    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
+                      <div>
                       <div className="mb-4 flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/70">
@@ -705,9 +754,20 @@ export default function TemplateBatchComposer() {
                             {item.fileName}
                           </h3>
                         </div>
-                        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/65">
-                          {activeItemId === item.id ? "Em edicao" : "Editavel"}
-                        </div>
+                        <button
+                          type="button"
+                          className={`rounded-full border px-3 py-1 text-[11px] transition-colors ${
+                            activeItemId === item.id
+                              ? "border-cyan-300/35 bg-cyan-400/15 text-cyan-50"
+                              : "border-white/10 bg-white/5 text-white/65 hover:bg-white/10"
+                          }`}
+                          onClick={event => {
+                            event.stopPropagation();
+                            setActiveItemId(item.id);
+                          }}
+                        >
+                          {activeItemId === item.id ? "Em edicao" : "Editar esta foto"}
+                        </button>
                       </div>
                       <div
                         className={`relative overflow-hidden rounded-xl border border-white/10 bg-black/20 ${
@@ -772,56 +832,6 @@ export default function TemplateBatchComposer() {
                         }`}>
                           Arraste somente a foto
                         </div>
-                        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              className="inline-flex h-10 items-center justify-center rounded-full border border-white/15 bg-black/70 px-4 text-sm text-white shadow-lg backdrop-blur-md transition-transform hover:scale-105"
-                              onClick={async event => {
-                                event.stopPropagation();
-                                setActiveItemId(item.id);
-                                await updateProcessedPlacement(item.id, currentPlacement => ({
-                                  ...currentPlacement,
-                                  width: clamp(currentPlacement.width - 5, 5, 100),
-                                  height: clamp(currentPlacement.height - 5, 5, 100),
-                                }));
-                              }}
-                              aria-label="Diminuir foto"
-                            >
-                              <Minus className="mr-2 h-4 w-4" />
-                              Diminuir
-                            </button>
-                            <button
-                              type="button"
-                              className="inline-flex h-10 items-center justify-center rounded-full border border-white/15 bg-black/70 px-4 text-sm text-white shadow-lg backdrop-blur-md transition-transform hover:scale-105"
-                              onClick={async event => {
-                                event.stopPropagation();
-                                setActiveItemId(item.id);
-                                await updateProcessedPlacement(item.id, currentPlacement => ({
-                                  ...currentPlacement,
-                                  width: clamp(currentPlacement.width + 5, 5, 100),
-                                  height: clamp(currentPlacement.height + 5, 5, 100),
-                                }));
-                              }}
-                              aria-label="Aumentar foto"
-                            >
-                              <Plus className="mr-2 h-4 w-4" />
-                              Aumentar
-                            </button>
-                          </div>
-                          <button
-                            type="button"
-                            className="inline-flex h-10 items-center justify-center rounded-full border border-white/15 bg-white/8 px-4 text-sm text-white/90 shadow-lg backdrop-blur-md transition-transform hover:scale-105"
-                            onClick={async event => {
-                              event.stopPropagation();
-                              setActiveItemId(item.id);
-                              await resetProcessedPlacement(item.id);
-                            }}
-                            aria-label="Resetar foto"
-                          >
-                            Resetar foto
-                          </button>
-                        </div>
                       </div>
                       <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
@@ -841,13 +851,96 @@ export default function TemplateBatchComposer() {
                           </p>
                         </div>
                       </div>
+                      </div>
+
+                      <aside className="rounded-[24px] border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+                        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/70">
+                          Ferramentas
+                        </p>
+                        <h4 className="mt-2 text-lg font-semibold text-white">
+                          Ajuste desta foto
+                        </h4>
+                        <p className="mt-2 text-sm text-white/70">
+                          O preview fica limpo. Todos os controles desta foto ficam concentrados aqui.
+                        </p>
+
+                        <div className="mt-5 space-y-3">
+                          <button
+                            type="button"
+                            className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/15 bg-black/60 px-4 text-sm font-medium text-white shadow-lg backdrop-blur-md transition-transform hover:scale-[1.01]"
+                            onClick={async event => {
+                              event.stopPropagation();
+                              setActiveItemId(item.id);
+                              await updateProcessedPlacement(item.id, currentPlacement => ({
+                                ...currentPlacement,
+                                width: clamp(currentPlacement.width - 5, 5, 100),
+                                height: clamp(currentPlacement.height - 5, 5, 100),
+                              }));
+                            }}
+                            aria-label="Diminuir foto"
+                          >
+                            <Minus className="mr-2 h-4 w-4" />
+                            Diminuir foto
+                          </button>
+
+                          <button
+                            type="button"
+                            className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-400/12 px-4 text-sm font-medium text-cyan-50 shadow-lg backdrop-blur-md transition-transform hover:scale-[1.01]"
+                            onClick={async event => {
+                              event.stopPropagation();
+                              setActiveItemId(item.id);
+                              await updateProcessedPlacement(item.id, currentPlacement => ({
+                                ...currentPlacement,
+                                width: clamp(currentPlacement.width + 5, 5, 100),
+                                height: clamp(currentPlacement.height + 5, 5, 100),
+                              }));
+                            }}
+                            aria-label="Aumentar foto"
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Aumentar foto
+                          </button>
+
+                          <button
+                            type="button"
+                            className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/8 px-4 text-sm font-medium text-white/90 shadow-lg backdrop-blur-md transition-transform hover:scale-[1.01]"
+                            onClick={async event => {
+                              event.stopPropagation();
+                              setActiveItemId(item.id);
+                              await resetProcessedPlacement(item.id);
+                            }}
+                            aria-label="Resetar foto"
+                          >
+                            Resetar foto
+                          </button>
+                        </div>
+
+                        <div className="mt-5 rounded-2xl border border-white/10 bg-black/25 p-4">
+                          <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">
+                            Dica rapida
+                          </p>
+                          <p className="mt-2 text-sm text-white/80">
+                            Arraste a pessoa no preview e depois refine o tamanho aqui ao lado.
+                          </p>
+                        </div>
+                      </aside>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/15 p-10 text-center text-sm text-muted-foreground">
-                Execute o processamento para gerar os previews finais.
+              <div className="rounded-[28px] border border-dashed border-white/15 bg-[linear-gradient(135deg,rgba(8,12,20,0.7),rgba(8,12,20,0.35))] p-10 text-center">
+                <div className="mx-auto flex max-w-md flex-col items-center gap-3">
+                  <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.24em] text-white/55">
+                    Editor aguardando lote
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">
+                    Processe as imagens para abrir o studio de edição
+                  </h3>
+                  <p className="text-sm text-white/65">
+                    Assim que o lote for gerado, cada foto aparecerá aqui com preview limpo e painel de ajuste separado.
+                  </p>
+                </div>
               </div>
             )}
           </CardContent>
