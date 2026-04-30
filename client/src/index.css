@@ -43,34 +43,31 @@
 }
 
 :root {
-  /* Paleta neon gamer mais viva e clara (charcoal iluminado) */
-  --radius: 0.75rem;
-  --primary: oklch(0.74 0.3 330);      /* magenta neon intenso */
+  --radius: 1rem;
+  --primary: oklch(0.72 0.2 197);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.82 0.24 180);   /* teal/cyber green mais vivo */
+  --secondary: oklch(0.77 0.18 154);
   --secondary-foreground: oklch(0.99 0 0);
-  --accent: oklch(0.79 0.26 250);      /* roxo-azul forte */
-  --accent-foreground: oklch(0.99 0 0);
+  --accent: oklch(0.78 0.17 78);
+  --accent-foreground: oklch(0.12 0.02 90);
   --destructive: oklch(0.7 0.26 25);
   --destructive-foreground: oklch(0.99 0 0);
-
-  --background: oklch(0.24 0.03 250);  /* bem mais claro que o anterior */
+  --background: oklch(0.19 0.02 218);
   --foreground: oklch(0.98 0.01 260);
-  --card: oklch(0.28 0.03 250);
+  --card: oklch(0.23 0.02 220);
   --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--card-foreground);
-  --muted: oklch(0.4 0.04 250);
-  --muted-foreground: oklch(0.82 0.05 260);
-  --border: oklch(0.34 0.03 250);
-  --input: oklch(0.3 0.03 250);
+  --muted: oklch(0.33 0.02 220);
+  --muted-foreground: oklch(0.78 0.03 235);
+  --border: oklch(0.3 0.02 220);
+  --input: oklch(0.26 0.02 220);
   --ring: var(--primary);
-
   --chart-1: var(--primary);
-  --chart-2: oklch(0.82 0.24 190);
-  --chart-3: oklch(0.8 0.26 240);
-  --chart-4: oklch(0.74 0.28 300);
-  --chart-5: oklch(0.66 0.26 25);
+  --chart-2: oklch(0.82 0.16 154);
+  --chart-3: oklch(0.83 0.12 78);
+  --chart-4: oklch(0.72 0.18 260);
+  --chart-5: oklch(0.7 0.21 24);
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
@@ -82,29 +79,28 @@
 }
 
 .dark {
-  /* Versão dark ainda clara comparado ao anterior */
-  --primary: oklch(0.74 0.3 330);
+  --primary: oklch(0.72 0.2 197);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.82 0.24 180);
+  --secondary: oklch(0.77 0.18 154);
   --secondary-foreground: oklch(0.99 0 0);
-  --accent: oklch(0.79 0.26 250);
-  --accent-foreground: oklch(0.99 0 0);
-  --background: oklch(0.2 0.03 250);
+  --accent: oklch(0.78 0.17 78);
+  --accent-foreground: oklch(0.12 0.02 90);
+  --background: oklch(0.17 0.02 218);
   --foreground: oklch(0.97 0.01 260);
-  --card: oklch(0.24 0.03 250);
+  --card: oklch(0.21 0.02 220);
   --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--card-foreground);
-  --muted: oklch(0.36 0.04 250);
-  --muted-foreground: oklch(0.8 0.05 260);
-  --border: oklch(0.3 0.03 250);
-  --input: oklch(0.26 0.03 250);
+  --muted: oklch(0.31 0.02 220);
+  --muted-foreground: oklch(0.76 0.03 235);
+  --border: oklch(0.28 0.02 220);
+  --input: oklch(0.24 0.02 220);
   --ring: var(--primary);
   --chart-1: var(--primary);
-  --chart-2: oklch(0.82 0.24 190);
-  --chart-3: oklch(0.8 0.26 240);
-  --chart-4: oklch(0.74 0.28 300);
-  --chart-5: oklch(0.66 0.26 25);
+  --chart-2: oklch(0.82 0.16 154);
+  --chart-3: oklch(0.83 0.12 78);
+  --chart-4: oklch(0.72 0.18 260);
+  --chart-5: oklch(0.7 0.21 24);
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-accent: var(--secondary);
@@ -135,6 +131,12 @@
   body {
     @apply bg-background text-foreground;
     text-wrap: pretty;
+    background-image:
+      radial-gradient(circle at top, rgba(34, 211, 238, 0.14), transparent 26%),
+      radial-gradient(circle at 80% 10%, rgba(251, 191, 36, 0.08), transparent 22%),
+      linear-gradient(180deg, rgba(3, 7, 18, 0.96), rgba(3, 7, 18, 1));
+    background-attachment: fixed;
+    font-feature-settings: "ss01" on, "cv02" on;
   }
 
   img,
@@ -166,6 +168,7 @@
     overflow-wrap: anywhere;
     word-break: break-word;
   }
+
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
@@ -180,25 +183,12 @@
 }
 
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     max-width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
     padding-right: 1rem;
   }
 
@@ -209,71 +199,62 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
+      padding-left: 2rem;
       padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      max-width: 1280px;
     }
   }
 
-  /* Elegant and Perfect Style Components */
   .gradient-text {
-    @apply text-transparent font-bold bg-clip-text;
-    background-image: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+    @apply bg-clip-text text-transparent font-bold;
+    background-image: linear-gradient(90deg, #91f2ff, #86efac, #fde68a);
   }
 
   .glow-effect {
-    @apply shadow-[0_0_30px_rgba(168,85,247,0.6)];
+    @apply shadow-[0_0_30px_rgba(34,211,238,0.32)];
   }
 
   .card-elegant {
-    @apply bg-card border border-border rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 backdrop-blur-sm;
+    @apply rounded-3xl border border-border bg-card p-6 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl;
     overflow: hidden;
   }
 
   .btn-primary {
-    @apply text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 active:scale-95;
-    background-image: linear-gradient(110deg, var(--primary), var(--accent));
-    box-shadow: 0 0 18px color-mix(in srgb, var(--primary) 50%, transparent);
+    @apply rounded-2xl px-6 py-3 font-semibold text-white transition-all duration-300 active:scale-95;
+    background-image: linear-gradient(110deg, #22d3ee, #34d399, #fbbf24);
+    box-shadow: 0 0 18px rgba(34, 211, 238, 0.3);
   }
 
   .btn-secondary {
-    @apply text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 active:scale-95;
-    background-image: linear-gradient(110deg, var(--secondary), var(--accent));
-    box-shadow: 0 0 18px color-mix(in srgb, var(--secondary) 45%, transparent);
+    @apply rounded-2xl px-6 py-3 font-semibold text-white transition-all duration-300 active:scale-95;
+    background-image: linear-gradient(110deg, #0f172a, #1e293b);
+    box-shadow: 0 0 18px rgba(15, 23, 42, 0.35);
   }
 
   .neon-border {
     @apply border-2;
-    border-color: color-mix(in srgb, var(--primary) 65%, var(--accent) 35%);
-    box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 45%, transparent);
+    border-color: rgba(148, 226, 255, 0.5);
+    box-shadow: 0 0 16px rgba(34, 211, 238, 0.18);
   }
 
   .stat-card {
-    @apply rounded-xl p-4 transition-all duration-300 border;
-    background: linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--primary) 18%, transparent),
-      color-mix(in srgb, var(--secondary) 18%, transparent)
-    );
-    border-color: color-mix(in srgb, var(--primary) 40%, var(--secondary) 30%);
-    box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 25%, transparent);
+    @apply rounded-[24px] border p-4 transition-all duration-300;
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.14), rgba(52, 211, 153, 0.12));
+    border-color: rgba(148, 226, 255, 0.16);
+    box-shadow: 0 18px 44px rgba(3, 7, 18, 0.2);
   }
 
   .badge-elegant {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border;
-    background: linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--primary) 22%, transparent),
-      color-mix(in srgb, var(--secondary) 22%, transparent)
-    );
-    border-color: color-mix(in srgb, var(--primary) 45%, var(--secondary) 35%);
+    @apply inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium;
+    background: linear-gradient(90deg, rgba(34, 211, 238, 0.12), rgba(251, 191, 36, 0.1));
+    border-color: rgba(148, 226, 255, 0.18);
   }
 
   .safe-shell {
@@ -285,5 +266,46 @@
   .safe-stack > * {
     min-width: 0;
     max-width: 100%;
+  }
+
+  .glass-panel {
+    @apply rounded-[28px] border backdrop-blur-xl;
+    border-color: rgba(255, 255, 255, 0.1);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04)),
+      rgba(7, 12, 22, 0.72);
+    box-shadow:
+      0 24px 80px rgba(3, 7, 18, 0.32),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .hero-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.08) 42%, transparent 62%),
+      radial-gradient(circle at top right, rgba(34, 211, 238, 0.18), transparent 36%);
+    mix-blend-mode: screen;
+  }
+
+  .action-tile {
+    @apply rounded-[24px] border px-4 py-4 text-left transition-all duration-200;
+    border-color: rgba(255, 255, 255, 0.1);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03)),
+      rgba(8, 14, 24, 0.8);
+  }
+
+  .action-tile:hover {
+    transform: translateY(-2px);
+    border-color: rgba(148, 226, 255, 0.28);
+    box-shadow: 0 18px 48px rgba(12, 74, 110, 0.2);
   }
 }

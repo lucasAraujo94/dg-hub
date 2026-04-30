@@ -13,11 +13,13 @@ import {
   ArrowLeft,
   Download,
   ImagePlus,
+  Images,
   Loader2,
   Minus,
   Plus,
   Package,
   Scissors,
+  Sparkles,
 } from "lucide-react";
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -54,6 +56,21 @@ const DEFAULT_PLACEMENT: Placement = {
   width: 40,
   height: 70,
 };
+
+const COMPOSER_STEPS = [
+  {
+    title: "Envie o lote",
+    description: "Selecione varias fotos e um unico template base.",
+  },
+  {
+    title: "Remova o fundo",
+    description: "O sistema processa tudo em lote antes da edicao.",
+  },
+  {
+    title: "Refine e exporte",
+    description: "Reposicione, ajuste a escala e baixe tudo em ZIP.",
+  },
+];
 
 const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -530,7 +547,7 @@ export default function TemplateBatchComposer() {
 
   return (
     <div className="safe-shell min-h-screen bg-background text-foreground pb-16">
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+      <div className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/65 backdrop-blur-xl">
         <div className="container py-4 md:py-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <Button asChild variant="outline" className="gap-2 rounded-full">
@@ -550,7 +567,7 @@ export default function TemplateBatchComposer() {
             <Button
               onClick={handleDownloadZip}
               disabled={!processed.length}
-              className="gap-2"
+              className="gap-2 rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#34d399)] text-slate-950 shadow-[0_16px_40px_rgba(34,211,238,0.22)] disabled:text-slate-950/70"
             >
               <Download className="w-4 h-4" />
               Baixar ZIP
@@ -560,8 +577,32 @@ export default function TemplateBatchComposer() {
       </div>
 
       <div className="container space-y-6 py-6">
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(360px,0.7fr)]">
-          <Card className="border-white/10 bg-black/20">
+        <section className="glass-panel overflow-hidden">
+          <div className="grid gap-5 border-b border-white/10 p-5 lg:grid-cols-[minmax(0,1.1fr)_320px] lg:items-center">
+            <div className="space-y-3">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-cyan-100">
+                <Sparkles className="h-3.5 w-3.5" />
+                DG Arena studio
+              </div>
+              <div>
+                <h2 className="text-2xl font-semibold text-white md:text-3xl">
+                  Monte lotes prontos para publicar sem sair do fluxo.
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm text-white/70">
+                  Tudo aqui tem funcao: upload em lote, remocao automatica de fundo, ajuste visual por foto e exportacao final organizada em ZIP.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {COMPOSER_STEPS.map(step => (
+                <div key={step.title} className="rounded-[22px] border border-white/10 bg-black/22 px-4 py-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-cyan-200/70">{step.title}</p>
+                  <p className="mt-2 text-sm text-white/78">{step.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <Card className="border-0 bg-transparent shadow-none">
             <CardHeader>
               <CardTitle>Arquivos</CardTitle>
               <CardDescription>
@@ -570,7 +611,11 @@ export default function TemplateBatchComposer() {
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="grid gap-5 md:grid-cols-2">
-                <div className="space-y-2">
+                <div className="rounded-[24px] border border-white/10 bg-black/20 p-4">
+                  <div className="mb-4 flex items-center gap-2">
+                    <Images className="h-4 w-4 text-cyan-300" />
+                    <p className="text-sm font-medium text-white">Fotos do lote</p>
+                  </div>
                   <Label htmlFor="photos">Fotos</Label>
                   <Input
                     id="photos"
@@ -583,7 +628,11 @@ export default function TemplateBatchComposer() {
                     PNG, JPG ou WEBP. Ate 20 arquivos por lote.
                   </p>
                 </div>
-                <div className="space-y-2">
+                <div className="rounded-[24px] border border-white/10 bg-black/20 p-4">
+                  <div className="mb-4 flex items-center gap-2">
+                    <Package className="h-4 w-4 text-emerald-300" />
+                    <p className="text-sm font-medium text-white">Template base</p>
+                  </div>
                   <Label htmlFor="template">Template</Label>
                   <Input
                     id="template"
@@ -687,7 +736,7 @@ export default function TemplateBatchComposer() {
           </div>
         </section>
 
-        <Card className="border-white/10 bg-black/20">
+        <Card className="glass-panel">
           <CardHeader>
             <div className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-cyan-100">
               <Package className="h-3.5 w-3.5" />

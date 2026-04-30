@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
-import HomeBg from "../assets/dg-games-bg.png";
+import HomeBg from "../assets/dg-arena.png";
 import { toast } from "sonner";
 import { getLoginUrl, isNativeApp } from "@/const";
 import { readLastSeenChatAt, writeLastSeenChatAt } from "@/lib/chatNotifications";
@@ -280,6 +280,53 @@ export default function Home() {
     return list.find(item => item.status === "ativo") || list.find(item => item.status === "futuro") || null;
   }, [campeonatosQuery.data]);
   const sessionUrgency = remainingSessionMs <= 2 * 60 * 1000 ? "critica" : remainingSessionMs <= 5 * 60 * 1000 ? "atencao" : "ok";
+  const overviewStats = [
+    {
+      key: "saldo",
+      label: "Saldo disponivel",
+      value: `R$ ${Number((user as any)?.saldoPremio ?? (user as any)?.prizeBalance ?? 0).toFixed(2)}`,
+      tone: "text-amber-300",
+      icon: Wallet,
+    },
+    {
+      key: "campeonato",
+      label: "Campeonato em foco",
+      value: activeChampionship?.nome ?? "Nenhum campeonato ativo agora",
+      tone: "text-white",
+      icon: Trophy,
+    },
+    {
+      key: "sessao",
+      label: "Status da sessao",
+      value:
+        sessionUrgency === "critica"
+          ? "Expirando em breve"
+          : sessionUrgency === "atencao"
+            ? "Fique atento"
+            : "Tudo estavel",
+      tone:
+        sessionUrgency === "critica"
+          ? "text-red-300"
+          : sessionUrgency === "atencao"
+            ? "text-amber-300"
+            : "text-emerald-300",
+      icon: TimerReset,
+    },
+  ];
+  const workflowCards = [
+    {
+      title: "Descubra",
+      description: "Veja o campeonato atual, o que mudou no chat e o que exige acao agora.",
+    },
+    {
+      title: "Aja",
+      description: "Entre no chat, inscreva-se ou abra o compositor sem procurar em menus soltos.",
+    },
+    {
+      title: "Finalize",
+      description: "Refine imagens, acompanhe ranking e feche a sessao com clareza do que foi feito.",
+    },
+  ];
   const quickActions: QuickAction[] = [
     { key: "campeonatos", label: "Campeonatos", icon: Trophy, action: () => { setActiveSection("campeonatos"); setMenuOpen(false); } },
     { key: "chat", label: "Chat", icon: MessageCircle, action: () => { setActiveSection("chat"); setMenuOpen(false); markChatAsRead(); } },
@@ -345,13 +392,13 @@ export default function Home() {
     <div
       className="safe-shell min-h-screen text-foreground flex flex-col"
       style={{
-        backgroundImage: `linear-gradient(180deg, rgba(5,7,13,0.8), rgba(5,7,13,0.95)), url(${HomeBg})`,
+        backgroundImage: `linear-gradient(180deg, rgba(4,8,15,0.64), rgba(4,8,15,0.92)), url(${HomeBg})`,
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: "center top",
       }}
     >
       {/* Top bar */}
-      <header className="border-b border-border bg-card/70 backdrop-blur-sm">
+      <header className="border-b border-white/10 bg-slate-950/60 backdrop-blur-xl">
         <div className="w-full flex flex-wrap items-start md:items-center gap-3 px-4 md:px-6 py-3 md:h-16 relative">
           <div className="flex items-center gap-3 md:w-64 md:px-3">
             <button
@@ -362,7 +409,7 @@ export default function Home() {
               <Menu className="w-5 h-5 text-muted-foreground" />
             </button>
             <div className="flex items-center gap-2 min-w-0 md:pl-1">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#34d399,#fbbf24)] flex items-center justify-center shadow-[0_18px_48px_rgba(34,211,238,0.24)]">
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <span className="text-lg font-bold leading-none gradient-text">DG Hub</span>
@@ -401,7 +448,7 @@ export default function Home() {
       <div className="safe-stack flex flex-1">
         {/* Sidebar */}
         <aside
-          className={`border-r border-white/10 bg-black/30 backdrop-blur-xl transition-all duration-50 ease-out
+          className={`border-r border-white/10 bg-slate-950/55 backdrop-blur-2xl transition-all duration-150 ease-out
             ${menuOpen ? "fixed inset-y-0 left-0 z-50 w-64 shadow-2xl" : "hidden"}
             md:static md:flex md:flex-col md:z-auto md:shadow-none
             ${menuCollapsed ? "md:w-16" : "md:w-64"} md:block md:translate-x-0`}
@@ -414,7 +461,7 @@ export default function Home() {
                 setMenuOpen(true);
               }}
             >
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-white text-xs font-bold shadow-lg">
+              <div className="w-8 h-8 rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#34d399,#fbbf24)] flex items-center justify-center text-slate-950 text-xs font-bold shadow-lg">
                 DG
               </div>
               <span className="text-sm font-semibold text-white/80">Navegacao</span>
@@ -460,7 +507,7 @@ export default function Home() {
               const baseClasses =
                 "w-full justify-start rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all";
               const activeClasses = isActive
-                ? "bg-gradient-to-r from-purple-600/30 to-cyan-500/25 border-white/20 shadow-md"
+                ? "bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(52,211,153,0.14),rgba(251,191,36,0.12))] border-cyan-200/20 shadow-[0_14px_40px_rgba(8,145,178,0.14)]"
                 : "";
               const content = (
                 <div className="flex items-center gap-3 w-full">
@@ -529,55 +576,41 @@ export default function Home() {
 
         {/* Main content */}
         <main className="safe-stack flex-1 space-y-5 px-4 py-5 md:p-6 md:space-y-6">
-          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.8fr)]">
-            <div className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(135deg,rgba(14,165,233,0.16),rgba(16,185,129,0.12),rgba(255,255,255,0.04))] p-5 sm:p-6">
-              <div className="absolute inset-y-0 right-0 w-40 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.22),transparent_68%)]" />
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.85fr)]">
+            <div className="glass-panel hero-sheen relative p-5 sm:p-6">
+              <div className="absolute inset-y-0 right-0 w-52 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.22),transparent_68%)]" />
+              <div className="absolute -left-20 bottom-0 h-56 w-56 rounded-full bg-amber-300/10 blur-3xl" />
               <div className="relative space-y-4">
                 <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-cyan-100">
                   <BellRing className="h-3.5 w-3.5" />
-                  Central do jogador
+                  DG Arena control room
                 </div>
                 <div className="space-y-2">
                   <h1 className="max-w-3xl text-3xl font-semibold leading-tight text-white md:text-4xl">
-                    Acompanhe o campeonato certo, entre no chat mais rapido e aja sem procurar nada.
+                    Tudo que move o jogador fica concentrado aqui, com proximo passo claro e menos atrito.
                   </h1>
                   <p className="max-w-2xl text-sm text-white/72 md:text-base">
-                    A home agora prioriza seu proximo passo: campeonato em destaque, novidades da comunidade, saldo e atalhos principais.
+                    A home virou um cockpit: status real, atalhos funcionais, acesso ao compositor e leitura rapida do que importa agora.
                   </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <Card className="border-white/10 bg-black/20 p-4">
-                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-white/55">
-                      <Wallet className="h-3.5 w-3.5" />
-                      Saldo
-                    </div>
-                    <p className="mt-2 text-2xl font-bold text-amber-300">
-                      R$ {Number((user as any)?.saldoPremio ?? (user as any)?.prizeBalance ?? 0).toFixed(2)}
-                    </p>
-                  </Card>
-                  <Card className="border-white/10 bg-black/20 p-4">
-                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-white/55">
-                      <Trophy className="h-3.5 w-3.5" />
-                      Campeonato
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm font-semibold text-white">
-                      {activeChampionship?.nome ?? "Nenhum campeonato ativo agora"}
-                    </p>
-                  </Card>
-                  <Card className="border-white/10 bg-black/20 p-4">
-                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-white/55">
-                      <TimerReset className="h-3.5 w-3.5" />
-                      Sessao
-                    </div>
-                    <p className={`mt-2 text-sm font-semibold ${
-                      sessionUrgency === "critica" ? "text-red-300" : sessionUrgency === "atencao" ? "text-amber-300" : "text-white"
-                    }`}>
-                      {sessionUrgency === "critica" ? "Expirando em breve" : sessionUrgency === "atencao" ? "Fique atento" : "Tudo estavel"}
-                    </p>
-                  </Card>
+                  {overviewStats.map(stat => {
+                    const Icon = stat.icon;
+                    return (
+                      <Card key={stat.key} className="border-white/10 bg-black/20 p-4">
+                        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-white/55">
+                          <Icon className="h-3.5 w-3.5" />
+                          {stat.label}
+                        </div>
+                        <p className={`mt-2 line-clamp-2 text-sm font-semibold md:text-base ${stat.tone}`}>
+                          {stat.value}
+                        </p>
+                      </Card>
+                    );
+                  })}
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Button asChild className="rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-white">
+                  <Button asChild className="rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#34d399)] text-slate-950 shadow-[0_16px_40px_rgba(34,211,238,0.22)]">
                     <Link href={activeChampionship?.id ? "/campeonatos" : "/campeonatos"}>
                       {activeChampionship?.id ? "Ver campeonato em destaque" : "Explorar campeonatos"}
                     </Link>
@@ -592,10 +625,18 @@ export default function Home() {
                     <Link href="/ranking">Ver ranking</Link>
                   </Button>
                 </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {workflowCards.map(card => (
+                    <div key={card.title} className="rounded-[22px] border border-white/10 bg-black/18 px-4 py-4">
+                      <p className="text-[11px] uppercase tracking-[0.24em] text-white/45">{card.title}</p>
+                      <p className="mt-2 text-sm text-white/78">{card.description}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="grid gap-4">
-              <Card className="border-white/10 bg-black/30 p-4">
+              <Card className="glass-panel p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-[11px] uppercase tracking-[0.22em] text-white/50">Chat da comunidade</p>
@@ -612,13 +653,13 @@ export default function Home() {
                   {hasNewChatMessages ? "Ler mensagens novas" : "Entrar no chat"}
                 </Button>
               </Card>
-              <Card className="border-white/10 bg-black/30 p-4">
+              <Card className="glass-panel p-4">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-white/50">Atalhos rapidos</p>
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   {quickActions.map(item => {
                     const Icon = item.icon;
                     return "href" in item ? (
-                      <Button key={item.key} asChild variant="outline" className="h-auto min-h-20 justify-start rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-left">
+                      <Button key={item.key} asChild variant="outline" className="action-tile h-auto min-h-20 justify-start px-4 py-3">
                         <Link href={item.href}>
                           <div className="flex flex-col items-start gap-2">
                             <Icon className="h-4 w-4 text-cyan-200" />
@@ -627,7 +668,7 @@ export default function Home() {
                         </Link>
                       </Button>
                     ) : (
-                      <Button key={item.key} variant="outline" className="h-auto min-h-20 justify-start rounded-2xl border-white/15 bg-white/5 px-4 py-3 text-left" onClick={item.action}>
+                      <Button key={item.key} variant="outline" className="action-tile h-auto min-h-20 justify-start px-4 py-3" onClick={item.action}>
                         <div className="flex flex-col items-start gap-2">
                           <Icon className="h-4 w-4 text-cyan-200" />
                           <span>{item.label}</span>
