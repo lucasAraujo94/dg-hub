@@ -15,8 +15,9 @@ import {
   Download,
   ImagePlus,
   Loader2,
+  Minus,
+  Plus,
   Package,
-  ScanSearch,
   Scissors,
 } from "lucide-react";
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -224,6 +225,40 @@ export default function TemplateBatchComposer() {
 
   const updatePlacement = (key: keyof Placement, value: number) => {
     setPlacement(current => ({ ...current, [key]: value }));
+  };
+
+  const updateProcessedPlacement = async (
+    itemId: string,
+    updater: (placement: Placement) => Placement
+  ) => {
+    if (!templateFile) return;
+
+    const target = processed.find(item => item.id === itemId);
+    if (!target) return;
+
+    const nextPlacement = updater(target.placement);
+    const templateSrc = await readFileAsDataUrl(templateFile);
+    const rendered = await renderComposite(
+      templateSrc,
+      target.cutoutDataUrl,
+      nextPlacement
+    );
+
+    setProcessed(current =>
+      current.map(item =>
+        item.id === itemId
+          ? {
+              ...item,
+              placement: nextPlacement,
+              finalDataUrl: rendered.dataUrl,
+              canvasWidth: rendered.canvasWidth,
+              canvasHeight: rendered.canvasHeight,
+              renderedWidth: rendered.renderedWidth,
+              renderedHeight: rendered.renderedHeight,
+            }
+          : item
+      )
+    );
   };
 
   const handlePhotosChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -720,36 +755,41 @@ export default function TemplateBatchComposer() {
                             top: `${((item.canvasHeight - item.renderedHeight) * item.placement.y) / item.canvasHeight}%`,
                           }}
                         />
-                        <button
-                          type="button"
-                          className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white shadow-lg"
-                          onPointerDown={event => {
-                            event.stopPropagation();
-                            const rect = event.currentTarget.parentElement?.getBoundingClientRect();
-                            if (!rect) return;
-                            dragStateRef.current = {
-                              action: "resize",
-                              itemId: item.id,
-                              startClientX: event.clientX,
-                              startClientY: event.clientY,
-                              startPlacementX: item.placement.x,
-                              startPlacementY: item.placement.y,
-                              startPlacementWidth: item.placement.width,
-                              startPlacementHeight: item.placement.height,
-                              previewWidth: rect.width,
-                              previewHeight: rect.height,
-                              renderedWidth: rect.width * (item.renderedWidth / item.canvasWidth),
-                              renderedHeight: rect.height * (item.renderedHeight / item.canvasHeight),
-                            };
-                            setDraggingId(item.id);
-                          }}
-                          aria-label="Redimensionar foto"
-                        >
-                          <ScanSearch className="h-4 w-4" />
-                        </button>
+                        <div className="absolute bottom-2 right-2 flex gap-2">
+                          <button
+                            type="button"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white shadow-lg"
+                            onClick={async event => {
+                              event.stopPropagation();
+                              await updateProcessedPlacement(item.id, currentPlacement => ({
+                                ...currentPlacement,
+                                width: clamp(currentPlacement.width - 5, 5, 100),
+                                height: clamp(currentPlacement.height - 5, 5, 100),
+                              }));
+                            }}
+                            aria-label="Diminuir foto"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/70 text-white shadow-lg"
+                            onClick={async event => {
+                              event.stopPropagation();
+                              await updateProcessedPlacement(item.id, currentPlacement => ({
+                                ...currentPlacement,
+                                width: clamp(currentPlacement.width + 5, 5, 100),
+                                height: clamp(currentPlacement.height + 5, 5, 100),
+                              }));
+                            }}
+                            aria-label="Aumentar foto"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Arraste a foto para reposicionar e use o botao no canto para aumentar ou diminuir.
+                        Arraste para reposicionar. Use os botoes `-` e `+` para diminuir ou aumentar no PC e no celular.
                       </p>
                     </div>
                   </div>
