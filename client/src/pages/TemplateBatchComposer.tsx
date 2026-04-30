@@ -18,7 +18,7 @@ import {
   Package,
   Scissors,
 } from "lucide-react";
-import { type ChangeEvent, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 
@@ -33,6 +33,11 @@ type ProcessedImage = {
   fileName: string;
   cutoutDataUrl: string;
   finalDataUrl: string;
+  placement: Placement;
+  canvasWidth: number;
+  canvasHeight: number;
+  renderedWidth: number;
+  renderedHeight: number;
 };
 
 type Placement = {
@@ -187,6 +192,18 @@ export default function TemplateBatchComposer() {
   const [placement, setPlacement] = useState<Placement>(DEFAULT_PLACEMENT);
   const [processed, setProcessed] = useState<ProcessedImage[]>([]);
   const [isRendering, setIsRendering] = useState(false);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const dragStateRef = useRef<{
+    itemId: string;
+    startClientX: number;
+    startClientY: number;
+    startPlacementX: number;
+    startPlacementY: number;
+    previewWidth: number;
+    previewHeight: number;
+    renderedWidth: number;
+    renderedHeight: number;
+  } | null>(null);
   const removeBackgroundMutation = trpc.imaging.removeBackgroundBatch.useMutation();
 
   useEffect(() => {
@@ -228,7 +245,8 @@ export default function TemplateBatchComposer() {
 
   const renderComposite = async (
     templateSrc: string,
-    cutoutSrc: string
+    cutoutSrc: string,
+    currentPlacement: Placement
   ) => {
     const [templateImg, cutoutImg] = await Promise.all([
       loadImage(templateSrc),
@@ -243,16 +261,16 @@ export default function TemplateBatchComposer() {
 
     ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
 
-    const targetWidth = canvas.width * (placement.width / 100);
-    const targetHeight = canvas.height * (placement.height / 100);
+    const targetWidth = canvas.width * (currentPlacement.width / 100);
+    const targetHeight = canvas.height * (currentPlacement.height / 100);
     const fitted = fitContain(
       cutoutImg.naturalWidth || cutoutImg.width,
       cutoutImg.naturalHeight || cutoutImg.height,
       targetWidth,
       targetHeight
     );
-    const posX = (canvas.width - fitted.width) * (placement.x / 100);
-    const posY = (canvas.height - fitted.height) * (placement.y / 100);
+    const posX = (canvas.width - fitted.width) * (currentPlacement.x / 100);
+    const posY = (canvas.height - fitted.height) * (currentPlacement.y / 100);
 
     ctx.drawImage(
       cutoutImg,
@@ -262,8 +280,85 @@ export default function TemplateBatchComposer() {
       fitted.height
     );
 
-    return canvas.toDataURL("image/png");
+    return {
+      dataUrl: canvas.toDataURL("image/png"),
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      renderedWidth: fitted.width,
+      renderedHeight: fitted.height,
+    };
   };
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const dragState = dragStateRef.current;
+      if (!dragState) return;
+
+      const deltaX = event.clientX - dragState.startClientX;
+      const deltaY = event.clientY - dragState.startClientY;
+      const availableX = Math.max(1, dragState.previewWidth - dragState.renderedWidth);
+      const availableY = Math.max(1, dragState.previewHeight - dragState.renderedHeight);
+
+      setProcessed(current =>
+        current.map(item =>
+          item.id === dragState.itemId
+            ? {
+                ...item,
+                placement: {
+                  ...item.placement,
+                  x: clamp(dragState.startPlacementX + (deltaX / availableX) * 100, 0, 100),
+                  y: clamp(dragState.startPlacementY + (deltaY / availableY) * 100, 0, 100),
+                },
+              }
+            : item
+        )
+      );
+    };
+
+    const handlePointerUp = async () => {
+      const dragState = dragStateRef.current;
+      if (!dragState || !templateFile) return;
+
+      dragStateRef.current = null;
+      setDraggingId(null);
+
+      try {
+        const templateSrc = await readFileAsDataUrl(templateFile);
+        const target = processed.find(item => item.id === dragState.itemId);
+        if (!target) return;
+        const rendered = await renderComposite(
+          templateSrc,
+          target.cutoutDataUrl,
+          target.placement
+        );
+
+        setProcessed(current =>
+          current.map(item =>
+            item.id === dragState.itemId
+              ? {
+                  ...item,
+                  finalDataUrl: rendered.dataUrl,
+                  canvasWidth: rendered.canvasWidth,
+                  canvasHeight: rendered.canvasHeight,
+                  renderedWidth: rendered.renderedWidth,
+                  renderedHeight: rendered.renderedHeight,
+                }
+              : item
+          )
+        );
+      } catch {
+        toast.error("Falha ao atualizar a posicao da foto");
+      }
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [processed, templateFile]);
 
   const handleProcess = async () => {
     if (!photos.length) {
@@ -297,12 +392,22 @@ export default function TemplateBatchComposer() {
 
       const templateSrc = await readFileAsDataUrl(templateFile);
       const nextProcessed = await Promise.all(
-        backgroundless.map(async item => ({
-          id: item.fileName,
-          fileName: item.fileName,
-          cutoutDataUrl: item.dataUrl,
-          finalDataUrl: await renderComposite(templateSrc, item.dataUrl),
-        }))
+        backgroundless.map(async item => {
+          const initialPlacement = { ...placement };
+          const rendered = await renderComposite(templateSrc, item.dataUrl, initialPlacement);
+
+          return {
+            id: item.fileName,
+            fileName: item.fileName,
+            cutoutDataUrl: item.dataUrl,
+            finalDataUrl: rendered.dataUrl,
+            placement: initialPlacement,
+            canvasWidth: rendered.canvasWidth,
+            canvasHeight: rendered.canvasHeight,
+            renderedWidth: rendered.renderedWidth,
+            renderedHeight: rendered.renderedHeight,
+          };
+        })
       );
 
       setProcessed(nextProcessed);
@@ -547,13 +652,53 @@ export default function TemplateBatchComposer() {
                         className="w-full rounded-xl border border-white/10 bg-[linear-gradient(45deg,rgba(255,255,255,0.04)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.04)_50%,rgba(255,255,255,0.04)_75%,transparent_75%,transparent)] bg-[length:18px_18px]"
                       />
                     </div>
-                    <div>
+                  <div>
                       <p className="mb-2 text-sm font-medium">Composto final</p>
-                      <img
-                        src={item.finalDataUrl}
-                        alt={`${item.fileName} final`}
-                        className="w-full rounded-xl border border-white/10 bg-black/20"
-                      />
+                      <div
+                        className={`relative overflow-hidden rounded-xl border border-white/10 bg-black/20 ${
+                          draggingId === item.id ? "cursor-grabbing" : "cursor-grab"
+                        }`}
+                        style={{
+                          aspectRatio: `${item.canvasWidth} / ${item.canvasHeight}`,
+                        }}
+                        onPointerDown={event => {
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          dragStateRef.current = {
+                            itemId: item.id,
+                            startClientX: event.clientX,
+                            startClientY: event.clientY,
+                            startPlacementX: item.placement.x,
+                            startPlacementY: item.placement.y,
+                            previewWidth: rect.width,
+                            previewHeight: rect.height,
+                            renderedWidth: rect.width * (item.renderedWidth / item.canvasWidth),
+                            renderedHeight: rect.height * (item.renderedHeight / item.canvasHeight),
+                          };
+                          setDraggingId(item.id);
+                        }}
+                      >
+                        <img
+                          src={templatePreview ?? item.finalDataUrl}
+                          alt={`${item.fileName} template`}
+                          className="absolute inset-0 h-full w-full object-cover"
+                          draggable={false}
+                        />
+                        <img
+                          src={item.cutoutDataUrl}
+                          alt={`${item.fileName} posicionado`}
+                          className="absolute select-none object-contain"
+                          draggable={false}
+                          style={{
+                            width: `${(item.renderedWidth / item.canvasWidth) * 100}%`,
+                            height: `${(item.renderedHeight / item.canvasHeight) * 100}%`,
+                            left: `${((item.canvasWidth - item.renderedWidth) * item.placement.x) / item.canvasWidth}%`,
+                            top: `${((item.canvasHeight - item.renderedHeight) * item.placement.y) / item.canvasHeight}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Arraste a foto sobre o template para reposicionar antes de baixar.
+                      </p>
                     </div>
                   </div>
                 ))}
