@@ -212,9 +212,9 @@ export default function Login() {
 
       <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-10 sm:px-6 lg:px-8">
         <header className="mb-10 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-primary/30 bg-black/50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+          <div className="flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100">
             <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgba(92,123,255,0.9)]" />
-            DG Hub Login
+            DG Arena login
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" asChild className="text-sm">
@@ -238,7 +238,7 @@ export default function Login() {
               <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
                 Conecte-se ao{" "}
                 <span className="bg-gradient-to-r from-emerald-300 via-white to-primary bg-clip-text text-transparent">
-                  DG Games
+                  DG Arena
                 </span>
               </h1>
               <p className="text-base text-muted-foreground">

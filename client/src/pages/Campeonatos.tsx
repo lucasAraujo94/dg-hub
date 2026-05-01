@@ -15,6 +15,7 @@ import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
+import { SitePage } from "@/components/SitePage";
 
 const BYE = "W.O";
 type Match = { jogador1: string; jogador2: string; vencedor?: string };
@@ -1132,22 +1133,14 @@ export default function Campeonatos() {
   }, [presentationMode, presentationAutoplay, roundsExibidos.length]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container py-6">
-          <div className="flex items-center justify-between mb-6">
-            <Button asChild variant="outline" className="gap-2 rounded-full">
-              <Link href="/">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">←</span>
-                <span>Voltar</span>
-              </Link>
-            </Button>
-            <h1 className="text-3xl font-bold gradient-text">Campeonatos</h1>
-            <div className="w-20" />
-          </div>
-          <p className="text-muted-foreground">Explore todos os campeonatos disponiveis e se inscreva para competir.</p>
-        </div>
-      </div>
+    <SitePage
+      title="Campeonatos"
+      description="Explore todos os campeonatos disponiveis, acompanhe fases e se inscreva para competir."
+      badge="Arena tournaments"
+      icon={Trophy}
+    >
+    <div className="space-y-6">
+
 
       {showCelebration && celebrationWinner ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
@@ -1160,8 +1153,8 @@ export default function Campeonatos() {
         </div>
       ) : null}
 
-      <section className="py-6 border-b border-border print:hidden">
-        <div className="container space-y-4">
+      <section className="rounded-[28px] border border-white/10 bg-black/15 p-4 print:hidden md:p-5">
+        <div className="space-y-4">
           <div className="flex items-center gap-3 flex-wrap">
             <Button variant="outline" size="sm" className="gap-2" disabled>
               <Filter className="w-4 h-4" />
@@ -1213,9 +1206,9 @@ export default function Campeonatos() {
         </div>
       </section>
 
-      <section className="py-8 border-t border-border bg-card/40 print:hidden">
-        <div className="container space-y-4">
-          <div className="flex items-center justify-between">
+      <section className="rounded-[28px] border border-white/10 bg-card/30 p-4 print:hidden md:p-5">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Campeonatos disponiveis</p>
               <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
@@ -1234,18 +1227,18 @@ export default function Campeonatos() {
                       selecionado ? "border-emerald-400/60 shadow-[0_0_25px_rgba(16,185,129,0.25)]" : "border-white/10"
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <h3 className="text-lg font-semibold text-white truncate">{c.nome}</h3>
                       <span className={`text-xs px-2 py-1 rounded-full border ${getStatusColor(c.status)}`}>{getStatusLabel(c.status)}</span>
                     </div>
                     <p className="text-sm text-muted-foreground">Jogo: {c.jogo}</p>
-                    <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                    <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
                       <span>Inicio: {c.inicio}</span>
                       <span>Premio: R$ {c.premio}</span>
                       <span>Participantes: {c.participantes}</span>
                       <span>Fase: {c.fase}</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row">
                       <Button
                         variant="secondary"
                         className="flex-1"
@@ -1271,9 +1264,9 @@ export default function Campeonatos() {
         </div>
       </section>
 
-      <section className="py-8 border-t border-border bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.12),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_40%)] print:border-0 print:bg-none print:py-4">
-        <div className="container space-y-4">
-          <div className="flex items-center justify-between print:block">
+      <section className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.12),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_40%)] p-4 print:border-0 print:bg-none print:py-4 md:p-5">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 print:block lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Chaveamento</p>
               <h2 className="text-xl font-semibold">Visualização em tempo real</h2>
@@ -1286,7 +1279,7 @@ export default function Campeonatos() {
             {roundsExibidos.length > 0 ? (
               <span className="text-sm text-muted-foreground">
                 {roundsExibidos[0].length} partida{roundsExibidos[0].length === 1 ? "" : "s"} inicial{roundsExibidos[0].length === 1 ? "" : "is"}
-                {rounds.length > 0 ? " • bracket responsivo para qualquer quantidade" : " • exemplo com 16 participantes"}
+                {rounds.length > 0 ? " - bracket responsivo para qualquer quantidade" : " - exemplo com 16 participantes"}
               </span>
             ) : null}
           </div>
@@ -1329,7 +1322,7 @@ export default function Campeonatos() {
                     <h3 className="text-2xl font-semibold text-white">{campeonatoSelecionado.nome}</h3>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {campeonatoSelecionado.jogo} • Inicio {campeonatoSelecionado.inicio}
+                    {campeonatoSelecionado.jogo} - Inicio {campeonatoSelecionado.inicio}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -1349,19 +1342,17 @@ export default function Campeonatos() {
               </div>
             </div>
           ) : null}
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 print:hidden" data-export-hidden="true">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Busca no bracket</p>
-                <p className="text-sm text-muted-foreground">{roundViewLabel}. Digite um jogador para destacar o caminho dele nas fases.</p>
-              </div>
-              <div className="flex w-full flex-col gap-2 xl:max-w-5xl xl:flex-row">
+          <div className="grid gap-3 print:hidden xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]" data-export-hidden="true">
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Busca no bracket</p>
+              <p className="mt-2 text-sm text-muted-foreground">{roundViewLabel}. Digite um jogador para destacar o caminho dele nas fases.</p>
+              <div className="mt-3 flex w-full flex-col gap-2 lg:flex-row">
                 <input
                   value={bracketSearch}
                   onChange={event => setBracketSearch(event.target.value)}
                   placeholder="Buscar jogador"
                   aria-label="Buscar jogador no bracket"
-                  className="h-10 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20"
+                  className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-foreground outline-none transition focus:border-cyan-300/40 focus:ring-2 focus:ring-cyan-300/20"
                 />
                 <div className="flex flex-wrap gap-2">
                   <select
@@ -1401,74 +1392,6 @@ export default function Campeonatos() {
                       </Button>
                     </>
                   ) : null}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={getToolbarButtonClassName(presentationMode, "violet")}
-                    onClick={() => setPresentationMode(prev => !prev)}
-                  >
-                    {presentationMode ? "Modo normal" : "Modo apresentacao"}
-                  </Button>
-                  {presentationMode ? (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={getToolbarButtonClassName(presentationAutoplay, "violet")}
-                        onClick={() => setPresentationAutoplay(prev => !prev)}
-                      >
-                        {presentationAutoplay ? "Pausar rotacao" : "Rotacao automatica"}
-                      </Button>
-                      <Button variant="outline" size="sm" className={getToolbarButtonClassName(true, "violet")} onClick={toggleBracketFullscreen}>
-                        Tela cheia
-                      </Button>
-                    </>
-                  ) : null}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={getToolbarButtonClassName(collapsedResolvedRounds, "amber")}
-                    onClick={() => setCollapsedResolvedRounds(prev => !prev)}
-                  >
-                    {collapsedResolvedRounds ? "Expandir resolvidas" : "Compactar resolvidas"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={getToolbarButtonClassName(spectatorMode, "emerald")}
-                    onClick={() => setSpectatorMode(prev => !prev)}
-                  >
-                    {spectatorMode ? "Modo operador" : "Modo espectador"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={getToolbarButtonClassName(compactBracket, "cyan")}
-                    onClick={() => setCompactBracket(prev => !prev)}
-                  >
-                    {compactBracket ? "Modo compacto" : "Modo detalhado"}
-                  </Button>
-                  <select
-                    value={bracketDensity}
-                    onChange={event => setBracketDensity(event.target.value as "detalhado" | "compacto" | "ultracompacto")}
-                    aria-label="Escolher densidade visual do bracket"
-                    className={bracketSelectClassName}
-                  >
-                    <option value="detalhado">Detalhado</option>
-                    <option value="compacto">Compacto</option>
-                    <option value="ultracompacto">Ultracompacto</option>
-                  </select>
-                  <Button variant="outline" size="sm" className="shrink-0" onClick={exportBracketAsImage}>
-                    Exportar imagem
-                  </Button>
-                  <Button variant="outline" size="sm" className="shrink-0" onClick={imprimirBracket}>
-                    Imprimir
-                  </Button>
-                  {(bracketSearch || compactBracket || roundFilter !== "todas" || presentationMode || collapsedResolvedRounds) ? (
-                    <Button variant="outline" size="sm" className="shrink-0" onClick={resetBracketView}>
-                      Resetar
-                    </Button>
-                  ) : null}
                   {bracketSearch ? (
                     <Button variant="outline" size="sm" className="shrink-0" onClick={copiarResumoBusca}>
                       Copiar resumo
@@ -1481,21 +1404,95 @@ export default function Campeonatos() {
                   ) : null}
                 </div>
               </div>
+              {normalizedBracketSearch ? (
+                <div className="mt-3 rounded-xl border border-white/10 bg-black/10 px-3 py-2 text-sm">
+                  {searchedPlayerLastRoundIndex >= 0 ? (
+                    <div className="space-y-1">
+                      <span className="text-cyan-100">
+                        Jogador encontrado. Melhor fase destacada: <span className="font-semibold">{searchedPlayerRoundLabel}</span>.
+                      </span>
+                      <p className="text-xs text-cyan-100/80">Caminho: {formatRoundStory(searchedPlayerRoundTrail)}</p>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">Nenhum jogador encontrado com esse nome no bracket atual.</span>
+                  )}
+                </div>
+              ) : null}
             </div>
-            {normalizedBracketSearch ? (
-              <div className="mt-3 rounded-xl border border-white/10 bg-black/10 px-3 py-2 text-sm">
-                {searchedPlayerLastRoundIndex >= 0 ? (
-                  <div className="space-y-1">
-                    <span className="text-cyan-100">
-                      Jogador encontrado. Melhor fase destacada: <span className="font-semibold">{searchedPlayerRoundLabel}</span>.
-                    </span>
-                    <p className="text-xs text-cyan-100/80">Caminho: {formatRoundStory(searchedPlayerRoundTrail)}</p>
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground">Nenhum jogador encontrado com esse nome no bracket atual.</span>
-                )}
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Modos de leitura</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={getToolbarButtonClassName(presentationMode, "violet")}
+                  onClick={() => setPresentationMode(prev => !prev)}
+                >
+                  {presentationMode ? "Modo normal" : "Modo apresentacao"}
+                </Button>
+                {presentationMode ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={getToolbarButtonClassName(presentationAutoplay, "violet")}
+                      onClick={() => setPresentationAutoplay(prev => !prev)}
+                    >
+                      {presentationAutoplay ? "Pausar rotacao" : "Rotacao automatica"}
+                    </Button>
+                    <Button variant="outline" size="sm" className={getToolbarButtonClassName(true, "violet")} onClick={toggleBracketFullscreen}>
+                      Tela cheia
+                    </Button>
+                  </>
+                ) : null}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={getToolbarButtonClassName(collapsedResolvedRounds, "amber")}
+                  onClick={() => setCollapsedResolvedRounds(prev => !prev)}
+                >
+                  {collapsedResolvedRounds ? "Expandir resolvidas" : "Compactar resolvidas"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={getToolbarButtonClassName(spectatorMode, "emerald")}
+                  onClick={() => setSpectatorMode(prev => !prev)}
+                >
+                  {spectatorMode ? "Modo operador" : "Modo espectador"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={getToolbarButtonClassName(compactBracket, "cyan")}
+                  onClick={() => setCompactBracket(prev => !prev)}
+                >
+                  {compactBracket ? "Modo compacto" : "Modo detalhado"}
+                </Button>
+                <select
+                  value={bracketDensity}
+                  onChange={event => setBracketDensity(event.target.value as "detalhado" | "compacto" | "ultracompacto")}
+                  aria-label="Escolher densidade visual do bracket"
+                  className={bracketSelectClassName}
+                >
+                  <option value="detalhado">Detalhado</option>
+                  <option value="compacto">Compacto</option>
+                  <option value="ultracompacto">Ultracompacto</option>
+                </select>
+                <Button variant="outline" size="sm" className="shrink-0" onClick={exportBracketAsImage}>
+                  Exportar imagem
+                </Button>
+                <Button variant="outline" size="sm" className="shrink-0" onClick={imprimirBracket}>
+                  Imprimir
+                </Button>
+                {(bracketSearch || compactBracket || roundFilter !== "todas" || presentationMode || collapsedResolvedRounds) ? (
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={resetBracketView}>
+                    Resetar
+                  </Button>
+                ) : null}
               </div>
-            ) : null}
+            </div>
           </div>
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
@@ -1772,5 +1769,6 @@ export default function Campeonatos() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </SitePage>
   );
 }

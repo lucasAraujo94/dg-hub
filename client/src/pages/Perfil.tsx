@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SitePage, SiteSection } from "@/components/SitePage";
 import { Zap, Crown, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -413,42 +414,29 @@ export default function Perfil() {
   })();
 
   return (
-    <div className="safe-shell min-h-screen bg-background text-foreground pb-20">
-      {/* Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container py-4 md:py-6">
-          <div className="mb-4 flex flex-col gap-3 md:mb-6 md:flex-row md:items-center md:justify-between">
-            <Button asChild variant="outline" className="gap-2 rounded-full">
-              <Link href="/">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card"><ArrowLeft className="w-4 h-4" /></span>
-                <span>Voltar</span>
-              </Link>
-            </Button>
-            
-            <h1 className="text-2xl font-bold gradient-text md:text-3xl">Meu Perfil</h1>
-            <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:flex md:w-auto md:items-center">
-              <Button variant="outline" size="sm" onClick={handleEditarPerfil} className="w-full md:w-auto">
-                Editar
-              </Button>
-              <Button className="btn-primary w-full md:w-auto" size="sm" onClick={handleSalvarPerfil}>
-                Salvar perfil
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Aviso para completar perfil */}
-      <div className="container mt-6">
+    <SitePage
+      title="Meu perfil"
+      description="Centralize identidade, saldo, foto, preferencias e historico em uma estrutura mais limpa."
+      badge="Arena profile"
+      icon={Crown}
+      actions={
+        <>
+          <Button variant="outline" size="sm" onClick={handleEditarPerfil}>
+            Editar
+          </Button>
+          <Button className="btn-primary" size="sm" onClick={handleSalvarPerfil}>
+            Salvar perfil
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-6">
         <div className="rounded-xl border border-amber-400/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100 shadow-lg">
           Complete seu perfil para personalizar como seu nome aparece no chat e nas paginas da comunidade.
         </div>
-      </div>
 
-      {/* Profile Header */}
-      <section className="py-12 border-b border-border">
-        <div className="container">
-          <div className="card-elegant neon-border p-8">
+        <SiteSection>
+          <div className="card-elegant neon-border p-5 md:p-8">
             <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-center md:gap-8">
               <div
                 ref={avatarRef}
@@ -528,7 +516,7 @@ export default function Perfil() {
                   </div>
                 ) : null}
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <h2 className="mb-2 text-3xl font-bold md:text-4xl">{displayName}</h2>
                 <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                   <div className="badge-elegant">
@@ -576,7 +564,7 @@ export default function Perfil() {
               </div>
             </div>
 
-            <div className="mb-6 grid gap-4 md:grid-cols-2 md:gap-6">
+            <div className="mb-6 grid gap-4 xl:grid-cols-2 md:gap-6">
               <div className="rounded-xl border border-border/60 bg-card/50 p-4 space-y-3">
                 <h3 className="text-lg font-semibold">Apelido no Hago</h3>
                 <Input
@@ -617,13 +605,13 @@ export default function Perfil() {
             </div>
 
             {/* Saldo de Premios + saque */}
-            <div className="space-y-4 rounded-lg border border-yellow-500/30 bg-gradient-to-r from-yellow-900/30 to-orange-900/30 p-4 md:p-6">
-              <div>
+            <div className="space-y-4 rounded-2xl border border-yellow-500/30 bg-gradient-to-r from-yellow-900/30 to-orange-900/30 p-4 md:p-6">
+              <div className="rounded-2xl border border-yellow-400/20 bg-black/10 p-4">
                 <p className="text-sm text-muted-foreground mb-2">Saldo Disponível para Saque</p>
                 <p className="text-3xl font-bold text-yellow-400">R$ {jogador.saldoPremio.toFixed(2)}</p>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-3 lg:grid-cols-2">
                 <select
                   value={walletProvider}
                   onChange={e => setWalletProvider(e.target.value)}
@@ -652,7 +640,7 @@ export default function Perfil() {
               </div>
 
               <Button
-                className="btn-secondary w-full"
+                className="btn-secondary w-full min-h-11"
                 onClick={handleSolicitarSaque}
                 disabled={solicitarSaqueMutation.isPending}
               >
@@ -663,7 +651,7 @@ export default function Perfil() {
                 O saque e enviado automaticamente via Pix para a chave informada.
               </p>
 
-              <div className="space-y-2">
+              <div className="space-y-2 rounded-2xl border border-yellow-400/15 bg-black/10 p-4">
                 <p className="text-sm font-semibold">Solicitações recentes</p>
                 {solicitacoesQuery.isLoading ? <p className="text-xs text-muted-foreground">Carregando...</p> : null}
                 {!solicitacoesQuery.isLoading && (solicitacoesQuery.data?.length ?? 0) === 0 ? (
@@ -680,7 +668,7 @@ export default function Perfil() {
                 ))}
               </div>
 
-              <div className="rounded-xl border border-border/60 bg-card/40 p-4 md:p-5">
+              <div className="rounded-2xl border border-border/60 bg-card/40 p-4 md:p-5">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold">Extrato financeiro</h3>
                   <p className="text-sm text-muted-foreground">
@@ -726,12 +714,9 @@ export default function Perfil() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </SiteSection>
 
-      {/* Emblemas */}
-      <section className="py-12 border-b border-border">
-        <div className="container">
+        <SiteSection title="Emblemas conquistados">
           <h2 className="text-2xl font-bold mb-8">Emblemas Conquistados</h2>
           {emblemas.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum emblema cadastrado na sua conta.</p>
@@ -746,12 +731,9 @@ export default function Perfil() {
               ))}
             </div>
           )}
-        </div>
-      </section>
+        </SiteSection>
 
-      {/* Historico de Campeonatos */}
-      <section className="py-12">
-        <div className="container">
+        <SiteSection title="Historico de campeonatos">
           <h2 className="text-2xl font-bold mb-8">Historico de Campeonatos</h2>
           {historicoCampeonatos.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum campeonato registrado na sua conta.</p>
@@ -771,8 +753,7 @@ export default function Perfil() {
               ))}
             </div>
           )}
-        </div>
-      </section>
+        </SiteSection>
 
       {showValorModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
@@ -792,6 +773,7 @@ export default function Perfil() {
           </div>
         </div>
       ) : null}
-    </div>
+      </div>
+    </SitePage>
   );
 }

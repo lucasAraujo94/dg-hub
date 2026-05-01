@@ -76,7 +76,7 @@ export default function Cadastro() {
   };
 
   return (
-    <div className="relative min-h-screen w-full max-w-screen overflow-hidden bg-[#070912]">
+    <div className="relative min-h-screen w-full max-w-screen overflow-hidden bg-[#070912] text-foreground">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-[#00ff85]/10 blur-3xl" />
         <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-primary/15 blur-[120px]" />
@@ -87,9 +87,9 @@ export default function Cadastro() {
       <div className="relative mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
         <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 rounded-full border border-primary/40 bg-black/50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+            <div className="flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100">
               <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
-              DG Hub
+              DG Arena
             </div>
             <div className="flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
               <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]" />

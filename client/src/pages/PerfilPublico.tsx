@@ -3,6 +3,7 @@ import { Link, useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SitePage, SiteSection } from "@/components/SitePage";
 import { ArrowLeft, Award, Trophy, Medal, ShieldCheck } from "lucide-react";
 
 export default function PerfilPublico() {
@@ -51,24 +52,15 @@ export default function PerfilPublico() {
   const isAdmin = data.role === "admin";
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container py-6 flex items-center justify-between">
-          <Button asChild variant="ghost" className="gap-2">
-            <Link href="/ranking">
-              <ArrowLeft className="w-4 h-4" />
-              Voltar
-            </Link>
-          </Button>
-          <div className="text-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Perfil publico</p>
-            <h1 className="text-3xl font-bold">{displayName}</h1>
-          </div>
-          <div className="w-20" />
-        </div>
-      </header>
-
-      <main className="container py-8 space-y-4">
+    <SitePage
+      title={displayName}
+      description="Perfil publico com identidade, ranking e historico de titulos do jogador."
+      badge="Perfil publico"
+      icon={Award}
+      backHref="/ranking"
+    >
+      <div className="space-y-4">
+        <SiteSection>
         <Card className="p-6 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
           {data.avatarUrl ? (
             <img
@@ -103,7 +95,9 @@ export default function PerfilPublico() {
             ) : null}
           </div>
         </Card>
+        </SiteSection>
 
+        <SiteSection>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="p-4 flex items-center justify-between">
             <div>
@@ -127,7 +121,9 @@ export default function PerfilPublico() {
             <Medal className="w-8 h-8 text-cyan-300" />
           </Card>
         </div>
+        </SiteSection>
 
+        <SiteSection title="Campeonatos conquistados">
         <Card className="p-6 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold">Campeonatos conquistados</p>
@@ -152,7 +148,8 @@ export default function PerfilPublico() {
             </ul>
           )}
         </Card>
-      </main>
-    </div>
+        </SiteSection>
+      </div>
+    </SitePage>
   );
 }

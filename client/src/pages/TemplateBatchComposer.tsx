@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
@@ -71,6 +72,9 @@ const COMPOSER_STEPS = [
     description: "Reposicione, ajuste a escala e baixe tudo em ZIP.",
   },
 ];
+
+const EDITOR_SCALE_MIN = 10;
+const EDITOR_SCALE_MAX = 100;
 
 const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -243,6 +247,10 @@ export default function TemplateBatchComposer() {
   const templateName = useMemo(
     () => (templateFile ? templateFile.name.replace(/\.[^.]+$/, "") : "template"),
     [templateFile]
+  );
+  const activeItem = useMemo(
+    () => processed.find(item => item.id === activeItemId) ?? null,
+    [processed, activeItemId]
   );
 
   const updatePlacement = (key: keyof Placement, value: number) => {
@@ -545,6 +553,18 @@ export default function TemplateBatchComposer() {
     }
   };
 
+  const handleScaleChange = async (itemId: string, nextWidth: number) => {
+    await updateProcessedPlacement(itemId, currentPlacement => {
+      const boundedWidth = clamp(nextWidth, EDITOR_SCALE_MIN, EDITOR_SCALE_MAX);
+      const scaleRatio = boundedWidth / Math.max(currentPlacement.width, 1);
+      return {
+        ...currentPlacement,
+        width: boundedWidth,
+        height: clamp(currentPlacement.height * scaleRatio, EDITOR_SCALE_MIN, EDITOR_SCALE_MAX),
+      };
+    });
+  };
+
   return (
     <div className="safe-shell min-h-screen bg-background text-foreground pb-16">
       <div className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/65 backdrop-blur-xl">
@@ -748,6 +768,130 @@ export default function TemplateBatchComposer() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {activeItem ? (
+              <div className="mb-6 rounded-[28px] border border-cyan-300/20 bg-[linear-gradient(145deg,rgba(7,14,24,0.94),rgba(11,20,32,0.92))] p-4 shadow-[0_18px_70px_rgba(8,145,178,0.14)]">
+                <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_320px]">
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/70">
+                          Editor em foco
+                        </p>
+                        <h3 className="mt-2 text-xl font-semibold text-white">
+                          {activeItem.fileName}
+                        </h3>
+                        <p className="mt-2 text-sm text-white/65">
+                          No celular, use este bloco para editar uma foto por vez com mais precisao.
+                        </p>
+                      </div>
+                      <div className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-cyan-100">
+                        Foto ativa
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                        <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">Mover</p>
+                        <p className="mt-2 text-sm text-white/78">Arraste apenas a pessoa no preview.</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                        <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">Escala</p>
+                        <p className="mt-2 text-sm text-white/78">Use o slider para ajustar de forma continua.</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                        <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">Persistencia</p>
+                        <p className="mt-2 text-sm text-white/78">A posicao atual ja entra no ZIP final.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <aside className="rounded-[24px] border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+                    <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/70">
+                      Controle rapido
+                    </p>
+                    <div className="mt-4 space-y-5">
+                      <div>
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <Label className="text-sm text-white">Escala da foto</Label>
+                          <span className="text-sm font-medium text-cyan-100">
+                            {Math.round(activeItem.placement.width)}%
+                          </span>
+                        </div>
+                        <Slider
+                          min={EDITOR_SCALE_MIN}
+                          max={EDITOR_SCALE_MAX}
+                          step={1}
+                          value={[activeItem.placement.width]}
+                          onValueChange={value => {
+                            const nextWidth = value[0];
+                            if (typeof nextWidth !== "number") return;
+                            setProcessed(current =>
+                              current.map(item =>
+                                item.id !== activeItem.id
+                                  ? item
+                                  : {
+                                      ...item,
+                                      placement: {
+                                        ...item.placement,
+                                        width: nextWidth,
+                                        height: clamp(
+                                          item.placement.height * (nextWidth / Math.max(item.placement.width, 1)),
+                                          EDITOR_SCALE_MIN,
+                                          EDITOR_SCALE_MAX
+                                        ),
+                                      },
+                                    }
+                              )
+                            );
+                          }}
+                          onValueCommit={async value => {
+                            const nextWidth = value[0];
+                            if (typeof nextWidth !== "number") return;
+                            await handleScaleChange(activeItem.id, nextWidth);
+                          }}
+                        />
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                        <button
+                          type="button"
+                          className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/15 bg-black/60 px-4 text-sm font-medium text-white shadow-lg backdrop-blur-md transition-transform hover:scale-[1.01]"
+                          onClick={async () => {
+                            setActiveItemId(activeItem.id);
+                            await handleScaleChange(activeItem.id, activeItem.placement.width - 5);
+                          }}
+                        >
+                          <Minus className="mr-2 h-4 w-4" />
+                          Diminuir
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-400/12 px-4 text-sm font-medium text-cyan-50 shadow-lg backdrop-blur-md transition-transform hover:scale-[1.01]"
+                          onClick={async () => {
+                            setActiveItemId(activeItem.id);
+                            await handleScaleChange(activeItem.id, activeItem.placement.width + 5);
+                          }}
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Aumentar
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/8 px-4 text-sm font-medium text-white/90 shadow-lg backdrop-blur-md transition-transform hover:scale-[1.01]"
+                          onClick={async () => {
+                            setActiveItemId(activeItem.id);
+                            await resetProcessedPlacement(activeItem.id);
+                          }}
+                        >
+                          Resetar foto
+                        </button>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+              </div>
+            ) : null}
+
             {processed.length ? (
               <div className="mb-5 grid gap-3 rounded-[24px] border border-white/10 bg-white/5 p-4 md:grid-cols-3">
                 <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
@@ -904,63 +1048,34 @@ export default function TemplateBatchComposer() {
 
                       <aside className="rounded-[24px] border border-white/10 bg-white/5 p-4 backdrop-blur-md">
                         <p className="text-[11px] uppercase tracking-[0.24em] text-cyan-200/70">
-                          Ferramentas
+                          Resumo rapido
                         </p>
                         <h4 className="mt-2 text-lg font-semibold text-white">
-                          Ajuste desta foto
+                          Refino desta foto
                         </h4>
                         <p className="mt-2 text-sm text-white/70">
-                          O preview fica limpo. Todos os controles desta foto ficam concentrados aqui.
+                          Use este card para entrar em edicao e o painel em foco acima para ajustar com mais precisao.
                         </p>
 
                         <div className="mt-5 space-y-3">
-                          <button
-                            type="button"
-                            className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/15 bg-black/60 px-4 text-sm font-medium text-white shadow-lg backdrop-blur-md transition-transform hover:scale-[1.01]"
-                            onClick={async event => {
-                              event.stopPropagation();
-                              setActiveItemId(item.id);
-                              await updateProcessedPlacement(item.id, currentPlacement => ({
-                                ...currentPlacement,
-                                width: clamp(currentPlacement.width - 5, 5, 100),
-                                height: clamp(currentPlacement.height - 5, 5, 100),
-                              }));
-                            }}
-                            aria-label="Diminuir foto"
-                          >
-                            <Minus className="mr-2 h-4 w-4" />
-                            Diminuir foto
-                          </button>
-
+                          <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+                            <p className="text-[11px] uppercase tracking-[0.22em] text-white/45">
+                              Escala atual
+                            </p>
+                            <p className="mt-2 text-lg font-semibold text-cyan-100">
+                              {Math.round(item.placement.width)}%
+                            </p>
+                          </div>
                           <button
                             type="button"
                             className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-400/12 px-4 text-sm font-medium text-cyan-50 shadow-lg backdrop-blur-md transition-transform hover:scale-[1.01]"
-                            onClick={async event => {
+                            onClick={event => {
                               event.stopPropagation();
                               setActiveItemId(item.id);
-                              await updateProcessedPlacement(item.id, currentPlacement => ({
-                                ...currentPlacement,
-                                width: clamp(currentPlacement.width + 5, 5, 100),
-                                height: clamp(currentPlacement.height + 5, 5, 100),
-                              }));
+                              window.scrollTo({ top: 0, behavior: "smooth" });
                             }}
-                            aria-label="Aumentar foto"
                           >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Aumentar foto
-                          </button>
-
-                          <button
-                            type="button"
-                            className="inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/15 bg-white/8 px-4 text-sm font-medium text-white/90 shadow-lg backdrop-blur-md transition-transform hover:scale-[1.01]"
-                            onClick={async event => {
-                              event.stopPropagation();
-                              setActiveItemId(item.id);
-                              await resetProcessedPlacement(item.id);
-                            }}
-                            aria-label="Resetar foto"
-                          >
-                            Resetar foto
+                            Abrir editor desta foto
                           </button>
                         </div>
 
@@ -969,7 +1084,7 @@ export default function TemplateBatchComposer() {
                             Dica rapida
                           </p>
                           <p className="mt-2 text-sm text-white/80">
-                            Arraste a pessoa no preview e depois refine o tamanho aqui ao lado.
+                            Arraste no preview e finalize tamanho e reset no editor em foco.
                           </p>
                         </div>
                       </aside>

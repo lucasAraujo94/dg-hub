@@ -1,9 +1,10 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { SitePage, SiteSection } from "@/components/SitePage";
 import { TrendingUp, Medal, Flame, Award, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RankingPodium } from "@/components/RankingPodium";
 
 type RankingTipo = "geral" | "semanal" | "mensal";
@@ -29,6 +30,7 @@ export default function Ranking() {
     if (typeof window === "undefined") return "";
     return localStorage.getItem("dg-hago-nickname") || "";
   });
+
   const rankingQuery = trpc.rankings.getByTipo.useQuery({ tipo, limite: 500 }, { refetchOnWindowFocus: false });
   const podiumQuery = trpc.rankings.getByTipo.useQuery(
     { tipo: "geral", limite: 3 },
@@ -39,7 +41,7 @@ export default function Ranking() {
   const podiumData = ((tipo === "geral" ? rankingData.slice(0, 3) : podiumQuery.data ?? []) as RankingItem[]);
   const currentUserId = (user as { id?: number } | null | undefined)?.id;
 
-  useMemo(() => {
+  useEffect(() => {
     const sync = () => {
       if (typeof window === "undefined") return;
       const pref = localStorage.getItem("dg-display-pref");
@@ -74,8 +76,8 @@ export default function Ranking() {
     <div className="overflow-x-auto rounded-2xl border border-border/70 bg-card/80 shadow-xl shadow-black/20">
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="text-left text-muted-foreground uppercase text-[11px] tracking-[0.12em] bg-white/5">
-            <th className="px-4 py-3 w-12">Pos</th>
+          <tr className="bg-white/5 text-left text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+            <th className="w-12 px-4 py-3">Pos</th>
             <th className="px-4 py-3">Jogador</th>
             <th className="px-4 py-3 text-center">Pontos</th>
             <th className="px-4 py-3 text-center">Vitorias</th>
@@ -93,9 +95,7 @@ export default function Ranking() {
             const lastTitle =
               campeonatosCampeao.length === 0
                 ? null
-                : campeonatosCampeao.reduce<
-                    { id: number; nome: string; jogo: string } | null
-                  >((acc, curr) => {
+                : campeonatosCampeao.reduce<{ id: number; nome: string; jogo: string } | null>((acc, curr) => {
                     if (!acc) return curr;
                     return curr.id > acc.id ? curr : acc;
                   }, null);
@@ -116,13 +116,10 @@ export default function Ranking() {
             const badgeColor =
               pos === 1 ? "text-amber-300" : pos === 2 ? "text-slate-200" : pos === 3 ? "text-orange-200" : "text-muted-foreground";
             return (
-              <tr
-                key={`${player.usuarioId}-${pos}`}
-                className={`${tone} border-b border-border/30 last:border-0 transition-colors hover:bg-white/8`}
-              >
+              <tr key={`${player.usuarioId}-${pos}`} className={`${tone} border-b border-border/30 last:border-0 transition-colors hover:bg-white/8`}>
                 <td className="px-4 py-3 font-semibold">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 border border-white/15">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/10">
                       {pos}
                     </span>
                     {pos <= 3 ? <Award className={`h-4 w-4 ${badgeColor}`} /> : null}
@@ -131,27 +128,23 @@ export default function Ranking() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt={displayName}
-                        className="h-10 w-10 rounded-full border border-white/15 object-cover bg-white/10"
-                      />
+                      <img src={avatarUrl} alt={displayName} className="h-10 w-10 rounded-full border border-white/15 bg-white/10 object-cover" />
                     ) : (
-                      <div className="h-10 w-10 rounded-full bg-white/10 border border-white/15 flex items-center justify-center text-sm font-bold">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-bold">
                         {displayName.slice(0, 2).toUpperCase()}
                       </div>
                     )}
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-semibold text-foreground break-words flex items-center gap-2">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="flex items-center gap-2 break-words font-semibold text-foreground">
                         {displayName}
                         {isAdmin ? (
-                          <span className="inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-200 border border-emerald-500/30">
-                            <ShieldCheck className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-[2px] text-[10px] uppercase tracking-wide text-emerald-200">
+                            <ShieldCheck className="h-3 w-3" />
                             Admin
                           </span>
                         ) : null}
                       </span>
-                      <span className="text-[11px] text-muted-foreground truncate">Campeonatos: {wins}</span>
+                      <span className="truncate text-[11px] text-muted-foreground">Campeonatos: {wins}</span>
                       <Link href={`/perfil/${player.usuarioId}`} className="text-[11px] text-emerald-300 hover:underline">
                         Ver perfil publico
                       </Link>
@@ -159,18 +152,18 @@ export default function Ranking() {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <span className="inline-flex items-center justify-center rounded-full px-3 py-1 text-[12px] font-semibold bg-primary/10 border border-primary/30 text-primary">
+                  <span className="inline-flex items-center justify-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[12px] font-semibold text-primary">
                     {player.pontuacao} pts
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <span className="inline-flex items-center justify-center rounded-full px-2.5 py-1 text-[12px] font-medium bg-emerald-500/10 border border-emerald-400/30 text-emerald-200">
+                  <span className="inline-flex items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2.5 py-1 text-[12px] font-medium text-emerald-200">
                     {wins}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   {lastTitle ? (
-                    <span className="px-2.5 py-1 rounded-full border border-white/10 bg-white/10 text-[11px] inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px]">
                       {lastTitle.nome} - {lastTitle.jogo}
                     </span>
                   ) : (
@@ -186,65 +179,49 @@ export default function Ranking() {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container py-6">
-          <div className="flex items-center justify-between mb-6">
-            <Button asChild variant="outline" className="gap-2 rounded-full">
-              <Link href="/">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">?</span>
-                <span>Voltar</span>
-              </Link>
-            </Button>
-            <h1 className="text-3xl font-bold gradient-text">Ranking de Campeoes</h1>
-            <div className="w-20" />
-          </div>
-          <p className="text-muted-foreground flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-            <span>Acompanhe a classificação como em uma tabela de campeonato.</span>
-            <span className="inline-block px-2 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/30 text-xs">
-              Cada campeonato conquistado vale 100 pontos
-            </span>
-          </p>
-        </div>
-      </div>
-
-      <section className="py-12 border-b border-border">
-        <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+    <SitePage
+      title="Ranking de campeoes"
+      description="Acompanhe a classificacao em um layout mais claro, com foco em pontuacao, podio e historico de titulos."
+      badge="Arena ranking"
+      icon={TrendingUp}
+    >
+      <div className="space-y-6">
+        <SiteSection>
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3">
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Sua posicao ({tipo})</p>
+                  <p className="mb-2 text-sm text-muted-foreground">Sua posicao ({tipo})</p>
                   <p className="text-3xl font-bold">#{currentUserInfo?.pos ?? "-"}</p>
                 </div>
-                <TrendingUp className="w-12 h-12 text-purple-500/30" />
+                <TrendingUp className="h-12 w-12 text-cyan-500/30" />
               </div>
             </div>
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Seus pontos</p>
+                  <p className="mb-2 text-sm text-muted-foreground">Seus pontos</p>
                   <p className="text-3xl font-bold">{currentUserInfo?.points ?? "-"}</p>
                 </div>
-                <Medal className="w-12 h-12 text-cyan-500/30" />
+                <Medal className="h-12 w-12 text-amber-500/30" />
               </div>
             </div>
             <div className="stat-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Suas vitorias em campeonatos</p>
+                  <p className="mb-2 text-sm text-muted-foreground">Suas vitorias</p>
                   <p className="text-3xl font-bold">{currentUserInfo?.wins ?? "-"}</p>
                 </div>
-                <Flame className="w-12 h-12 text-orange-500/30" />
+                <Flame className="h-12 w-12 text-orange-500/30" />
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </SiteSection>
 
-      <section className="py-12">
-        <div className="container space-y-6">
-          <div className="flex flex-wrap items-center gap-3 justify-between">
+        <SiteSection
+          title="Tabela completa"
+          description="Cada campeonato conquistado vale 100 pontos e a ordem reage ao filtro selecionado."
+          actions={
             <div className="flex items-center gap-2">
               {["geral", "semanal", "mensal"].map(key => (
                 <Button
@@ -257,26 +234,31 @@ export default function Ranking() {
                 </Button>
               ))}
             </div>
-            {rankingQuery.isLoading ? <span className="text-sm text-muted-foreground">Carregando...</span> : null}
-          </div>
-
-          {rankingQuery.error ? (
-            <div className="card-elegant p-4 text-sm text-red-400">
-              Erro ao carregar ranking: {rankingQuery.error.message}
+          }
+        >
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-xs text-amber-200">
+                Cada campeonato conquistado vale 100 pontos
+              </div>
+              {rankingQuery.isLoading ? <span className="text-sm text-muted-foreground">Carregando...</span> : null}
             </div>
-          ) : null}
 
-          {!rankingQuery.isLoading && rankingData.length === 0 ? (
-            <div className="card-elegant p-4 text-sm text-muted-foreground">Nenhum jogador no ranking ainda.</div>
-          ) : null}
+            {rankingQuery.error ? (
+              <div className="card-elegant p-4 text-sm text-red-400">
+                Erro ao carregar ranking: {rankingQuery.error.message}
+              </div>
+            ) : null}
 
-          {podiumData.length > 0 ? (
-            <RankingPodium data={podiumData} displayPref={displayPref} hagoNickLocal={hagoNickLocal} />
-          ) : null}
+            {!rankingQuery.isLoading && rankingData.length === 0 ? (
+              <div className="card-elegant p-4 text-sm text-muted-foreground">Nenhum jogador no ranking ainda.</div>
+            ) : null}
 
-          {rankingData.length > 0 ? <RankingTable data={rankingData} /> : null}
-        </div>
-      </section>
-    </div>
+            {podiumData.length > 0 ? <RankingPodium data={podiumData} displayPref={displayPref} hagoNickLocal={hagoNickLocal} /> : null}
+            {rankingData.length > 0 ? <RankingTable data={rankingData} /> : null}
+          </div>
+        </SiteSection>
+      </div>
+    </SitePage>
   );
 }

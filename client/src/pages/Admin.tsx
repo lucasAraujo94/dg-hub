@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SitePage, SiteSection } from "@/components/SitePage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, ShieldCheck, Trophy, Users } from "lucide-react";
 import { Suspense, lazy, useMemo, useRef, useState } from "react";
@@ -242,25 +243,14 @@ export default function Admin() {
   }, [depositosBusca, depositosStatus, pixPaymentsQuery.data]);
 
   return (
-    <div className="safe-shell min-h-screen bg-background text-foreground pb-20">
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container py-4 md:py-6">
-          <div className="mb-4 flex flex-col gap-3 md:mb-6 md:flex-row md:items-center md:justify-between">
-            <Button asChild variant="outline" className="gap-2 rounded-full">
-              <Link href="/">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-xs">&larr;</span>
-                <span>Voltar</span>
-              </Link>
-            </Button>
-            <h1 className="text-2xl font-bold gradient-text md:text-3xl">Painel Administrativo</h1>
-            <div className="w-20" />
-          </div>
-          <p className="text-muted-foreground">Gerencie campeonatos, usuarios e operacoes financeiras.</p>
-        </div>
-      </div>
-
-      <section className="py-12 border-b border-border">
-        <div className="container">
+    <SitePage
+      title="Painel administrativo"
+      description="Gerencie campeonatos, usuarios e premiacoes financeiras em uma estrutura mais clara."
+      badge="Arena admin"
+      icon={ShieldCheck}
+    >
+      <div className="space-y-6">
+        <SiteSection>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="stat-card">
               <div className="flex items-center justify-between">
@@ -304,11 +294,9 @@ export default function Admin() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </SiteSection>
 
-      <section className="py-12">
-        <div className="container">
+        <SiteSection title="Operacoes administrativas" description="Troque entre os blocos para cuidar de torneios, usuarios e premiacoes.">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-2 rounded-2xl bg-card/60 p-1 md:mb-8 md:grid-cols-3">
               <TabsTrigger value="campeonatos">Campeonatos</TabsTrigger>
@@ -577,9 +565,9 @@ export default function Admin() {
               </Suspense>
             </TabsContent>
           </Tabs>
-        </div>
-      </section>
-    </div>
+        </SiteSection>
+      </div>
+    </SitePage>
   );
 }
 
