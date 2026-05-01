@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
-import HomeBg from "../assets/dg-arena.png";
+import HomeBg from "../assets/dg-arena-optimized.jpg";
 import { toast } from "sonner";
 import { getLoginUrl, isNativeApp } from "@/const";
 import { readLastSeenChatAt, writeLastSeenChatAt } from "@/lib/chatNotifications";
