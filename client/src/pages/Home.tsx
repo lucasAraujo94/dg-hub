@@ -389,14 +389,7 @@ export default function Home() {
   }
 
   return (
-    <div
-      className="safe-shell min-h-screen text-foreground flex flex-col"
-      style={{
-        backgroundImage: `linear-gradient(180deg, rgba(4,8,15,0.64), rgba(4,8,15,0.92)), url(${HomeBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-      }}
-    >
+    <div className="safe-shell min-h-screen bg-background text-foreground flex flex-col">
       {/* Top bar */}
       <header className="border-b border-white/10 bg-slate-950/60 backdrop-blur-xl">
         <div className="w-full flex flex-wrap items-start md:items-center gap-3 px-4 md:px-6 py-3 md:h-16 relative">

@@ -76,14 +76,7 @@ export default function Cadastro() {
   };
 
   return (
-    <div className="relative min-h-screen w-full max-w-screen overflow-hidden bg-[#070912] text-foreground">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-[#00ff85]/10 blur-3xl" />
-        <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-primary/15 blur-[120px]" />
-        <div className="absolute -bottom-24 left-1/3 h-72 w-72 rounded-full bg-cyan-500/15 blur-[120px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(0,255,133,0.08),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(99,102,241,0.12),transparent_30%)]" />
-      </div>
-
+    <div className="relative min-h-screen w-full max-w-screen overflow-hidden bg-background text-foreground">
       <div className="relative mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
         <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">

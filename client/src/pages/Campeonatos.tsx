@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -121,6 +121,7 @@ export default function Campeonatos() {
   const bracketViewportRef = useRef<HTMLDivElement | null>(null);
   const bracketContentRef = useRef<HTMLDivElement | null>(null);
   const roundRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const lastAutoScrolledRoundRef = useRef<number | null>(null);
 
   const utils = trpc.useUtils();
   const campeonatosQuery = trpc.campeonatos.list.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -745,7 +746,8 @@ export default function Campeonatos() {
       ? "Concluido"
       : "Aguardando";
   const progressoPercentual = partidasTotais > 0 ? Math.round((partidasDefinidas / partidasTotais) * 100) : 0;
-  const normalizedBracketSearch = bracketSearch.trim().toLowerCase();
+  const deferredBracketSearch = useDeferredValue(bracketSearch);
+  const normalizedBracketSearch = deferredBracketSearch.trim().toLowerCase();
   const matchContainsSearchedPlayer = (match: Match) => {
     if (!normalizedBracketSearch) return false;
     return [match.jogador1, match.jogador2, match.vencedor]
@@ -1124,8 +1126,23 @@ export default function Campeonatos() {
     if (!bracketViewportRef.current) return;
     const target = roundRefs.current[effectiveRoundIndex];
     if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [effectiveRoundIndex, compactBracket, presentationMode]);
+    if (lastAutoScrolledRoundRef.current === effectiveRoundIndex) return;
+
+    const viewportRect = bracketViewportRef.current.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const alreadyVisible =
+      targetRect.left >= viewportRect.left + 12 &&
+      targetRect.right <= viewportRect.right - 12;
+
+    lastAutoScrolledRoundRef.current = effectiveRoundIndex;
+    if (alreadyVisible) return;
+
+    target.scrollIntoView({
+      behavior: presentationMode ? "smooth" : "auto",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [effectiveRoundIndex, presentationMode]);
 
   useEffect(() => {
     if (!presentationMode || !presentationAutoplay || roundsExibidos.length <= 1) return;
@@ -1221,7 +1238,7 @@ export default function Campeonatos() {
         getStatusColor={getStatusColor}
         getStatusLabel={getStatusLabel}
       />
-      <section className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.12),_transparent_35%),radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_40%)] p-4 print:border-0 print:bg-none print:py-4 md:p-5">
+      <section className="rounded-[28px] border border-white/10 bg-black/15 p-4 print:border-0 print:bg-none print:py-4 md:p-5">
         <div className="space-y-4">
           <div className="flex flex-col gap-3 print:block lg:flex-row lg:items-center lg:justify-between">
             <div>

@@ -46,7 +46,7 @@ export function ChampionshipBracketCanvas({
   return (
     <div
       ref={bracketContentRef}
-      className={`rounded-3xl border border-white/10 bg-black/10 p-3 print:rounded-none print:border-black/20 print:bg-transparent print:p-0 sm:p-4 ${
+      className={`rounded-3xl border border-white/10 bg-black/15 p-3 print:rounded-none print:border-black/20 print:bg-transparent print:p-0 sm:p-4 ${
         presentationMode ? "shadow-[0_30px_80px_-40px_rgba(34,211,238,0.45)]" : ""
       }`}
     >

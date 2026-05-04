@@ -131,11 +131,7 @@
   body {
     @apply bg-background text-foreground;
     text-wrap: pretty;
-    background-image:
-      radial-gradient(circle at top, rgba(34, 211, 238, 0.14), transparent 26%),
-      radial-gradient(circle at 80% 10%, rgba(251, 191, 36, 0.08), transparent 22%),
-      linear-gradient(180deg, rgba(3, 7, 18, 0.96), rgba(3, 7, 18, 1));
-    background-attachment: fixed;
+    background-image: none;
     font-feature-settings: "ss01" on, "cv02" on;
   }
 
