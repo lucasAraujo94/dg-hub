@@ -564,3 +564,26 @@
     transform: translateX(42%);
   }
 }
+
+@media (max-width: 768px) {
+  .bracket-match-enter,
+  .bracket-match-winner,
+  .bracket-final-pulse,
+  .bracket-card-sheen::after,
+  .bracket-connector-glow,
+  .bracket-connector-flow,
+  .arena-grid-overlay,
+  .arena-radial-glow,
+  .arena-beam,
+  .arena-orb {
+    animation: none !important;
+  }
+
+  .bracket-match-enter,
+  .bracket-match-winner,
+  .bracket-final-pulse,
+  .bracket-connector-glow,
+  .bracket-connector-flow {
+    transition: none !important;
+  }
+}

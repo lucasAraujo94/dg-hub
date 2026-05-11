@@ -924,7 +924,7 @@ export default function Campeonatos() {
         ref={node => {
           roundRefs.current[roundIndex] = node;
         }}
-        className={`relative flex shrink-0 snap-center items-stretch sm:snap-start ${bracketColumnWidthClassName} ${side === "right" ? "xl:self-end" : ""}`}
+        className={`relative flex shrink-0 items-stretch sm:snap-center sm:snap-start ${bracketColumnWidthClassName} ${side === "right" ? "xl:self-end" : ""}`}
       >
         <div
           className={`relative w-full rounded-[28px] border transition-all ${roundCardPaddingClassName} ${
@@ -939,15 +939,15 @@ export default function Campeonatos() {
               : "border-white/8 bg-[#14202d] shadow-none"
           } ${isFinalRound ? "bracket-final-pulse" : ""}`}
         >
-          <div className="relative z-10 flex items-center justify-between pt-1">
+          <div className="relative z-10 flex items-start justify-between gap-2 pt-1">
             <div>
               <p className="text-[10px] uppercase tracking-[0.26em] text-cyan-100/90">Round {roundIndex + 1}</p>
               <h3 className={`${densityUltraCompact ? "text-sm" : "text-base"} font-semibold text-white`}>{getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}</h3>
               {!densityUltraCompact ? <p className="text-[11px] text-white/72">{round.length} partida{round.length === 1 ? "" : "s"}</p> : null}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {!spectatorMode ? (
-                <Button variant="outline" size="sm" className="h-8 px-2 text-[11px]" onClick={() => copyRoundSummary(roundIndex)}>
+                <Button variant="outline" size="sm" className="hidden h-8 px-2 text-[11px] sm:inline-flex" onClick={() => copyRoundSummary(roundIndex)}>
                   Copiar
                 </Button>
               ) : null}
@@ -1019,7 +1019,7 @@ export default function Campeonatos() {
                     aria-hidden="true"
                     viewBox="0 0 32 100"
                     preserveAspectRatio="none"
-                    className={`pointer-events-none absolute top-1/2 h-[calc(50%+28px)] w-8 -translate-y-1/2 overflow-visible ${
+                    className={`pointer-events-none absolute top-1/2 hidden h-[calc(50%+28px)] w-8 -translate-y-1/2 overflow-visible sm:block ${
                       side === "left" ? "-right-8" : "-left-8 scale-x-[-1]"
                     }`}
                   >
@@ -1048,7 +1048,7 @@ export default function Campeonatos() {
                     aria-hidden="true"
                     viewBox="0 0 64 24"
                     preserveAspectRatio="none"
-                    className="pointer-events-none absolute -left-8 right-[-2rem] top-1/2 h-6 -translate-y-1/2 overflow-visible"
+                    className="pointer-events-none absolute -left-8 right-[-2rem] top-1/2 hidden h-6 -translate-y-1/2 overflow-visible sm:block"
                   >
                     <path
                       d="M0 12 H16 M48 12 H64"

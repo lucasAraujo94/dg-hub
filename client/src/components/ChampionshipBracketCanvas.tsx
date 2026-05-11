@@ -112,22 +112,22 @@ export function ChampionshipBracketCanvas({
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background via-background/75 to-transparent print:hidden sm:w-12" />
         <div
           ref={bracketViewportRef}
-          className="overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden print:overflow-visible print:pb-0"
+          className="overflow-x-auto overscroll-x-contain scroll-smooth pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden print:overflow-visible print:pb-0 sm:snap-x sm:snap-mandatory"
           style={{ touchAction: "pan-x" }}
         >
           {usarBracketDuplo ? (
-            <div className="flex min-w-max items-start gap-4 px-1 print:min-w-0 print:gap-3 print:px-0 sm:gap-6 xl:gap-10">
-              <div className="flex min-w-max flex-col gap-3 sm:gap-4">
+            <div className="flex min-w-max items-start gap-3 px-1 print:min-w-0 print:gap-3 print:px-0 sm:gap-6 xl:gap-10">
+              <div className="flex min-w-max flex-col gap-2.5 sm:gap-4">
                 <div className="flex items-center justify-center">
                   <span className="rounded-full border border-fuchsia-300/25 bg-fuchsia-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-fuchsia-100">
                     Lado A
                   </span>
                 </div>
-                <div className="flex min-w-max items-start gap-4 sm:gap-6">
+                <div className="flex min-w-max items-start gap-3 sm:gap-6">
                   {roundsLadoEsquerdo.map((round, roundIndex) => renderRoundColumn(round, roundIndex, "left"))}
                 </div>
               </div>
-              <div className="flex min-w-[260px] flex-col items-center justify-center self-stretch sm:min-w-[320px]">
+              <div className="flex min-w-[220px] flex-col items-center justify-center self-stretch sm:min-w-[320px]">
                 <div className="mb-4 flex flex-col items-center gap-2">
                   <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-cyan-100">
                     Final
@@ -136,13 +136,13 @@ export function ChampionshipBracketCanvas({
                 </div>
                 {finalRound.length ? renderRoundColumn(finalRound, roundsExibidos.length - 1, "full") : null}
               </div>
-              <div className="flex min-w-max flex-col gap-3 sm:gap-4">
+              <div className="flex min-w-max flex-col gap-2.5 sm:gap-4">
                 <div className="flex items-center justify-center">
                   <span className="rounded-full border border-fuchsia-300/25 bg-fuchsia-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-fuchsia-100">
                     Lado B
                   </span>
                 </div>
-                <div className="flex min-w-max items-start gap-4 sm:gap-6">
+                <div className="flex min-w-max items-start gap-3 sm:gap-6">
                   {[...roundsLadoDireito].reverse().map((round, reverseIndex) => {
                     const roundIndex = roundsLadoDireito.length - 1 - reverseIndex;
                     return renderRoundColumn(round, roundIndex, "right");
@@ -151,7 +151,7 @@ export function ChampionshipBracketCanvas({
               </div>
             </div>
           ) : (
-            <div className={`flex min-w-max items-start gap-4 px-1 print:min-w-0 print:gap-3 print:px-0 sm:gap-6 ${presentationMode ? "sm:gap-8" : ""}`}>
+            <div className={`flex min-w-max items-start gap-3 px-1 print:min-w-0 print:gap-3 print:px-0 sm:gap-6 ${presentationMode ? "sm:gap-8" : ""}`}>
               {roundsFiltrados.map((round, filteredIndex) => {
                 const roundIndex = roundFilter === "todas" ? filteredIndex : Number(roundFilter);
                 return renderRoundColumn(round, roundIndex);

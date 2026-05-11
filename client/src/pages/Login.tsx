@@ -205,10 +205,14 @@ export default function Login() {
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-foreground">
       <div
         className="absolute inset-0 bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${dgArenaBackground})`, backgroundSize: "72%", backgroundPosition: "left center" }}
+        style={{
+          backgroundImage: `url(${dgArenaBackground})`,
+          backgroundSize: "min(92vw, 920px)",
+          backgroundPosition: "center 18%",
+        }}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(15,23,42,0.88),rgba(30,41,59,0.72),rgba(146,64,14,0.58))]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.22),transparent_34%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.14),rgba(2,6,23,0.28),rgba(2,6,23,0.62))] sm:bg-[linear-gradient(135deg,rgba(15,23,42,0.48),rgba(30,41,59,0.34),rgba(146,64,14,0.2))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.12),transparent_32%)] sm:bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.14),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.16),transparent_34%)]" />
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between gap-3 py-2">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/85">DG Hub</p>
@@ -233,20 +237,20 @@ export default function Login() {
           </div>
         </header>
 
-        <div className="relative flex flex-1 items-center justify-end py-8">
-          <div className="pointer-events-none absolute right-[6%] top-1/2 hidden h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-black/38 blur-3xl lg:block" />
-          <section className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-white/16 bg-slate-950/18 p-5 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.65)] backdrop-blur-[3px] sm:p-7">
+        <div className="relative flex flex-1 items-end justify-center py-6 sm:items-center sm:justify-end sm:py-8">
+          <div className="pointer-events-none absolute right-[6%] top-1/2 hidden h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-black/24 blur-3xl lg:block" />
+          <section className="relative mt-auto w-full max-w-md overflow-hidden rounded-[28px] border border-white/14 bg-slate-950/8 p-4 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.5)] backdrop-blur-[1px] sm:mt-0 sm:rounded-[32px] sm:bg-slate-950/18 sm:p-7 sm:backdrop-blur-[3px]">
             <div className="relative">
-              <div className="mb-8">
-                <h1 className="text-3xl font-semibold tracking-[-0.04em] text-foreground">Entrar</h1>
+              <div className="mb-6 sm:mb-8">
+                <h1 className="text-2xl font-semibold tracking-[-0.04em] text-foreground sm:text-3xl">Entrar</h1>
               </div>
 
-              <div className="mb-5 rounded-[24px] border border-white/12 bg-black/10 p-3 backdrop-blur-[2px]">
+              <div className="mb-5 rounded-[22px] border border-white/12 bg-black/8 p-3 backdrop-blur-[1px] sm:rounded-[24px] sm:bg-black/10 sm:backdrop-blur-[2px]">
                 <Button
                   type="button"
                   onClick={handleOauth}
                   variant="secondary"
-                  className="h-12 w-full justify-center gap-2 rounded-2xl border border-amber-300/30 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 hover:opacity-95"
+                  className="h-11 w-full justify-center gap-2 rounded-2xl border border-amber-300/30 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 hover:opacity-95 sm:h-12"
                   disabled={isNativeOauthPending}
                 >
                   <Mail className="h-4 w-4" />
@@ -272,7 +276,7 @@ export default function Login() {
                             type="email"
                             autoComplete="email"
                             placeholder="voce@email.com"
-                            className="h-12 rounded-2xl border-white/12 bg-black/10 text-white placeholder:text-white/45"
+                            className="h-11 rounded-2xl border-white/12 bg-black/8 text-white placeholder:text-white/45 sm:h-12 sm:bg-black/10"
                             {...field}
                           />
                         </FormControl>
@@ -292,7 +296,7 @@ export default function Login() {
                             type="password"
                             autoComplete="current-password"
                             placeholder="Sua senha"
-                            className="h-12 rounded-2xl border-white/12 bg-black/10 text-white placeholder:text-white/45"
+                            className="h-11 rounded-2xl border-white/12 bg-black/8 text-white placeholder:text-white/45 sm:h-12 sm:bg-black/10"
                             {...field}
                           />
                         </FormControl>
@@ -304,7 +308,7 @@ export default function Login() {
                   <div className="flex flex-col gap-3 pt-2">
                     <Button
                       type="submit"
-                      className="h-12 w-full rounded-2xl border border-white/14 bg-white/10 text-white backdrop-blur-[2px] hover:bg-white/16"
+                      className="h-11 w-full rounded-2xl border border-white/14 bg-white/9 text-white backdrop-blur-[1px] hover:bg-white/16 sm:h-12 sm:backdrop-blur-[2px]"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? "Entrando..." : "Entrar"}
