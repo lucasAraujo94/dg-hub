@@ -939,8 +939,7 @@ export default function Campeonatos() {
               : "border-white/6 bg-white/[0.03] shadow-none"
           } ${isFinalRound ? "bracket-final-pulse" : ""}`}
         >
-          <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
-          <div className="flex items-center justify-between">
+          <div className="relative z-10 flex items-center justify-between pt-1">
             <div>
               <p className="text-[10px] uppercase tracking-[0.26em] text-cyan-200/70">Round {roundIndex + 1}</p>
               <h3 className={`${densityUltraCompact ? "text-sm" : "text-base"} font-semibold`}>{getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}</h3>
