@@ -205,7 +205,7 @@ export default function Login() {
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-foreground">
       <div
         className="absolute inset-0 bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${dgArenaBackground})`, backgroundSize: "78%" }}
+        style={{ backgroundImage: `url(${dgArenaBackground})`, backgroundSize: "72%", backgroundPosition: "left center" }}
       />
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(15,23,42,0.88),rgba(30,41,59,0.72),rgba(146,64,14,0.58))]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.22),transparent_34%)]" />
@@ -233,7 +233,8 @@ export default function Login() {
           </div>
         </header>
 
-        <div className="flex flex-1 items-center justify-center py-8">
+        <div className="relative flex flex-1 items-center justify-end py-8">
+          <div className="pointer-events-none absolute right-[6%] top-1/2 hidden h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-black/38 blur-3xl lg:block" />
           <section className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-white/16 bg-slate-950/18 p-5 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.65)] backdrop-blur-[3px] sm:p-7">
             <div className="relative">
               <div className="mb-8">
