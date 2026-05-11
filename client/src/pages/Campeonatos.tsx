@@ -115,6 +115,7 @@ export default function Campeonatos() {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("dg-bracket-spectator") === "1";
   });
+  const [activeMatchKey, setActiveMatchKey] = useState<string | null>(null);
   const [editingMatchKey, setEditingMatchKey] = useState<string | null>(null);
   const [manualScoreInput, setManualScoreInput] = useState("1 x 0");
   const [manualNoteInput, setManualNoteInput] = useState("");
@@ -192,6 +193,7 @@ export default function Campeonatos() {
   useEffect(() => {
     if (typeof window === "undefined" || !selectedCampId) {
       setLoadedBracketCampId(null);
+      setActiveMatchKey(null);
       return;
     }
     const savedRounds = localStorage.getItem(`dg-bracket-rounds-${selectedCampId}`);
@@ -218,6 +220,7 @@ export default function Campeonatos() {
       setMatchActivity({});
     }
     setLoadedBracketCampId(selectedCampId);
+    setActiveMatchKey(null);
   }, [selectedCampId]);
 
   useEffect(() => {
@@ -823,7 +826,7 @@ export default function Campeonatos() {
     roundFilter === "todas"
       ? "Todas as fases"
       : roundFilterOptions.find(option => option.value === roundFilter)?.label ?? "Fase filtrada";
-  const usarBracketDuplo = roundFilter === "todas" && (roundsExibidos[0]?.length ?? 0) >= 16;
+  const usarBracketDuplo = roundFilter === "todas" && (roundsExibidos[0]?.length ?? 0) >= 8;
   const roundsLadoEsquerdo = usarBracketDuplo
     ? roundsExibidos.slice(0, -1).map(round => round.slice(0, Math.ceil(round.length / 2)))
     : [];
@@ -915,6 +918,8 @@ export default function Campeonatos() {
   const renderRoundColumn = (round: Match[], roundIndex: number, side: "full" | "left" | "right" = "full") => {
     const roundResolved = isRoundResolved(round);
     const collapseRound = collapsedResolvedRounds && roundResolved && roundIndex !== faseAtualIndex && roundIndex !== effectiveRoundIndex;
+    const isFirstRound = roundIndex === 0;
+    const isFinalRound = roundIndex === roundsExibidos.length - 1;
     return (
       <div
         key={`${side}-${roundIndex}`}
@@ -925,16 +930,16 @@ export default function Campeonatos() {
       >
         <div
           className={`relative w-full rounded-[28px] border backdrop-blur-md transition-all ${roundCardPaddingClassName} ${
-            roundIndex === roundsExibidos.length - 1 && campeaoAtual && !isBracketPlaceholder(campeaoAtual) ? "ring-1 ring-emerald-300/35" : ""
+            isFinalRound && campeaoAtual && !isBracketPlaceholder(campeaoAtual) ? "ring-1 ring-emerald-300/35" : ""
           } ${
             normalizedBracketSearch && roundContainsSearchedPlayer(round) ? "ring-1 ring-cyan-300/35" : ""
           } ${
-            roundIndex === 0
+            isFirstRound
               ? "border-slate-200/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(148,163,184,0.03))] shadow-none"
-              : faseAtualIndex === roundIndex
+            : faseAtualIndex === roundIndex
               ? "border-cyan-300/35 bg-[linear-gradient(180deg,rgba(34,211,238,0.14),rgba(255,255,255,0.05))] shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)]"
               : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04))] shadow-[0_20px_60px_-30px_rgba(0,0,0,0.55)]"
-          }`}
+          } ${isFinalRound ? "bracket-final-pulse" : ""}`}
         >
           <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
           <div className="flex items-center justify-between">
@@ -959,24 +964,113 @@ export default function Campeonatos() {
             </div>
           </div>
           <div className="flex flex-col" style={getResponsiveRoundStackStyle(roundIndex)}>
-            {round.map((match, matchIndex) => (
-              <div
-                key={`${side}-${roundIndex}-${matchIndex}`}
-                role="group"
-                aria-label={getMatchAriaLabel(match, roundIndex, matchIndex)}
-                className={`relative rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ${matchCardPaddingClassName} ${
-                  normalizedBracketSearch && matchContainsSearchedPlayer(match)
-                    ? "ring-1 ring-cyan-300/40 shadow-[0_0_0_1px_rgba(103,232,249,0.18),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                    : ""
-                } ${
-                  getMatchAdvanceState(roundIndex, matchIndex)
-                    ? "border-emerald-400/45 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(34,197,94,0.06),rgba(59,130,246,0.10))] shadow-[0_0_0_1px_rgba(52,211,153,0.12),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                    : roundIndex === 0
-                    ? "border-white/12 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(59,130,246,0.04))]"
-                    : "border-white/10 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08))]"
-                } ${collapseRound ? "space-y-1" : ""} ${presentationMode && !densityCompact ? "p-4" : ""}`}
-                style={{ minHeight: `${collapseRound ? Math.max(80, bracketMatchHeight - 28) : presentationMode ? bracketMatchHeight + 20 : bracketMatchHeight}px` }}
-              >
+            {round.map((match, matchIndex) => {
+              const matchKey = `${roundIndex}-${matchIndex}`;
+              const isActiveMatch = activeMatchKey === matchKey;
+              const isSearchMatch = normalizedBracketSearch && matchContainsSearchedPlayer(match);
+              const connectorStroke = isActiveMatch
+                ? "rgba(244,114,182,0.88)"
+                : isSearchMatch
+                ? "rgba(103,232,249,0.82)"
+                : "rgba(165,243,252,0.38)";
+              const connectorGlow = isActiveMatch
+                ? "rgba(217,70,239,0.34)"
+                : isSearchMatch
+                ? "rgba(34,211,238,0.24)"
+                : "rgba(34,211,238,0.16)";
+              const hasWinner = Boolean(match.vencedor && !isBracketPlaceholder(match.vencedor));
+
+              return (
+                <div
+                  key={`${side}-${roundIndex}-${matchIndex}`}
+                  role="group"
+                  tabIndex={0}
+                  aria-label={getMatchAriaLabel(match, roundIndex, matchIndex)}
+                  onClick={() => setActiveMatchKey(matchKey)}
+                  onMouseEnter={() => setActiveMatchKey(matchKey)}
+                  onFocus={() => setActiveMatchKey(matchKey)}
+                  onKeyDown={event => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setActiveMatchKey(matchKey);
+                    }
+                  }}
+                  className={`bracket-match-enter relative rounded-2xl border text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] outline-none transition ${matchCardPaddingClassName} ${
+                    isSearchMatch
+                      ? "ring-1 ring-cyan-300/40 shadow-[0_0_0_1px_rgba(103,232,249,0.18),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                      : ""
+                  } ${
+                    isActiveMatch
+                      ? "border-fuchsia-300/55 bg-[linear-gradient(135deg,rgba(217,70,239,0.18),rgba(34,211,238,0.12))] shadow-[0_0_0_1px_rgba(244,114,182,0.18),0_24px_50px_-30px_rgba(168,85,247,0.55)]"
+                      : ""
+                  } ${
+                    hasWinner ? "bracket-match-winner" : ""
+                  } ${
+                    getMatchAdvanceState(roundIndex, matchIndex)
+                      ? "bracket-card-sheen border-emerald-400/45 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(34,197,94,0.06),rgba(59,130,246,0.10))] shadow-[0_0_0_1px_rgba(52,211,153,0.12),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                      : roundIndex === 0
+                      ? "border-white/12 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(59,130,246,0.04))]"
+                      : "border-white/10 bg-[linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.08))]"
+                  } ${collapseRound ? "space-y-1" : ""} ${presentationMode && !densityCompact ? "p-4" : ""}`}
+                  style={{
+                    minHeight: `${collapseRound ? Math.max(80, bracketMatchHeight - 28) : presentationMode ? bracketMatchHeight + 20 : bracketMatchHeight}px`,
+                    animationDelay: `${roundIndex * 90 + matchIndex * 65}ms`,
+                  }}
+                >
+                  {usarBracketDuplo && side !== "full" && !collapseRound ? (
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 32 100"
+                    preserveAspectRatio="none"
+                    className={`pointer-events-none absolute top-1/2 h-[calc(50%+28px)] w-8 -translate-y-1/2 overflow-visible ${
+                      side === "left" ? "-right-8" : "-left-8 scale-x-[-1]"
+                    }`}
+                  >
+                    <path
+                      d={matchIndex % 2 === 0 ? "M0 50 H12 Q22 50 22 60 V100 H32" : "M0 50 H12 Q22 50 22 40 V0 H32"}
+                      fill="none"
+                      stroke={connectorStroke}
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={isActiveMatch ? "bracket-connector-flow" : undefined}
+                    />
+                    <path
+                      d={matchIndex % 2 === 0 ? "M0 50 H12 Q22 50 22 60 V100 H32" : "M0 50 H12 Q22 50 22 40 V0 H32"}
+                      fill="none"
+                      stroke={connectorGlow}
+                      strokeWidth="5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={isActiveMatch ? "bracket-connector-glow" : undefined}
+                    />
+                  </svg>
+                ) : null}
+                {side === "full" && !collapseRound ? (
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 64 24"
+                    preserveAspectRatio="none"
+                    className="pointer-events-none absolute -left-8 right-[-2rem] top-1/2 h-6 -translate-y-1/2 overflow-visible"
+                  >
+                    <path
+                      d="M0 12 H16 M48 12 H64"
+                      fill="none"
+                      stroke={connectorStroke}
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      className={isActiveMatch ? "bracket-connector-flow" : undefined}
+                    />
+                    <path
+                      d="M0 12 H16 M48 12 H64"
+                      fill="none"
+                      stroke={connectorGlow}
+                      strokeWidth="5"
+                      strokeLinecap="round"
+                      className={isActiveMatch ? "bracket-connector-glow" : undefined}
+                    />
+                  </svg>
+                ) : null}
                 <div className="flex items-center justify-between">
                   <h4 className={`${densityUltraCompact ? "text-[10px]" : "text-xs"} font-semibold uppercase tracking-wide text-muted-foreground`}>Partida {matchIndex + 1}</h4>
                   <div className="flex items-center gap-1.5">
@@ -988,6 +1082,11 @@ export default function Campeonatos() {
                     <span className={`text-[10px] px-2 py-0.5 rounded-full border ${getMatchStatusClassName(match)}`}>{getMatchStatusLabel(match)}</span>
                   </div>
                 </div>
+                {isActiveMatch && !collapseRound ? (
+                  <p className="text-[11px] text-fuchsia-100/80">
+                    Confronto em destaque. Clique nos jogadores para definir vencedor ou revisar esse duelo.
+                  </p>
+                ) : null}
                 {showDensityDescription && !collapseRound ? (
                   <p className={`text-[11px] ${roundIndex === 0 ? "text-foreground/80" : "text-muted-foreground"}`}>
                     {rounds.length > 0 ? "Toque no nome para marcar o vencedor." : "Modelo ilustrativo de eliminacao."}
@@ -1031,8 +1130,9 @@ export default function Campeonatos() {
                     {showWinnerLabel && rounds.length > 0 && match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
                   </Button>
                 </div>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

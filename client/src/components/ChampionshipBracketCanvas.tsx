@@ -46,7 +46,7 @@ export function ChampionshipBracketCanvas({
   return (
     <div
       ref={bracketContentRef}
-      className={`rounded-3xl border border-white/10 bg-black/15 p-3 print:rounded-none print:border-black/20 print:bg-transparent print:p-0 sm:p-4 ${
+      className={`rounded-3xl border border-white/10 bg-[linear-gradient(180deg,rgba(7,17,31,0.94),rgba(10,18,32,0.88))] p-3 print:rounded-none print:border-black/20 print:bg-transparent print:p-0 sm:p-4 ${
         presentationMode ? "shadow-[0_30px_80px_-40px_rgba(34,211,238,0.45)]" : ""
       }`}
     >
@@ -117,17 +117,37 @@ export function ChampionshipBracketCanvas({
         >
           {usarBracketDuplo ? (
             <div className="flex min-w-max items-start gap-4 px-1 print:min-w-0 print:gap-3 print:px-0 sm:gap-6 xl:gap-10">
-              <div className="flex min-w-max items-start gap-4 sm:gap-6">
-                {roundsLadoEsquerdo.map((round, roundIndex) => renderRoundColumn(round, roundIndex, "left"))}
+              <div className="flex min-w-max flex-col gap-3 sm:gap-4">
+                <div className="flex items-center justify-center">
+                  <span className="rounded-full border border-fuchsia-300/25 bg-fuchsia-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-fuchsia-100">
+                    Lado A
+                  </span>
+                </div>
+                <div className="flex min-w-max items-start gap-4 sm:gap-6">
+                  {roundsLadoEsquerdo.map((round, roundIndex) => renderRoundColumn(round, roundIndex, "left"))}
+                </div>
               </div>
-              <div className="flex min-w-[260px] items-center justify-center self-stretch sm:min-w-[320px]">
+              <div className="flex min-w-[260px] flex-col items-center justify-center self-stretch sm:min-w-[320px]">
+                <div className="mb-4 flex flex-col items-center gap-2">
+                  <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-cyan-100">
+                    Final
+                  </span>
+                  <div className="h-10 w-px bg-gradient-to-b from-cyan-300/50 to-transparent" />
+                </div>
                 {finalRound.length ? renderRoundColumn(finalRound, roundsExibidos.length - 1, "full") : null}
               </div>
-              <div className="flex min-w-max items-start gap-4 sm:gap-6">
-                {[...roundsLadoDireito].reverse().map((round, reverseIndex) => {
-                  const roundIndex = roundsLadoDireito.length - 1 - reverseIndex;
-                  return renderRoundColumn(round, roundIndex, "right");
-                })}
+              <div className="flex min-w-max flex-col gap-3 sm:gap-4">
+                <div className="flex items-center justify-center">
+                  <span className="rounded-full border border-fuchsia-300/25 bg-fuchsia-400/10 px-3 py-1 text-[10px] uppercase tracking-[0.28em] text-fuchsia-100">
+                    Lado B
+                  </span>
+                </div>
+                <div className="flex min-w-max items-start gap-4 sm:gap-6">
+                  {[...roundsLadoDireito].reverse().map((round, reverseIndex) => {
+                    const roundIndex = roundsLadoDireito.length - 1 - reverseIndex;
+                    return renderRoundColumn(round, roundIndex, "right");
+                  })}
+                </div>
               </div>
             </div>
           ) : (
