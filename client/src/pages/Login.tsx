@@ -234,13 +234,13 @@ export default function Login() {
         </header>
 
         <div className="flex flex-1 items-center justify-center py-8">
-          <section className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-white/20 bg-slate-950/38 p-5 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.8)] backdrop-blur-md sm:p-7">
+          <section className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-white/16 bg-slate-950/18 p-5 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.65)] backdrop-blur-[3px] sm:p-7">
             <div className="relative">
               <div className="mb-8">
                 <h1 className="text-3xl font-semibold tracking-[-0.04em] text-foreground">Entrar</h1>
               </div>
 
-              <div className="mb-5 rounded-[24px] border border-white/14 bg-black/15 p-3 backdrop-blur-sm">
+              <div className="mb-5 rounded-[24px] border border-white/12 bg-black/10 p-3 backdrop-blur-[2px]">
                 <Button
                   type="button"
                   onClick={handleOauth}
@@ -271,7 +271,7 @@ export default function Login() {
                             type="email"
                             autoComplete="email"
                             placeholder="voce@email.com"
-                            className="h-12 rounded-2xl border-white/14 bg-black/15 text-white placeholder:text-white/45"
+                            className="h-12 rounded-2xl border-white/12 bg-black/10 text-white placeholder:text-white/45"
                             {...field}
                           />
                         </FormControl>
@@ -291,7 +291,7 @@ export default function Login() {
                             type="password"
                             autoComplete="current-password"
                             placeholder="Sua senha"
-                            className="h-12 rounded-2xl border-white/14 bg-black/15 text-white placeholder:text-white/45"
+                            className="h-12 rounded-2xl border-white/12 bg-black/10 text-white placeholder:text-white/45"
                             {...field}
                           />
                         </FormControl>
@@ -303,7 +303,7 @@ export default function Login() {
                   <div className="flex flex-col gap-3 pt-2">
                     <Button
                       type="submit"
-                      className="h-12 w-full rounded-2xl border border-white/16 bg-white/14 text-white backdrop-blur-sm hover:bg-white/20"
+                      className="h-12 w-full rounded-2xl border border-white/14 bg-white/10 text-white backdrop-blur-[2px] hover:bg-white/16"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? "Entrando..." : "Entrar"}
