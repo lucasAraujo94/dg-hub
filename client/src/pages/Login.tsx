@@ -27,6 +27,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Link } from "wouter";
 import { z } from "zod";
+import dgArenaBackground from "@/assets/dg-arena-optimized.jpg";
 
 const loginSchema = z.object({
   email: z.string().email("E-mail invalido"),
@@ -201,15 +202,29 @@ export default function Login() {
   );
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground">
+    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-foreground">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${dgArenaBackground})` }}
+      />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(15,23,42,0.88),rgba(30,41,59,0.72),rgba(146,64,14,0.58))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.22),transparent_34%)]" />
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between gap-3 py-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">DG Hub</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/85">DG Hub</p>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" asChild className="rounded-full text-sm text-slate-600 hover:bg-white/80 hover:text-slate-950">
+            <Button
+              variant="ghost"
+              asChild
+              className="rounded-full text-sm text-white/80 hover:bg-white/12 hover:text-white"
+            >
               <Link href="/cadastro">Criar conta</Link>
             </Button>
-            <Button variant="outline" asChild className="rounded-full border-slate-200 bg-white/70 text-sm text-slate-700">
+            <Button
+              variant="outline"
+              asChild
+              className="rounded-full border-white/20 bg-white/10 text-sm text-white backdrop-blur-md hover:bg-white/16"
+            >
               <Link href="/">
                 <ArrowLeft className="h-4 w-4" />
                 <span>Voltar</span>
@@ -219,18 +234,19 @@ export default function Login() {
         </header>
 
         <div className="flex flex-1 items-center justify-center py-8">
-          <section className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-white/10 bg-card p-5 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.35)] backdrop-blur-xl sm:p-7">
+          <section className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-white/15 bg-slate-950/72 p-5 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.8)] backdrop-blur-xl sm:p-7">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-300/80 to-transparent" />
             <div className="relative">
               <div className="mb-8">
                 <h1 className="text-3xl font-semibold tracking-[-0.04em] text-foreground">Entrar</h1>
               </div>
 
-              <div className="mb-5 rounded-[24px] border border-white/10 bg-background/40 p-3">
+              <div className="mb-5 rounded-[24px] border border-white/10 bg-white/5 p-3">
                 <Button
                   type="button"
                   onClick={handleOauth}
                   variant="secondary"
-                  className="h-12 w-full justify-center gap-2 rounded-2xl bg-primary text-primary-foreground hover:opacity-90"
+                  className="h-12 w-full justify-center gap-2 rounded-2xl border border-amber-300/30 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 hover:opacity-95"
                   disabled={isNativeOauthPending}
                 >
                   <Mail className="h-4 w-4" />
@@ -256,7 +272,7 @@ export default function Login() {
                             type="email"
                             autoComplete="email"
                             placeholder="voce@email.com"
-                            className="h-12 rounded-2xl border-border bg-background text-foreground placeholder:text-muted-foreground"
+                            className="h-12 rounded-2xl border-white/12 bg-white/6 text-white placeholder:text-white/45"
                             {...field}
                           />
                         </FormControl>
@@ -276,7 +292,7 @@ export default function Login() {
                             type="password"
                             autoComplete="current-password"
                             placeholder="Sua senha"
-                            className="h-12 rounded-2xl border-border bg-background text-foreground placeholder:text-muted-foreground"
+                            className="h-12 rounded-2xl border-white/12 bg-white/6 text-white placeholder:text-white/45"
                             {...field}
                           />
                         </FormControl>
@@ -286,7 +302,11 @@ export default function Login() {
                   />
 
                   <div className="flex flex-col gap-3 pt-2">
-                    <Button type="submit" className="h-12 w-full rounded-2xl" disabled={loginMutation.isPending}>
+                    <Button
+                      type="submit"
+                      className="h-12 w-full rounded-2xl bg-white text-slate-950 hover:bg-amber-50"
+                      disabled={loginMutation.isPending}
+                    >
                       {loginMutation.isPending ? "Entrando..." : "Entrar"}
                     </Button>
                   </div>
