@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { AmbientArenaBackground } from "@/components/AmbientArenaBackground";
 import { ArrowLeft, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "wouter";
@@ -25,7 +26,8 @@ export function SitePage({
   children,
 }: SitePageProps) {
   return (
-    <div className="safe-shell min-h-screen bg-background text-foreground pb-20">
+    <div className="safe-shell arena-page-shell min-h-screen bg-background text-foreground pb-20">
+      <AmbientArenaBackground />
       <div className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/65 backdrop-blur-xl">
         <div className="container py-4 md:py-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">

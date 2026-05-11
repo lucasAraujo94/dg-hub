@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
+import { AmbientArenaBackground } from "@/components/AmbientArenaBackground";
 import {
   Loader2,
   Menu,
@@ -389,7 +390,8 @@ export default function Home() {
   }
 
   return (
-    <div className="safe-shell min-h-screen bg-background text-foreground flex flex-col">
+    <div className="safe-shell arena-page-shell min-h-screen bg-background text-foreground flex flex-col">
+      <AmbientArenaBackground />
       {/* Top bar */}
       <header className="border-b border-white/10 bg-slate-950/60 backdrop-blur-xl">
         <div className="w-full flex flex-wrap items-start md:items-center gap-3 px-4 md:px-6 py-3 md:h-16 relative">
@@ -569,6 +571,7 @@ export default function Home() {
 
         {/* Main content */}
         <main className="safe-stack flex-1 space-y-5 px-4 py-5 md:p-6 md:space-y-6">
+          {activeSection !== "textos" ? (
           <section className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.85fr)]">
             <div className="glass-panel hero-sheen relative p-5 sm:p-6">
               <div className="absolute inset-y-0 right-0 w-52 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.22),transparent_68%)]" />
@@ -673,6 +676,7 @@ export default function Home() {
               </Card>
             </div>
           </section>
+          ) : null}
           {!activeSection ? (
             <Suspense
               fallback={

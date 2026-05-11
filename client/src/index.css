@@ -261,6 +261,88 @@
     overflow-x: hidden;
   }
 
+  .arena-page-shell {
+    position: relative;
+    isolation: isolate;
+    background:
+      radial-gradient(circle at top, rgba(24, 64, 92, 0.34), transparent 38%),
+      linear-gradient(180deg, #08111a 0%, #0b1521 46%, #0a121c 100%);
+  }
+
+  .arena-grid-overlay {
+    background-image:
+      linear-gradient(rgba(148, 226, 255, 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 226, 255, 0.07) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.72), transparent 92%);
+    opacity: 0.26;
+    animation: arena-grid-drift 22s linear infinite;
+  }
+
+  .arena-radial-glow {
+    filter: blur(44px);
+    opacity: 0.42;
+    mix-blend-mode: screen;
+  }
+
+  .arena-radial-glow-a {
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.28), transparent 68%);
+    animation: arena-float-a 14s ease-in-out infinite;
+  }
+
+  .arena-radial-glow-b {
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.18), transparent 70%);
+    animation: arena-float-b 18s ease-in-out infinite;
+  }
+
+  .arena-radial-glow-c {
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.16), transparent 74%);
+    animation: arena-float-c 20s ease-in-out infinite;
+  }
+
+  .arena-beam {
+    background: linear-gradient(180deg, transparent 0%, rgba(34, 211, 238, 0.14) 22%, rgba(34, 211, 238, 0.03) 100%);
+    filter: blur(2px);
+    opacity: 0.42;
+  }
+
+  .arena-beam-a {
+    animation: arena-beam-shift-a 16s ease-in-out infinite;
+  }
+
+  .arena-beam-b {
+    background: linear-gradient(180deg, transparent 0%, rgba(251, 191, 36, 0.11) 20%, rgba(251, 191, 36, 0.02) 100%);
+    animation: arena-beam-shift-b 19s ease-in-out infinite;
+  }
+
+  .arena-orb {
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(34, 211, 238, 0.72) 45%, transparent 72%);
+    box-shadow: 0 0 22px rgba(34, 211, 238, 0.28);
+    opacity: 0.7;
+  }
+
+  .arena-orb-b,
+  .arena-orb-d {
+    background: radial-gradient(circle, rgba(255, 248, 220, 0.92), rgba(251, 191, 36, 0.62) 48%, transparent 72%);
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+  }
+
+  .arena-orb-a {
+    animation: arena-orb-rise 9s ease-in-out infinite;
+  }
+
+  .arena-orb-b {
+    animation: arena-orb-rise 12s ease-in-out infinite reverse;
+  }
+
+  .arena-orb-c {
+    animation: arena-orb-rise 10s ease-in-out infinite 1s;
+  }
+
+  .arena-orb-d {
+    animation: arena-orb-rise 11s ease-in-out infinite 2s reverse;
+  }
+
   .safe-stack > * {
     min-width: 0;
     max-width: 100%;
@@ -344,6 +426,81 @@
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes arena-grid-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 72px, 0);
+  }
+}
+
+@keyframes arena-float-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(28px, 18px, 0) scale(1.08);
+  }
+}
+
+@keyframes arena-float-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-26px, 22px, 0) scale(1.06);
+  }
+}
+
+@keyframes arena-float-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(14px, -18px, 0) scale(1.04);
+  }
+}
+
+@keyframes arena-beam-shift-a {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.24;
+  }
+  50% {
+    transform: translateX(24px);
+    opacity: 0.42;
+  }
+}
+
+@keyframes arena-beam-shift-b {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateX(-20px);
+    opacity: 0.38;
+  }
+}
+
+@keyframes arena-orb-rise {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.92);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate3d(0, -18px, 0) scale(1.08);
+    opacity: 0.85;
   }
 }
 

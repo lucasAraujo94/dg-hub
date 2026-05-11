@@ -399,7 +399,7 @@ export default function Campeonatos() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ativo":
-        return "bg-green-500/20 text-green-400 border-green-500/30";
+        return "bg-cyan-500/20 text-cyan-300 border-cyan-400/30";
       case "futuro":
         return "bg-blue-500/20 text-blue-400 border-blue-500/30";
       case "cancelado":
@@ -691,7 +691,7 @@ export default function Campeonatos() {
   };
   const getMatchStatusClassName = (match: Match) => {
     if (match.vencedor && !isBracketPlaceholder(match.vencedor)) {
-      return "border-emerald-400/30 bg-emerald-400/10 text-emerald-200";
+      return "border-cyan-400/30 bg-cyan-400/10 text-cyan-100";
     }
     if (match.jogador1 === BYE || match.jogador2 === BYE) {
       return "border-amber-400/30 bg-amber-400/10 text-amber-100";
@@ -851,7 +851,7 @@ export default function Campeonatos() {
       return "shrink-0 border-white/12 bg-black/20 text-muted-foreground hover:border-cyan-300/30 hover:bg-cyan-400/10 hover:text-cyan-50";
     }
     if (palette === "emerald") {
-      return "shrink-0 border-emerald-300/45 bg-[linear-gradient(135deg,rgba(6,95,70,0.95),rgba(16,185,129,0.35))] text-emerald-50 shadow-[0_12px_28px_-18px_rgba(16,185,129,0.85)]";
+      return "shrink-0 border-cyan-300/45 bg-[linear-gradient(135deg,rgba(10,37,64,0.96),rgba(34,211,238,0.28))] text-cyan-50 shadow-[0_12px_28px_-18px_rgba(34,211,238,0.45)]";
     }
     if (palette === "amber") {
       return "shrink-0 border-amber-300/45 bg-[linear-gradient(135deg,rgba(120,53,15,0.96),rgba(245,158,11,0.36))] text-amber-50 shadow-[0_12px_28px_-18px_rgba(245,158,11,0.85)]";
@@ -927,23 +927,23 @@ export default function Campeonatos() {
         className={`relative flex shrink-0 snap-center items-stretch sm:snap-start ${bracketColumnWidthClassName} ${side === "right" ? "xl:self-end" : ""}`}
       >
         <div
-          className={`relative w-full rounded-[28px] border backdrop-blur-sm transition-all ${roundCardPaddingClassName} ${
-            isFinalRound && campeaoAtual && !isBracketPlaceholder(campeaoAtual) ? "ring-1 ring-emerald-300/35" : ""
+          className={`relative w-full rounded-[28px] border transition-all ${roundCardPaddingClassName} ${
+            isFinalRound && campeaoAtual && !isBracketPlaceholder(campeaoAtual) ? "ring-1 ring-cyan-300/35" : ""
           } ${
             normalizedBracketSearch && roundContainsSearchedPlayer(round) ? "ring-1 ring-cyan-300/35" : ""
           } ${
             isFirstRound
-              ? "border-white/6 bg-white/[0.02] shadow-none"
+              ? "border-white/8 bg-[#111c29] shadow-none"
             : faseAtualIndex === roundIndex
-              ? "border-cyan-300/25 bg-cyan-400/[0.05] shadow-[0_14px_32px_-28px_rgba(0,0,0,0.45)]"
-              : "border-white/6 bg-white/[0.03] shadow-none"
+              ? "border-cyan-300/30 bg-[#132434] shadow-[0_14px_32px_-28px_rgba(0,0,0,0.45)]"
+              : "border-white/8 bg-[#14202d] shadow-none"
           } ${isFinalRound ? "bracket-final-pulse" : ""}`}
         >
           <div className="relative z-10 flex items-center justify-between pt-1">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.26em] text-cyan-200/70">Round {roundIndex + 1}</p>
-              <h3 className={`${densityUltraCompact ? "text-sm" : "text-base"} font-semibold`}>{getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}</h3>
-              {!densityUltraCompact ? <p className="text-[11px] text-muted-foreground">{round.length} partida{round.length === 1 ? "" : "s"}</p> : null}
+              <p className="text-[10px] uppercase tracking-[0.26em] text-cyan-100/90">Round {roundIndex + 1}</p>
+              <h3 className={`${densityUltraCompact ? "text-sm" : "text-base"} font-semibold text-white`}>{getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}</h3>
+              {!densityUltraCompact ? <p className="text-[11px] text-white/72">{round.length} partida{round.length === 1 ? "" : "s"}</p> : null}
             </div>
             <div className="flex items-center gap-2">
               {!spectatorMode ? (
@@ -953,7 +953,7 @@ export default function Campeonatos() {
               ) : null}
               <span
                 className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] ${
-                  faseAtualIndex === roundIndex ? "border-cyan-300/35 bg-cyan-400/15 text-cyan-100" : "border-white/10 bg-white/5 text-muted-foreground"
+                  faseAtualIndex === roundIndex ? "border-cyan-300/40 bg-cyan-400/18 text-cyan-50" : "border-white/12 bg-white/[0.06] text-white/70"
                 }`}
               >
                 {collapseRound ? "Compacta" : faseAtualIndex === roundIndex ? "Em foco" : rounds.length > 0 ? "Eliminacao" : "Exemplo"}
@@ -998,16 +998,16 @@ export default function Campeonatos() {
                       : ""
                   } ${
                     isActiveMatch
-                      ? "border-fuchsia-300/40 bg-fuchsia-400/[0.06] shadow-[0_14px_28px_-26px_rgba(168,85,247,0.38)]"
+                      ? "border-fuchsia-300/40 bg-[#1b2234] shadow-[0_14px_28px_-26px_rgba(168,85,247,0.22)]"
                       : ""
                   } ${
                     hasWinner ? "bracket-match-winner" : ""
                   } ${
                     getMatchAdvanceState(roundIndex, matchIndex)
-                      ? "bracket-card-sheen border-emerald-400/30 bg-emerald-400/[0.05]"
+                      ? "bracket-card-sheen border-cyan-400/30 bg-[#162a34]"
                       : roundIndex === 0
-                      ? "border-white/6 bg-white/[0.03]"
-                      : "border-white/6 bg-white/[0.025]"
+                      ? "border-white/8 bg-[#162231]"
+                      : "border-white/8 bg-[#172434]"
                   } ${collapseRound ? "space-y-1" : ""} ${presentationMode && !densityCompact ? "p-4" : ""}`}
                   style={{
                     minHeight: `${collapseRound ? Math.max(80, bracketMatchHeight - 28) : presentationMode ? bracketMatchHeight + 20 : bracketMatchHeight}px`,
@@ -1106,7 +1106,7 @@ export default function Campeonatos() {
                       </span>
                       <span className="truncate text-left">{exibirApelido(match.jogador1, displayPref)}</span>
                     </span>
-                    {showWinnerLabel && rounds.length > 0 && match.vencedor === match.jogador1 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
+                    {showWinnerLabel && rounds.length > 0 && match.vencedor === match.jogador1 ? <span className="text-[10px] text-cyan-200">Vencedor</span> : null}
                   </Button>
                   <Button
                     size="sm"
@@ -1124,7 +1124,7 @@ export default function Campeonatos() {
                       </span>
                       <span className="truncate text-left">{exibirApelido(match.jogador2, displayPref)}</span>
                     </span>
-                    {showWinnerLabel && rounds.length > 0 && match.vencedor === match.jogador2 ? <span className="text-[10px] text-emerald-300">Vencedor</span> : null}
+                    {showWinnerLabel && rounds.length > 0 && match.vencedor === match.jogador2 ? <span className="text-[10px] text-cyan-200">Vencedor</span> : null}
                   </Button>
                 </div>
                 </div>
@@ -1274,7 +1274,7 @@ export default function Campeonatos() {
         </div>
       ) : null}
 
-      <section className="rounded-[28px] border border-white/6 bg-black/10 p-4 print:hidden md:p-5">
+      <section className="rounded-[28px] border border-white/6 bg-[#111b27] p-4 print:hidden md:p-5">
         <div className="space-y-4">
           <div className="flex items-center gap-3 flex-wrap">
             <Button variant="outline" size="sm" className="gap-2" disabled>
@@ -1331,7 +1331,7 @@ export default function Campeonatos() {
         getStatusColor={getStatusColor}
         getStatusLabel={getStatusLabel}
       />
-      <section className="rounded-[28px] border border-white/6 bg-black/10 p-4 print:border-0 print:bg-none print:py-4 md:p-5">
+      <section className="rounded-[28px] border border-white/6 bg-[#111b27] p-4 print:border-0 print:bg-none print:py-4 md:p-5">
         <div className="space-y-4">
           <div className="flex flex-col gap-3 print:block lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -1351,7 +1351,7 @@ export default function Campeonatos() {
             ) : null}
           </div>
           {rounds.length === 0 ? (
-            <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-white/8 bg-[#152232] p-4 text-sm text-muted-foreground">
               <p>Exibindo um chaveamento de exemplo com 16 participantes. Quando o sorteio real acontecer, este modelo sera substituido automaticamente.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {isAdmin ? (
@@ -1359,17 +1359,17 @@ export default function Campeonatos() {
                     {sorteando ? "Sorteando..." : "Gerar sorteio real"}
                   </Button>
                 ) : null}
-                <span className="rounded-full border border-white/6 bg-white/[0.04] px-3 py-1 text-xs">
+                <span className="rounded-full border border-white/8 bg-[#1a2838] px-3 py-1 text-xs">
                   {isAdmin ? "Aguardando definicao do admin" : "Aguardando sorteio do admin"}
                 </span>
               </div>
             </div>
           ) : null}
           {campeaoAtual && !isBracketPlaceholder(campeaoAtual) ? (
-            <div className="rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] px-4 py-3">
-              <p className="text-[10px] uppercase tracking-[0.24em] text-emerald-100/80">Campeao atual</p>
-              <p className="mt-2 text-2xl font-semibold text-emerald-50">{exibirApelido(campeaoAtual, displayPref)}</p>
-              <p className="text-sm text-emerald-100/80">A chave ja tem um vencedor definido no confronto final.</p>
+            <div className="rounded-2xl border border-cyan-400/25 bg-[#152533] px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.24em] text-cyan-100/80">Campeao atual</p>
+              <p className="mt-2 text-2xl font-semibold text-cyan-50">{exibirApelido(campeaoAtual, displayPref)}</p>
+              <p className="text-sm text-cyan-100/78">A chave ja tem um vencedor definido no confronto final.</p>
             </div>
           ) : null}
           {campeonatoSelecionado ? (

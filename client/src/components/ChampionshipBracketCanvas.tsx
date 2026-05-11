@@ -46,16 +46,16 @@ export function ChampionshipBracketCanvas({
   return (
     <div
       ref={bracketContentRef}
-      className={`rounded-3xl border border-white/6 bg-[linear-gradient(180deg,rgba(7,17,31,0.9),rgba(10,18,32,0.84))] p-3 print:rounded-none print:border-black/20 print:bg-transparent print:p-0 sm:p-4 ${
-        presentationMode ? "shadow-[0_20px_50px_-40px_rgba(34,211,238,0.28)]" : ""
+      className={`rounded-3xl border border-white/6 bg-[#0f1a27] p-3 print:rounded-none print:border-black/20 print:bg-transparent print:p-0 sm:p-4 ${
+        presentationMode ? "shadow-[0_20px_50px_-44px_rgba(34,211,238,0.18)]" : ""
       }`}
     >
       <div className="mb-3 space-y-3 print:hidden" data-export-hidden="true">
-        <div className="rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3 sm:hidden">
+        <div className="rounded-2xl border border-white/8 bg-[#152232] px-3 py-3 sm:hidden">
           <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Como ler</p>
           <p className="mt-2 text-sm text-white/80">Deslize para navegar pelas fases e toque em uma fase para colocar o foco nela.</p>
         </div>
-        <div className="flex items-center justify-between rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-2 sm:hidden">
+        <div className="flex items-center justify-between rounded-2xl border border-white/8 bg-[#152232] px-3 py-2 sm:hidden">
           <div>
             <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Fase atual</p>
             <p className="text-sm font-semibold text-cyan-100">{roundFilterLabel}</p>
@@ -74,8 +74,8 @@ export function ChampionshipBracketCanvas({
                 effectiveRoundIndex === roundIndex
                   ? "border-cyan-300/45 bg-cyan-400/15 text-cyan-100"
                   : faseAtualIndex === roundIndex
-                  ? "border-emerald-300/35 bg-emerald-400/10 text-emerald-100"
-                  : "border-white/10 bg-white/5 text-muted-foreground"
+                  ? "border-cyan-300/35 bg-cyan-400/10 text-cyan-100"
+                  : "border-white/12 bg-[#182535] text-white/68"
               }`}
             >
               {getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}
@@ -90,7 +90,7 @@ export function ChampionshipBracketCanvas({
                 <span
                   key={`round-pill-${roundIndex}`}
                   className={`shrink-0 rounded-full border px-3 py-1 tracking-wide ${
-                    faseAtualIndex === roundIndex ? "border-cyan-300/40 bg-cyan-400/15 text-cyan-100" : "border-white/10 bg-white/5 text-muted-foreground"
+                    faseAtualIndex === roundIndex ? "border-cyan-300/40 bg-cyan-400/15 text-cyan-100" : "border-white/12 bg-[#182535] text-white/68"
                   }`}
                 >
                   {getRoundLabel(roundIndex, totalRoundsExibidos, round.length)}

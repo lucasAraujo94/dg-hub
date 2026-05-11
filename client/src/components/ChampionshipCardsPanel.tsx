@@ -30,7 +30,7 @@ export function ChampionshipCardsPanel({
   getStatusLabel,
 }: ChampionshipCardsPanelProps) {
   return (
-    <section className="rounded-[28px] border border-white/6 bg-card/20 p-4 print:hidden md:p-5">
+    <section className="rounded-[28px] border border-white/8 bg-[#111b27] p-4 print:hidden md:p-5">
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -39,7 +39,7 @@ export function ChampionshipCardsPanel({
           </div>
         </div>
         {campeonatos.length === 0 ? (
-          <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4 text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-white/8 bg-[#162231] p-4 text-sm text-muted-foreground">
             Nenhum campeonato encontrado para este filtro.
           </div>
         ) : (
@@ -52,11 +52,11 @@ export function ChampionshipCardsPanel({
                   key={campeonato.id}
                   className={`relative overflow-hidden rounded-[24px] border p-4 transition-colors ${
                     selecionado
-                      ? "border-emerald-400/30 bg-[linear-gradient(180deg,rgba(16,185,129,0.08),rgba(255,255,255,0.03))]"
-                      : "border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))]"
+                      ? "border-cyan-300/28 bg-[#152433]"
+                      : "border-white/8 bg-[#162231]"
                   }`}
                 >
-                  <div className={`absolute inset-x-0 top-0 h-px ${selecionado ? "bg-emerald-300/60" : "bg-white/12"}`} />
+                  <div className={`absolute inset-x-0 top-0 h-px ${selecionado ? "bg-cyan-300/55" : "bg-white/12"}`} />
 
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-3">
@@ -66,7 +66,7 @@ export function ChampionshipCardsPanel({
                             {campeonato.jogo}
                           </span>
                           {selecionado ? (
-                            <span className="rounded-full border border-emerald-300/25 bg-emerald-400/[0.08] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-emerald-100">
+                            <span className="rounded-full border border-cyan-300/25 bg-cyan-400/[0.10] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-cyan-100">
                               Em foco
                             </span>
                           ) : null}
@@ -80,19 +80,19 @@ export function ChampionshipCardsPanel({
                     </div>
 
                     <div className="grid grid-cols-2 gap-2.5">
-                      <div className="rounded-2xl border border-white/6 bg-black/10 px-3 py-2.5">
+                      <div className="rounded-2xl border border-white/8 bg-[#1a2838] px-3 py-2.5">
                         <p className="text-[10px] uppercase tracking-[0.18em] text-white/45">Inicio</p>
                         <p className="mt-1 text-sm font-medium text-white/82">{campeonato.inicio}</p>
                       </div>
-                      <div className="rounded-2xl border border-white/6 bg-black/10 px-3 py-2.5">
+                      <div className="rounded-2xl border border-white/8 bg-[#1a2838] px-3 py-2.5">
                         <p className="text-[10px] uppercase tracking-[0.18em] text-white/45">Premio</p>
-                        <p className="mt-1 text-sm font-medium text-white/82">R$ {campeonato.premio}</p>
+                        <p className="mt-1 text-sm font-medium text-amber-300">R$ {campeonato.premio}</p>
                       </div>
-                      <div className="rounded-2xl border border-white/6 bg-black/10 px-3 py-2.5">
+                      <div className="rounded-2xl border border-white/8 bg-[#1a2838] px-3 py-2.5">
                         <p className="text-[10px] uppercase tracking-[0.18em] text-white/45">Participantes</p>
                         <p className="mt-1 text-sm font-medium text-white/82">{campeonato.participantes}</p>
                       </div>
-                      <div className="rounded-2xl border border-white/6 bg-black/10 px-3 py-2.5">
+                      <div className="rounded-2xl border border-white/8 bg-[#1a2838] px-3 py-2.5">
                         <p className="text-[10px] uppercase tracking-[0.18em] text-white/45">Status</p>
                         <p className="mt-1 text-sm font-medium text-white/82">{getStatusLabel(campeonato.status)}</p>
                       </div>

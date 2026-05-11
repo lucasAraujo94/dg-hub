@@ -37,9 +37,30 @@ type PodiumTone = {
 };
 
 const PODIUM_LAYOUT = [
-  { place: 2, mobileOrder: "order-2", desktopOrder: "md:order-1", heightClass: "md:mt-16", scaleClass: "md:scale-[0.97]" },
-  { place: 1, mobileOrder: "order-1", desktopOrder: "md:order-2", heightClass: "md:-mt-6", scaleClass: "md:scale-100" },
-  { place: 3, mobileOrder: "order-3", desktopOrder: "md:order-3", heightClass: "md:mt-20", scaleClass: "md:scale-[0.95]" },
+  {
+    place: 2,
+    mobileOrder: "order-2",
+    desktopOrder: "md:order-1",
+    heightClass: "md:mt-16",
+    scaleClass: "md:scale-[0.97]",
+    mobileSpanClass: "col-span-1",
+  },
+  {
+    place: 1,
+    mobileOrder: "order-1",
+    desktopOrder: "md:order-2",
+    heightClass: "md:-mt-6",
+    scaleClass: "md:scale-100",
+    mobileSpanClass: "col-span-2",
+  },
+  {
+    place: 3,
+    mobileOrder: "order-3",
+    desktopOrder: "md:order-3",
+    heightClass: "md:mt-20",
+    scaleClass: "md:scale-[0.95]",
+    mobileSpanClass: "col-span-1",
+  },
 ] as const;
 
 const podiumTones: Record<1 | 2 | 3, PodiumTone> = {
@@ -137,6 +158,7 @@ function PodiumCard({
   desktopOrder,
   heightClass,
   scaleClass,
+  mobileSpanClass,
 }: {
   player: RankingPodiumItem;
   place: 1 | 2 | 3;
@@ -146,6 +168,7 @@ function PodiumCard({
   desktopOrder: string;
   heightClass: string;
   scaleClass: string;
+  mobileSpanClass: string;
 }) {
   const usuario = player.usuario;
   const wins = player.wins ?? player.campeonatosCampeao?.length ?? 0;
@@ -163,10 +186,12 @@ function PodiumCard({
       <HoverCardTrigger asChild>
         <Link
           href={profileHref}
-          className={`group relative block min-w-[260px] flex-none snap-center sm:min-w-0 sm:flex-auto ${mobileOrder} ${desktopOrder} ${heightClass}`}
+          className={`group relative block min-w-0 ${mobileOrder} ${desktopOrder} ${heightClass} ${mobileSpanClass}`}
         >
           <article
-            className={`relative overflow-hidden rounded-[24px] border p-3 transition-all duration-300 ease-out animate-in fade-in zoom-in-95 sm:rounded-[28px] sm:p-5 ${tone.cardClass} ${tone.glowClass} ${scaleClass} hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_55px_rgba(255,255,255,0.08)]`}
+            className={`relative overflow-hidden rounded-[22px] border p-3 transition-all duration-300 ease-out animate-in fade-in zoom-in-95 sm:rounded-[28px] sm:p-5 ${tone.cardClass} ${tone.glowClass} ${scaleClass} hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_55px_rgba(255,255,255,0.08)] ${
+              place === 1 ? "min-h-[252px]" : "min-h-[216px]"
+            } sm:min-h-0`}
           >
             <div className={`absolute inset-x-5 top-0 h-px bg-gradient-to-r ${tone.accentClass} opacity-80`} />
             <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -174,14 +199,18 @@ function PodiumCard({
             </div>
 
             <div className="relative flex flex-col items-center text-center">
-              <div className={`mb-3 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] sm:px-3 sm:text-[11px] sm:tracking-[0.22em] ${tone.badgeClass}`}>
+              <div className={`mb-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] sm:mb-3 sm:gap-2 sm:px-3 sm:text-[11px] sm:tracking-[0.22em] ${tone.badgeClass}`}>
                 <Icon className={`h-3.5 w-3.5 ${tone.iconClass}`} />
-                {place}º lugar
+                {place}o lugar
               </div>
 
-              <div className="relative mb-4">
+              <div className="relative mb-3 sm:mb-4">
                 <div className={`absolute inset-0 rounded-full blur-xl bg-gradient-to-br ${tone.accentClass} opacity-35`} />
-                <div className="relative h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-black/30 sm:h-24 sm:w-24">
+                <div
+                  className={`relative overflow-hidden rounded-full border border-white/20 bg-black/30 ${
+                    place === 1 ? "h-16 w-16" : "h-14 w-14"
+                  } sm:h-24 sm:w-24`}
+                >
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
                   ) : (
@@ -196,11 +225,11 @@ function PodiumCard({
               </div>
 
               <div className="space-y-1">
-                <p className="text-base font-semibold leading-tight text-foreground sm:text-lg">
+                <p className={`${place === 1 ? "text-base" : "text-sm"} font-semibold leading-tight text-foreground sm:text-lg`}>
                   {displayName}
                 </p>
                 {isAdmin ? (
-                  <div className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-emerald-200">
+                  <div className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-[9px] uppercase tracking-[0.18em] text-cyan-200 sm:text-[10px]">
                     <ShieldCheck className="h-3 w-3" />
                     Admin
                   </div>
@@ -208,19 +237,19 @@ function PodiumCard({
               </div>
 
               <div className="mt-3 grid w-full grid-cols-2 gap-2 sm:mt-4 sm:gap-3">
-                <div className="rounded-2xl border border-white/10 bg-black/20 px-2.5 py-2.5 sm:px-3 sm:py-3">
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-2 py-2 sm:px-3 sm:py-3">
                   <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Pontos</p>
-                  <p className="mt-1 text-lg font-bold text-foreground sm:text-xl">{player.pontuacao}</p>
+                  <p className="mt-1 text-base font-bold text-foreground sm:text-xl">{player.pontuacao}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/20 px-2.5 py-2.5 sm:px-3 sm:py-3">
+                <div className="rounded-2xl border border-white/10 bg-black/20 px-2 py-2 sm:px-3 sm:py-3">
                   <p className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">Vitorias</p>
-                  <p className="mt-1 text-lg font-bold text-foreground sm:text-xl">{wins}</p>
+                  <p className="mt-1 text-base font-bold text-foreground sm:text-xl">{wins}</p>
                 </div>
               </div>
 
-              <div className={`mt-4 h-2.5 w-full rounded-full bg-gradient-to-r ${tone.blockClass} opacity-90 sm:mt-5 sm:h-3`} />
-              <div className={`mt-2 w-full rounded-t-3xl border border-white/10 bg-white/5 bg-gradient-to-b ${tone.blockClass} px-3 py-3 text-xs font-semibold text-white/95 sm:py-4 sm:text-sm`}>
-                Destaque do pódio
+              <div className={`mt-3 h-2 w-full rounded-full bg-gradient-to-r ${tone.blockClass} opacity-90 sm:mt-5 sm:h-3`} />
+              <div className={`mt-2 w-full rounded-t-[20px] border border-white/10 bg-white/5 bg-gradient-to-b ${tone.blockClass} px-3 py-2.5 text-[11px] font-semibold text-white/95 sm:rounded-t-3xl sm:py-4 sm:text-sm`}>
+                Destaque do podio
               </div>
             </div>
           </article>
@@ -235,7 +264,7 @@ function PodiumCard({
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
               <p className="text-muted-foreground">Posicao</p>
-              <p className="font-semibold">{place}º lugar</p>
+              <p className="font-semibold">{place}o lugar</p>
             </div>
             <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
               <p className="text-muted-foreground">Pontos</p>
@@ -268,49 +297,50 @@ export function RankingPodium({ data, displayPref, hagoNickLocal }: RankingPodiu
   if (topThree.length === 0) return null;
 
   return (
-    <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-card/70 px-4 py-6 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:px-6 sm:py-8">
+    <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-card/70 px-4 py-5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:rounded-[32px] sm:px-6 sm:py-8">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.14),_transparent_45%),radial-gradient(circle_at_bottom_right,_rgba(34,211,238,0.12),_transparent_32%)]" />
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent" />
 
-      <div className="relative mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="relative mb-5 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.28em] text-cyan-300/80">Top 3 do ranking</p>
-          <h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">Pódio geral em destaque</h2>
+          <h2 className="mt-2 text-xl font-bold text-foreground sm:text-3xl">Podio geral em destaque</h2>
         </div>
-        <p className="max-w-xl text-sm text-muted-foreground">
-          O pódio acompanha automaticamente a mesma ordenação da tabela principal e abre o perfil público ao clicar.
+        <p className="max-w-xl text-xs text-muted-foreground sm:text-sm">
+          O podio acompanha automaticamente a mesma ordenacao da tabela principal e abre o perfil publico ao clicar.
         </p>
       </div>
 
-      <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0">
-        <div className="relative flex snap-x snap-mandatory gap-4 md:grid md:grid-cols-3 md:items-end">
-        {PODIUM_LAYOUT.map(layout => {
-          const player = topThree[layout.place - 1];
-          if (!player) {
-            return (
-              <div
-                key={layout.place}
-                className={`min-w-[260px] flex-none snap-center rounded-[24px] border border-dashed border-white/10 bg-black/10 p-5 text-center text-sm text-muted-foreground sm:min-w-0 sm:flex-auto sm:rounded-[28px] sm:p-6 ${layout.mobileOrder} ${layout.desktopOrder} ${layout.heightClass}`}
-              >
-                Posição {layout.place}º aguardando jogador
-              </div>
-            );
-          }
+      <div className="pb-1 sm:pb-0">
+        <div className="relative grid grid-cols-2 gap-3 md:grid-cols-3 md:items-end md:gap-4">
+          {PODIUM_LAYOUT.map(layout => {
+            const player = topThree[layout.place - 1];
+            if (!player) {
+              return (
+                <div
+                  key={layout.place}
+                  className={`rounded-[22px] border border-dashed border-white/10 bg-black/10 p-4 text-center text-sm text-muted-foreground sm:rounded-[28px] sm:p-6 ${layout.mobileOrder} ${layout.desktopOrder} ${layout.heightClass}`}
+                >
+                  Posicao {layout.place}o aguardando jogador
+                </div>
+              );
+            }
 
-          return (
-            <PodiumCard
-              key={`${player.usuarioId}-${layout.place}`}
-              player={player}
-              place={layout.place}
-              displayPref={displayPref}
-              hagoNickLocal={hagoNickLocal}
-              mobileOrder={layout.mobileOrder}
-              desktopOrder={layout.desktopOrder}
-              heightClass={layout.heightClass}
-              scaleClass={layout.scaleClass}
-            />
-          );
-        })}
+            return (
+              <PodiumCard
+                key={`${player.usuarioId}-${layout.place}`}
+                player={player}
+                place={layout.place}
+                displayPref={displayPref}
+                hagoNickLocal={hagoNickLocal}
+                mobileOrder={layout.mobileOrder}
+                desktopOrder={layout.desktopOrder}
+                heightClass={layout.heightClass}
+                scaleClass={layout.scaleClass}
+                mobileSpanClass={layout.mobileSpanClass}
+              />
+            );
+          })}
         </div>
       </div>
     </section>
