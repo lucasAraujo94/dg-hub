@@ -30,7 +30,7 @@ export function ChampionshipCardsPanel({
   getStatusLabel,
 }: ChampionshipCardsPanelProps) {
   return (
-    <section className="rounded-[28px] border border-white/10 bg-card/30 p-4 print:hidden md:p-5">
+    <section className="rounded-[28px] border border-white/6 bg-card/20 p-4 print:hidden md:p-5">
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -47,8 +47,8 @@ export function ChampionshipCardsPanel({
               return (
                 <div
                   key={campeonato.id}
-                  className={`space-y-3 rounded-2xl border bg-white/5 p-4 backdrop-blur ${
-                    selecionado ? "border-emerald-400/60 shadow-[0_0_25px_rgba(16,185,129,0.25)]" : "border-white/10"
+                  className={`space-y-3 rounded-2xl border bg-white/[0.03] p-4 ${
+                    selecionado ? "border-emerald-400/35 bg-emerald-400/[0.04]" : "border-white/6"
                   }`}
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

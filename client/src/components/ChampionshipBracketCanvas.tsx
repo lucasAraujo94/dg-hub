@@ -46,16 +46,16 @@ export function ChampionshipBracketCanvas({
   return (
     <div
       ref={bracketContentRef}
-      className={`rounded-3xl border border-white/10 bg-[linear-gradient(180deg,rgba(7,17,31,0.94),rgba(10,18,32,0.88))] p-3 print:rounded-none print:border-black/20 print:bg-transparent print:p-0 sm:p-4 ${
-        presentationMode ? "shadow-[0_30px_80px_-40px_rgba(34,211,238,0.45)]" : ""
+      className={`rounded-3xl border border-white/6 bg-[linear-gradient(180deg,rgba(7,17,31,0.9),rgba(10,18,32,0.84))] p-3 print:rounded-none print:border-black/20 print:bg-transparent print:p-0 sm:p-4 ${
+        presentationMode ? "shadow-[0_20px_50px_-40px_rgba(34,211,238,0.28)]" : ""
       }`}
     >
       <div className="mb-3 space-y-3 print:hidden" data-export-hidden="true">
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 sm:hidden">
+        <div className="rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-3 sm:hidden">
           <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Como ler</p>
           <p className="mt-2 text-sm text-white/80">Deslize para navegar pelas fases e toque em uma fase para colocar o foco nela.</p>
         </div>
-        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3 py-2 sm:hidden">
+        <div className="flex items-center justify-between rounded-2xl border border-white/6 bg-white/[0.03] px-3 py-2 sm:hidden">
           <div>
             <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">Fase atual</p>
             <p className="text-sm font-semibold text-cyan-100">{roundFilterLabel}</p>
