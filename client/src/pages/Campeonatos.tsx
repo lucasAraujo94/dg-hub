@@ -10,15 +10,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trophy, Users, Clock, DollarSign, Filter, Volume2 } from "lucide-react";
+import { Trophy, Users, Clock, DollarSign, Filter } from "lucide-react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
 import { SitePage } from "@/components/SitePage";
 import { ChampionshipCardsPanel } from "@/components/ChampionshipCardsPanel";
-import { ChampionshipBracketInsights } from "@/components/ChampionshipBracketInsights";
-import { ChampionshipBracketSidebar } from "@/components/ChampionshipBracketSidebar";
 import { ChampionshipBracketControls } from "@/components/ChampionshipBracketControls";
 import { ChampionshipBracketCanvas } from "@/components/ChampionshipBracketCanvas";
 import { ChampionshipFocusPanel } from "@/components/ChampionshipFocusPanel";
@@ -1312,10 +1310,6 @@ export default function Campeonatos() {
             >
               Finalizados
             </Button>
-            <Button variant="secondary" size="sm" className="gap-2" onClick={narrarCampeonatos}>
-              <Volume2 className="w-4 h-4" />
-              Ouvir campeonatos
-            </Button>
             {isAdmin ? (
               <Button
                 size="sm"
@@ -1400,57 +1394,17 @@ export default function Campeonatos() {
             roundsExibidosLength={roundsExibidos.length}
             goToPreviousRound={goToPreviousRound}
             goToNextRound={goToNextRound}
-            copiarResumoBusca={copiarResumoBusca}
             normalizedBracketSearch={normalizedBracketSearch}
             searchedPlayerLastRoundIndex={searchedPlayerLastRoundIndex}
             searchedPlayerRoundLabel={searchedPlayerRoundLabel}
             searchedPlayerRoundTrail={searchedPlayerRoundTrail}
             formatRoundStory={formatRoundStory}
-            presentationMode={presentationMode}
-            setPresentationMode={setPresentationMode}
-            presentationAutoplay={presentationAutoplay}
-            setPresentationAutoplay={setPresentationAutoplay}
-            toggleBracketFullscreen={toggleBracketFullscreen}
-            collapsedResolvedRounds={collapsedResolvedRounds}
-            setCollapsedResolvedRounds={setCollapsedResolvedRounds}
-            spectatorMode={spectatorMode}
-            setSpectatorMode={setSpectatorMode}
             compactBracket={compactBracket}
             setCompactBracket={setCompactBracket}
-            bracketDensity={bracketDensity}
-            setBracketDensity={setBracketDensity}
             exportBracketAsImage={exportBracketAsImage}
-            imprimirBracket={imprimirBracket}
             resetBracketView={resetBracketView}
           />
-          <ChampionshipBracketInsights
-            phaseSizeSummary={phaseSizeSummary}
-            effectiveRoundIndex={effectiveRoundIndex}
-            onCopyRoundSummary={copyRoundSummary}
-            onFocusCurrentRound={goToRound}
-            faseAtualLabel={faseAtualLabel}
-            currentPhaseCounter={currentPhaseCounter}
-            bracketDensity={bracketDensity}
-            totalParticipantesExibidos={totalParticipantesExibidos}
-            totalRoundsExibidos={totalRoundsExibidos}
-            partidasDefinidas={partidasDefinidas}
-            partidasTotais={partidasTotais}
-            progressoPercentual={progressoPercentual}
-            woCount={woCount}
-            pendingMatches={pendingMatches}
-            alivePlayers={alivePlayers}
-            presentationMode={presentationMode}
-            compactBracket={compactBracket}
-            bracketEhExemplo={bracketEhExemplo}
-            roundFilterLabel={roundFilterLabel}
-            presentationAutoplay={presentationAutoplay}
-            collapsedResolvedRounds={collapsedResolvedRounds}
-            spectatorMode={spectatorMode}
-            normalizedBracketSearch={normalizedBracketSearch}
-            bracketSearch={bracketSearch}
-            visibleColumnsCount={roundsFiltrados.length}
-          />
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid gap-4">
             <ChampionshipBracketCanvas
               bracketContentRef={bracketContentRef}
               bracketViewportRef={bracketViewportRef}
@@ -1470,15 +1424,6 @@ export default function Campeonatos() {
               roundsLadoDireito={roundsLadoDireito}
               finalRound={finalRound}
               renderRoundColumn={renderRoundColumn}
-            />
-            <ChampionshipBracketSidebar
-              orderedActivities={orderedActivities}
-              getRoundLabel={getRoundLabel}
-              totalRoundsExibidos={totalRoundsExibidos}
-              roundLengths={roundsExibidos.map(round => round.length)}
-              exibirApelido={exibirApelido}
-              displayPref={displayPref}
-              spectatorMode={spectatorMode}
             />
           </div>
         </div>
