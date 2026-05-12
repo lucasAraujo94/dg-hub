@@ -207,11 +207,11 @@ export default function Login() {
         className="absolute inset-0 bg-center bg-no-repeat"
         style={{
           backgroundImage: `url(${dgArenaBackground})`,
-          backgroundSize: "min(92vw, 920px)",
-          backgroundPosition: "center 18%",
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
         }}
       />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.14),rgba(2,6,23,0.28),rgba(2,6,23,0.62))] sm:bg-[linear-gradient(135deg,rgba(15,23,42,0.48),rgba(30,41,59,0.34),rgba(146,64,14,0.2))]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.08),rgba(2,6,23,0.18),rgba(2,6,23,0.5))] sm:bg-[linear-gradient(135deg,rgba(15,23,42,0.48),rgba(30,41,59,0.34),rgba(146,64,14,0.2))]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.12),transparent_32%)] sm:bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.14),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.16),transparent_34%)]" />
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex items-center justify-between gap-3 py-2">
@@ -237,9 +237,9 @@ export default function Login() {
           </div>
         </header>
 
-        <div className="relative flex flex-1 items-center justify-center py-6 sm:py-8">
+        <div className="relative flex flex-1 items-end justify-center pb-5 pt-[19rem] sm:items-center sm:py-8">
           <div className="pointer-events-none absolute right-[6%] top-1/2 hidden h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-black/24 blur-3xl lg:block" />
-          <section className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/[0.02] p-4 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.26)] backdrop-blur-0 sm:rounded-[32px] sm:border-white/14 sm:bg-slate-950/18 sm:p-7 sm:backdrop-blur-[3px]">
+          <section className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/[0.015] p-4 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.2)] backdrop-blur-0 sm:rounded-[32px] sm:border-white/14 sm:bg-slate-950/18 sm:p-7 sm:backdrop-blur-[3px]">
             <div className="relative">
               <div className="mb-6 sm:mb-8">
                 <h1 className="hidden text-2xl font-semibold tracking-[-0.04em] text-foreground sm:block sm:text-3xl">Entrar</h1>
