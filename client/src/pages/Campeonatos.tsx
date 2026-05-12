@@ -120,6 +120,9 @@ export default function Campeonatos() {
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window === "undefined" ? false : window.innerWidth < 768
   );
+  const [mobileAutoFollowPhase, setMobileAutoFollowPhase] = useState(() =>
+    typeof window === "undefined" ? false : window.innerWidth < 768
+  );
   const bracketViewportRef = useRef<HTMLDivElement | null>(null);
   const bracketContentRef = useRef<HTMLDivElement | null>(null);
   const roundRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -146,6 +149,7 @@ export default function Campeonatos() {
     setPresentationMode(false);
     setPresentationAutoplay(false);
     setCollapsedResolvedRounds(true);
+    setMobileAutoFollowPhase(true);
   }, [isMobileViewport]);
 
   useEffect(() => {
@@ -645,6 +649,7 @@ export default function Campeonatos() {
     setCompactBracket(false);
     setBracketDensity("detalhado");
     setRoundFilter("todas");
+    setMobileAutoFollowPhase(isMobileViewport);
     setPresentationMode(false);
     setPresentationAutoplay(false);
     setCollapsedResolvedRounds(false);
@@ -760,11 +765,11 @@ export default function Campeonatos() {
     round.some(match => !match.vencedor && !isBracketPlaceholder(match.jogador1) && !isBracketPlaceholder(match.jogador2))
   );
   useEffect(() => {
-    if (!isMobileViewport) return;
-    if (roundFilter === "todas" && faseAtualIndex >= 0) {
+    if (!isMobileViewport || !mobileAutoFollowPhase) return;
+    if (faseAtualIndex >= 0) {
       setRoundFilter(String(faseAtualIndex));
     }
-  }, [faseAtualIndex, isMobileViewport, roundFilter]);
+  }, [faseAtualIndex, isMobileViewport, mobileAutoFollowPhase]);
   const faseAtualLabel =
     faseAtualIndex >= 0
       ? getRoundLabel(faseAtualIndex, totalRoundsExibidos, roundsExibidos[faseAtualIndex]?.length ?? 0)
@@ -860,15 +865,26 @@ export default function Campeonatos() {
   const bracketEhExemplo = rounds.length === 0;
   const selectedRoundIndex = roundFilter === "todas" ? -1 : Number(roundFilter);
   const effectiveRoundIndex = selectedRoundIndex >= 0 ? selectedRoundIndex : (searchedPlayerLastRoundIndex >= 0 ? searchedPlayerLastRoundIndex : Math.max(faseAtualIndex, 0));
+  const handleRoundFilterChange = (value: string) => {
+    if (isMobileViewport) {
+      setMobileAutoFollowPhase(value === "todas");
+    }
+    setRoundFilter(value);
+  };
   const goToPreviousRound = () => {
     if (selectedRoundIndex <= 0) return;
+    if (isMobileViewport) setMobileAutoFollowPhase(false);
     setRoundFilter(String(selectedRoundIndex - 1));
   };
   const goToNextRound = () => {
     if (selectedRoundIndex < 0 || selectedRoundIndex >= roundsExibidos.length - 1) return;
+    if (isMobileViewport) setMobileAutoFollowPhase(false);
     setRoundFilter(String(selectedRoundIndex + 1));
   };
-  const goToRound = (roundIndex: number) => setRoundFilter(String(roundIndex));
+  const goToRound = (roundIndex: number) => {
+    if (isMobileViewport) setMobileAutoFollowPhase(false);
+    setRoundFilter(String(roundIndex));
+  };
   const bracketSelectClassName =
     "h-10 rounded-xl border border-cyan-400/25 bg-[linear-gradient(135deg,rgba(8,20,40,0.94),rgba(22,78,99,0.82))] px-3 text-sm text-cyan-50 outline-none transition focus:border-cyan-200/60 focus:ring-2 focus:ring-cyan-300/25";
   const getToolbarButtonClassName = (active: boolean, palette: "cyan" | "sky" | "amber" | "violet" = "cyan") => {
@@ -1411,7 +1427,7 @@ export default function Campeonatos() {
             bracketSearch={bracketSearch}
             onBracketSearchChange={setBracketSearch}
             roundFilter={roundFilter}
-            onRoundFilterChange={setRoundFilter}
+            onRoundFilterChange={handleRoundFilterChange}
             roundFilterOptions={roundFilterOptions}
             bracketSelectClassName={bracketSelectClassName}
             getToolbarButtonClassName={getToolbarButtonClassName}
