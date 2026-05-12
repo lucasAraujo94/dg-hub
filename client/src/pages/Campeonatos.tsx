@@ -818,7 +818,9 @@ export default function Campeonatos() {
   const bracketMatchHeight =
     densityUltraCompact ? 72 : densityCompact ? 94 : BRACKET_MATCH_HEIGHT;
   const bracketBaseGap = densityUltraCompact ? 12 : densityCompact ? 18 : BRACKET_BASE_GAP;
-  const bracketColumnWidthClassName = presentationMode
+  const bracketColumnWidthClassName = isMobileViewport
+    ? "w-full max-w-none min-w-0"
+    : presentationMode
     ? densityUltraCompact
       ? "w-[82vw] max-w-[320px] min-w-[260px] sm:w-[320px]"
       : densityCompact
@@ -854,7 +856,7 @@ export default function Campeonatos() {
     roundFilter === "todas"
       ? "Todas as fases"
       : roundFilterOptions.find(option => option.value === roundFilter)?.label ?? "Fase filtrada";
-  const usarBracketDuplo = roundFilter === "todas" && (roundsExibidos[0]?.length ?? 0) >= 8;
+  const usarBracketDuplo = !isMobileViewport && roundFilter === "todas" && (roundsExibidos[0]?.length ?? 0) >= 8;
   const roundsLadoEsquerdo = usarBracketDuplo
     ? roundsExibidos.slice(0, -1).map(round => round.slice(0, Math.ceil(round.length / 2)))
     : [];

@@ -112,7 +112,7 @@ export function ChampionshipBracketCanvas({
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background via-background/75 to-transparent print:hidden sm:w-12" />
         <div
           ref={bracketViewportRef}
-          className="overflow-x-auto overscroll-x-contain scroll-smooth pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden print:overflow-visible print:pb-0 sm:snap-x sm:snap-mandatory"
+          className="overflow-visible pb-4 print:overflow-visible print:pb-0 sm:overflow-x-auto sm:overscroll-x-contain sm:scroll-smooth sm:[-ms-overflow-style:none] sm:[scrollbar-width:none] sm:[&::-webkit-scrollbar]:hidden sm:snap-x sm:snap-mandatory"
         >
           {usarBracketDuplo ? (
             <div className="flex min-w-max items-start gap-3 px-1 print:min-w-0 print:gap-3 print:px-0 sm:gap-6 xl:gap-10">
@@ -150,7 +150,7 @@ export function ChampionshipBracketCanvas({
               </div>
             </div>
           ) : (
-            <div className={`flex min-w-max items-start gap-3 px-1 print:min-w-0 print:gap-3 print:px-0 sm:gap-6 ${presentationMode ? "sm:gap-8" : ""}`}>
+            <div className={`flex min-w-0 flex-col items-stretch gap-3 px-0 print:min-w-0 print:gap-3 print:px-0 sm:min-w-max sm:flex-row sm:items-start sm:px-1 sm:gap-6 ${presentationMode ? "sm:gap-8" : ""}`}>
               {roundsFiltrados.map((round, filteredIndex) => {
                 const roundIndex = roundFilter === "todas" ? filteredIndex : Number(roundFilter);
                 return renderRoundColumn(round, roundIndex);
