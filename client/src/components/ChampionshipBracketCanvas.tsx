@@ -113,7 +113,6 @@ export function ChampionshipBracketCanvas({
         <div
           ref={bracketViewportRef}
           className="overflow-x-auto overscroll-x-contain scroll-smooth pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden print:overflow-visible print:pb-0 sm:snap-x sm:snap-mandatory"
-          style={{ touchAction: "pan-x" }}
         >
           {usarBracketDuplo ? (
             <div className="flex min-w-max items-start gap-3 px-1 print:min-w-0 print:gap-3 print:px-0 sm:gap-6 xl:gap-10">

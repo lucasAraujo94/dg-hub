@@ -135,11 +135,11 @@ export default function Ranking() {
                       </div>
                     )}
                     <div className="flex min-w-0 flex-col">
-                      <span className="flex items-center gap-2 break-words font-semibold text-foreground">
-                        {displayName}
+                      <span className="flex flex-wrap items-center gap-2 font-semibold text-foreground">
+                        <span className="min-w-0 break-words">{displayName}</span>
                         {isAdmin ? (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/15 px-2 py-[2px] text-[10px] uppercase tracking-wide text-cyan-200">
-                            <ShieldCheck className="h-3 w-3" />
+                          <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-cyan-500/30 bg-cyan-500/15 px-2 py-[2px] text-[10px] uppercase tracking-wide text-cyan-200">
+                            <ShieldCheck className="h-3 w-3 shrink-0" />
                             Admin
                           </span>
                         ) : null}
