@@ -250,7 +250,7 @@ export default function Login() {
                   type="button"
                   onClick={handleOauth}
                   variant="secondary"
-                  className="h-11 w-full justify-center gap-2 rounded-2xl border border-amber-300/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.72),rgba(249,115,22,0.58))] text-slate-950 hover:opacity-95 sm:h-12 sm:border-amber-300/30 sm:bg-gradient-to-r sm:from-amber-500 sm:to-orange-500"
+                  className="h-11 w-full justify-center gap-2 rounded-2xl border border-orange-300/20 bg-gradient-to-r from-orange-500/58 to-orange-400/48 text-slate-950 hover:opacity-95 sm:h-12 sm:border-amber-300/30 sm:from-amber-500 sm:to-orange-500"
                   disabled={isNativeOauthPending}
                 >
                   <Mail className="h-4 w-4" />
