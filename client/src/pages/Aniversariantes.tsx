@@ -30,7 +30,7 @@ export default function Aniversariantes() {
         left: `${Math.random() * 100}%`,
         delay: `${Math.random() * 2}s`,
         duration: `${4 + Math.random() * 3}s`,
-        color: ["#34d399", "#22d3ee", "#a78bfa", "#f472b6", "#facc15"][i % 5],
+    color: ["#38bdf8", "#22d3ee", "#a78bfa", "#f472b6", "#facc15"][i % 5],
       })),
     []
   );
@@ -108,7 +108,7 @@ export default function Aniversariantes() {
             <SiteSection key={month}>
               <section className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/15 text-sm text-emerald-200">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/15 text-sm text-cyan-200">
                     {String(list[0] ? parseBirth(list[0].birthDate as any).day : 1).padStart(2, "0")}
                   </div>
                   <h2 className="text-lg font-semibold">
@@ -125,7 +125,7 @@ export default function Aniversariantes() {
                     return (
                       <Card
                         key={item.id}
-                        className={`flex items-center gap-3 border p-4 ${item.isToday ? "border-emerald-400/60 shadow-[0_0_20px_rgba(16,185,129,0.25)]" : "border-border"} bg-card/70`}
+                    className={`flex items-center gap-3 border p-4 ${item.isToday ? "border-cyan-400/60 shadow-[0_0_20px_rgba(34,211,238,0.2)]" : "border-border"} bg-card/70`}
                       >
                         {item.avatarUrl ? (
                           <img src={item.avatarUrl} alt={displayName} className="h-12 w-12 rounded-full border border-white/10 object-cover" />
@@ -141,7 +141,7 @@ export default function Aniversariantes() {
                           </p>
                           <p className="text-xs text-muted-foreground">Data: {formatDate(item.birthDate as any)}</p>
                         </div>
-                        <Cake className={`h-5 w-5 ${item.isToday ? "text-emerald-300" : "text-muted-foreground"}`} />
+                      <Cake className={`h-5 w-5 ${item.isToday ? "text-cyan-300" : "text-muted-foreground"}`} />
                       </Card>
                     );
                   })}

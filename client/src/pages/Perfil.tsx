@@ -541,7 +541,7 @@ export default function Perfil() {
                     className="hidden"
                     onChange={handlePhotoChange}
                   />
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={triggerFileSelect}>
+                    <Button className="bg-cyan-600 hover:bg-cyan-700 text-white" onClick={triggerFileSelect}>
                     Escolher foto de perfil
                   </Button>
                   {photoFileName ? <span className="text-xs text-muted-foreground">Selecionado: {photoFileName}</span> : null}
@@ -702,7 +702,7 @@ export default function Perfil() {
                         </div>
 
                         <div className="text-left md:text-right">
-                          <p className={`text-lg font-bold ${isDeposit ? "text-emerald-400" : "text-yellow-400"}`}>
+                              <p className={`text-lg font-bold ${isDeposit ? "text-cyan-400" : "text-yellow-400"}`}>
                             {isDeposit ? "+" : "-"} R$ {Number(item.valor).toFixed(2)}
                           </p>
                           <p className="text-sm text-muted-foreground">{getFinancialStatusLabel(item.status)}</p>

@@ -113,7 +113,7 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
               </div>
 
               {pixStatusData.creditedAt ? (
-                <p className="text-sm text-green-400">Saldo creditado em {new Date(pixStatusData.creditedAt).toLocaleString("pt-BR")}</p>
+                <p className="text-sm text-cyan-400">Saldo creditado em {new Date(pixStatusData.creditedAt).toLocaleString("pt-BR")}</p>
               ) : (
                 <p className="text-sm text-muted-foreground">A premiacao sera refletida no saldo assim que o lancamento for concluido.</p>
               )}
@@ -165,7 +165,7 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
                   <div className="text-left md:text-right">
                     <p className="text-xs text-muted-foreground">Criado em {new Date(item.createdAt).toLocaleString("pt-BR")}</p>
                     {item.creditedAt ? (
-                      <p className="text-xs text-green-400">Creditado em {new Date(item.creditedAt).toLocaleString("pt-BR")}</p>
+                      <p className="text-xs text-cyan-400">Creditado em {new Date(item.creditedAt).toLocaleString("pt-BR")}</p>
                     ) : null}
                   </div>
                 </div>
@@ -180,7 +180,7 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
   return (
     <div className="card-elegant p-4 md:p-6">
       <div className="flex items-center gap-2 mb-4">
-        <ShieldCheck className="w-5 h-5 text-green-400" />
+        <ShieldCheck className="w-5 h-5 text-cyan-400" />
         <h2 className="text-2xl font-bold">Usuarios</h2>
       </div>
       {usuariosLoading ? <p className="text-sm text-muted-foreground">Carregando usuarios...</p> : null}
@@ -194,7 +194,7 @@ export default function AdminSupportPanels(props: AdminSupportPanelsProps) {
             <div key={u.id} className="flex items-center justify-between p-4 bg-card/50 rounded-lg border border-border/50">
               <div className="flex flex-col gap-1">
                 <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className={`w-2 h-2 rounded-full inline-block ${isOnline ? "bg-green-500" : "bg-zinc-500"}`} />
+                  <span className={`w-2 h-2 rounded-full inline-block ${isOnline ? "bg-cyan-500" : "bg-zinc-500"}`} />
                   {isOnline ? "online" : "offline"}
                 </span>
                 <p className="font-semibold">{u.nickname ? `${u.name || u.email || u.openId} (${u.nickname})` : u.name || u.email || u.openId}</p>

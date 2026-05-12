@@ -77,7 +77,7 @@ export default function PerfilPublico() {
             <p className="text-lg font-semibold break-words flex items-center justify-center sm:justify-start gap-2">
               {displayName}
               {isAdmin ? (
-                <span className="inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-200 border border-emerald-500/30">
+                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-[2px] text-[10px] uppercase tracking-wide bg-cyan-500/15 text-cyan-200 border border-cyan-500/30">
                   <ShieldCheck className="w-3 h-3" />
                   Admin
                 </span>
@@ -111,7 +111,7 @@ export default function PerfilPublico() {
               <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground mb-1">Pontos</p>
               <p className="text-2xl font-bold">{ranking?.pontos ?? 0}</p>
             </div>
-            <Trophy className="w-8 h-8 text-emerald-300" />
+                  <Trophy className="w-8 h-8 text-cyan-300" />
           </Card>
           <Card className="p-4 flex items-center justify-between">
             <div>
@@ -142,7 +142,7 @@ export default function PerfilPublico() {
                     <p className="font-medium">{camp.nome}</p>
                     <p className="text-xs text-muted-foreground">{camp.jogo}</p>
                   </div>
-                  <span className="text-[11px] text-emerald-300">Campeao</span>
+                          <span className="text-[11px] text-cyan-300">Campeao</span>
                 </li>
               ))}
             </ul>

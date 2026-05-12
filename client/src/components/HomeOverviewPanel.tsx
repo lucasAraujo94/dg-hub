@@ -113,7 +113,7 @@ export default function HomeOverviewPanel({
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <Button asChild className="h-auto min-h-24 justify-start whitespace-normal rounded-2xl border border-emerald-400/30 bg-emerald-500/15 px-4 py-4 text-left text-white hover:bg-emerald-500/20">
+                <Button asChild className="h-auto min-h-24 justify-start whitespace-normal rounded-2xl border border-cyan-400/30 bg-cyan-500/15 px-4 py-4 text-left text-white hover:bg-cyan-500/20">
                   <Link href="/campeonatos">
                     <div className="flex min-w-0 flex-col items-start gap-1 text-left">
                       <span className="text-sm font-semibold">Entrar em campeonato</span>
@@ -219,16 +219,16 @@ export default function HomeOverviewPanel({
               key={poll.pollId}
               className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/15 via-transparent to-cyan-500/20" />
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/15 via-transparent to-blue-500/20" />
               <div className="relative flex flex-col gap-4 rounded-3xl border border-white/10 bg-black/40 p-6 md:p-8">
-                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-emerald-200/80">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]" />
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-cyan-200/80">
+                  <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
                   Enquete
                 </div>
                 <h2 className="text-3xl font-semibold leading-tight text-white md:text-4xl">
                   {poll.question || "Próximo campeonato: escolha o modo"}
                 </h2>
-                <p className="text-sm text-emerald-100/80">
+                <p className="text-sm text-cyan-100/80">
                   Vote no jogo que quer ver no próximo torneio. 1 voto por jogador logado.
                 </p>
                 <div className="space-y-3">
@@ -257,16 +257,16 @@ export default function HomeOverviewPanel({
                       const pct = total > 0 ? Math.round((item.count / total) * 100) : 0;
                       return (
                         <div key={item.label} className="space-y-1">
-                          <div className="flex justify-between text-xs text-emerald-100/80">
+                          <div className="flex justify-between text-xs text-cyan-100/80">
                             <span>{item.label}</span>
                             <span>{pct}% ({item.count} votos)</span>
                           </div>
                           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                            <div className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400" style={{ width: `${pct}%` }} />
+                            <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-400" style={{ width: `${pct}%` }} />
                           </div>
                           <Button
                             variant="outline"
-                            className="w-full justify-between border-emerald-400/40 text-white hover:border-emerald-400 hover:text-white/90"
+                            className="w-full justify-between border-cyan-400/40 text-white hover:border-cyan-400 hover:text-white/90"
                             onClick={() => {
                               if (votedPolls.has(poll.pollId)) {
                                 return;
@@ -276,7 +276,7 @@ export default function HomeOverviewPanel({
                             disabled={isVoting || votedPolls.has(poll.pollId)}
                           >
                             <span className="font-semibold">{item.label}</span>
-                            <span className="text-xs text-emerald-100/80">{item.count} votos</span>
+                            <span className="text-xs text-cyan-100/80">{item.count} votos</span>
                           </Button>
                         </div>
                       );
@@ -284,17 +284,17 @@ export default function HomeOverviewPanel({
                   })()}
                 </div>
                 {poll.closesAt ? (
-                  <div className="text-xs text-emerald-100/70">
+                  <div className="text-xs text-cyan-100/70">
                     Fecha em: {new Date(poll.closesAt).toLocaleString("pt-BR")}
                   </div>
                 ) : null}
-                {isVoting ? <p className="text-xs text-emerald-100/80">Enviando voto...</p> : null}
-                <div className="text-xs text-emerald-100/70">A enquete é atualizada em tempo real após cada voto.</div>
+                {isVoting ? <p className="text-xs text-cyan-100/80">Enviando voto...</p> : null}
+                <div className="text-xs text-cyan-100/70">A enquete é atualizada em tempo real após cada voto.</div>
               </div>
             </div>
           ))
         ) : (
-          <div className="relative rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-emerald-50 backdrop-blur-xl">
+            <div className="relative rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-cyan-50 backdrop-blur-xl">
             Nenhuma enquete ativa. Crie uma enquete no painel admin.
           </div>
         )}

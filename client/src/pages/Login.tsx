@@ -237,9 +237,9 @@ export default function Login() {
           </div>
         </header>
 
-        <div className="relative flex flex-1 items-end justify-center py-6 sm:items-center sm:justify-end sm:py-8">
+        <div className="relative flex flex-1 items-center justify-center py-6 sm:py-8">
           <div className="pointer-events-none absolute right-[6%] top-1/2 hidden h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-black/24 blur-3xl lg:block" />
-          <section className="relative mt-auto w-full max-w-md overflow-hidden rounded-[28px] border border-white/14 bg-slate-950/8 p-4 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.5)] backdrop-blur-[1px] sm:mt-0 sm:rounded-[32px] sm:bg-slate-950/18 sm:p-7 sm:backdrop-blur-[3px]">
+          <section className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-white/14 bg-slate-950/8 p-4 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.5)] backdrop-blur-[1px] sm:rounded-[32px] sm:bg-slate-950/18 sm:p-7 sm:backdrop-blur-[3px]">
             <div className="relative">
               <div className="mb-6 sm:mb-8">
                 <h1 className="text-2xl font-semibold tracking-[-0.04em] text-foreground sm:text-3xl">Entrar</h1>

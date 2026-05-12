@@ -117,6 +117,9 @@ export default function Campeonatos() {
   const [editingMatchKey, setEditingMatchKey] = useState<string | null>(null);
   const [manualScoreInput, setManualScoreInput] = useState("1 x 0");
   const [manualNoteInput, setManualNoteInput] = useState("");
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window === "undefined" ? false : window.innerWidth < 768
+  );
   const bracketViewportRef = useRef<HTMLDivElement | null>(null);
   const bracketContentRef = useRef<HTMLDivElement | null>(null);
   const roundRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -128,6 +131,22 @@ export default function Campeonatos() {
     { campeonatoId: selectedCampId ?? 0 },
     { enabled: Boolean(selectedCampId), refetchOnWindowFocus: false }
   );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncViewport = () => setIsMobileViewport(window.innerWidth < 768);
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    return () => window.removeEventListener("resize", syncViewport);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileViewport) return;
+    setCompactBracket(true);
+    setPresentationMode(false);
+    setPresentationAutoplay(false);
+    setCollapsedResolvedRounds(true);
+  }, [isMobileViewport]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -740,6 +759,12 @@ export default function Campeonatos() {
   const faseAtualIndex = roundsExibidos.findIndex(round =>
     round.some(match => !match.vencedor && !isBracketPlaceholder(match.jogador1) && !isBracketPlaceholder(match.jogador2))
   );
+  useEffect(() => {
+    if (!isMobileViewport) return;
+    if (roundFilter === "todas" && faseAtualIndex >= 0) {
+      setRoundFilter(String(faseAtualIndex));
+    }
+  }, [faseAtualIndex, isMobileViewport, roundFilter]);
   const faseAtualLabel =
     faseAtualIndex >= 0
       ? getRoundLabel(faseAtualIndex, totalRoundsExibidos, roundsExibidos[faseAtualIndex]?.length ?? 0)
@@ -846,11 +871,11 @@ export default function Campeonatos() {
   const goToRound = (roundIndex: number) => setRoundFilter(String(roundIndex));
   const bracketSelectClassName =
     "h-10 rounded-xl border border-cyan-400/25 bg-[linear-gradient(135deg,rgba(8,20,40,0.94),rgba(22,78,99,0.82))] px-3 text-sm text-cyan-50 outline-none transition focus:border-cyan-200/60 focus:ring-2 focus:ring-cyan-300/25";
-  const getToolbarButtonClassName = (active: boolean, palette: "cyan" | "emerald" | "amber" | "violet" = "cyan") => {
+  const getToolbarButtonClassName = (active: boolean, palette: "cyan" | "sky" | "amber" | "violet" = "cyan") => {
     if (!active) {
       return "shrink-0 border-white/12 bg-black/20 text-muted-foreground hover:border-cyan-300/30 hover:bg-cyan-400/10 hover:text-cyan-50";
     }
-    if (palette === "emerald") {
+    if (palette === "sky") {
       return "shrink-0 border-cyan-300/45 bg-[linear-gradient(135deg,rgba(10,37,64,0.96),rgba(34,211,238,0.28))] text-cyan-50 shadow-[0_12px_28px_-18px_rgba(34,211,238,0.45)]";
     }
     if (palette === "amber") {
@@ -925,6 +950,7 @@ export default function Campeonatos() {
           roundRefs.current[roundIndex] = node;
         }}
         className={`relative flex shrink-0 items-stretch sm:snap-center sm:snap-start ${bracketColumnWidthClassName} ${side === "right" ? "xl:self-end" : ""}`}
+        style={{ contentVisibility: "auto", containIntrinsicSize: "320px 640px" }}
       >
         <div
           className={`relative w-full rounded-[28px] border transition-all ${roundCardPaddingClassName} ${

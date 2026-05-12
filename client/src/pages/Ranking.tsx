@@ -138,14 +138,14 @@ export default function Ranking() {
                       <span className="flex items-center gap-2 break-words font-semibold text-foreground">
                         {displayName}
                         {isAdmin ? (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-[2px] text-[10px] uppercase tracking-wide text-emerald-200">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/15 px-2 py-[2px] text-[10px] uppercase tracking-wide text-cyan-200">
                             <ShieldCheck className="h-3 w-3" />
                             Admin
                           </span>
                         ) : null}
                       </span>
                       <span className="truncate text-[11px] text-muted-foreground">Campeonatos: {wins}</span>
-                      <Link href={`/perfil/${player.usuarioId}`} className="text-[11px] text-emerald-300 hover:underline">
+                      <Link href={`/perfil/${player.usuarioId}`} className="text-[11px] text-cyan-300 hover:underline">
                         Ver perfil publico
                       </Link>
                     </div>
@@ -157,7 +157,7 @@ export default function Ranking() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <span className="inline-flex items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-2.5 py-1 text-[12px] font-medium text-emerald-200">
+                  <span className="inline-flex items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1 text-[12px] font-medium text-cyan-200">
                     {wins}
                   </span>
                 </td>

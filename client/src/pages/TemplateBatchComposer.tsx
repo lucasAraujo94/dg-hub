@@ -587,7 +587,7 @@ export default function TemplateBatchComposer() {
             <Button
               onClick={handleDownloadZip}
               disabled={!processed.length}
-              className="gap-2 rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#34d399)] text-slate-950 shadow-[0_16px_40px_rgba(34,211,238,0.22)] disabled:text-slate-950/70"
+              className="gap-2 rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#38bdf8)] text-slate-950 shadow-[0_16px_40px_rgba(34,211,238,0.22)] disabled:text-slate-950/70"
             >
               <Download className="w-4 h-4" />
               Baixar ZIP
@@ -650,7 +650,7 @@ export default function TemplateBatchComposer() {
                 </div>
                 <div className="rounded-[24px] border border-white/10 bg-black/20 p-4">
                   <div className="mb-4 flex items-center gap-2">
-                    <Package className="h-4 w-4 text-emerald-300" />
+                    <Package className="h-4 w-4 text-cyan-300" />
                     <p className="text-sm font-medium text-white">Template base</p>
                   </div>
                   <Label htmlFor="template">Template</Label>
@@ -696,7 +696,7 @@ export default function TemplateBatchComposer() {
 
                 <div className="rounded-2xl border border-border/60 bg-card/50 p-4">
                   <div className="mb-3 flex items-center gap-2">
-                    <Package className="h-4 w-4 text-emerald-300" />
+                    <Package className="h-4 w-4 text-cyan-300" />
                     <h2 className="font-semibold">Template</h2>
                   </div>
                   {templatePreview ? (
@@ -719,7 +719,7 @@ export default function TemplateBatchComposer() {
         <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(6,10,18,0.96),rgba(10,16,28,0.88))] shadow-[0_24px_70px_rgba(0,0,0,0.3)]">
           <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
             <div className="space-y-3">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-emerald-100">
+                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-cyan-100">
                 <Scissors className="h-3.5 w-3.5" />
                 Fluxo de montagem
               </div>
@@ -743,7 +743,7 @@ export default function TemplateBatchComposer() {
               <Button
                 onClick={handleProcess}
                 disabled={isRendering || removeBackgroundMutation.isPending}
-                className="gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-white"
+                    className="gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-sky-500 text-white"
               >
                 {isRendering || removeBackgroundMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -935,7 +935,7 @@ export default function TemplateBatchComposer() {
                   >
                     <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/55 to-transparent" />
                     <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl transition-opacity duration-300 group-hover:opacity-100" />
-                    <div className="absolute -bottom-16 -left-12 h-36 w-36 rounded-full bg-emerald-400/10 blur-3xl transition-opacity duration-300 group-hover:opacity-100" />
+                  <div className="absolute -bottom-16 -left-12 h-36 w-36 rounded-full bg-cyan-400/10 blur-3xl transition-opacity duration-300 group-hover:opacity-100" />
                     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
                       <div>
                       <div className="mb-4 flex items-start justify-between gap-3">

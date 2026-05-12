@@ -86,7 +86,7 @@ export function ChampionshipBracketInsights({
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs">
             <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-cyan-100">Em aberto</span>
-            <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-emerald-200">Definida</span>
+            <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-cyan-200">Definida</span>
             <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-amber-100">W.O</span>
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-muted-foreground">Aguardando</span>
             <span className="rounded-full border border-cyan-300/35 bg-cyan-400/15 px-3 py-1 text-cyan-100">Fase em foco</span>
@@ -118,7 +118,7 @@ export function ChampionshipBracketInsights({
           </p>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-200 transition-[width] duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-cyan-200 transition-[width] duration-300"
               style={{ width: `${progressoPercentual}%` }}
             />
           </div>

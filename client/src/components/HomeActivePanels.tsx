@@ -213,18 +213,18 @@ export default function HomeActivePanels({
             <Link href="/campeonatos">Abrir pagina</Link>
           </Button>
         </div>
-        <div className="rounded-lg border border-emerald-500/40 bg-emerald-950/30 p-3">
-          <p className="flex items-center gap-2 text-sm text-emerald-100">
-            <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+        <div className="rounded-lg border border-cyan-500/40 bg-cyan-950/30 p-3">
+          <p className="flex items-center gap-2 text-sm text-cyan-100">
+            <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
             Jogadores online
           </p>
-          <div className="mt-2 flex flex-wrap gap-2 text-sm text-emerald-100">
+          <div className="mt-2 flex flex-wrap gap-2 text-sm text-cyan-100">
             {onlinePlayers.map(p => (
               <span
                 key={p.id}
-                className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1"
+                className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-1"
               >
-                <span className="h-2 w-2 rounded-full bg-green-400" />
+                <span className="h-2 w-2 rounded-full bg-cyan-400" />
                 {p.name}
               </span>
             ))}

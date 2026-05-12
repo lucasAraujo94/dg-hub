@@ -8,7 +8,7 @@ type ChampionshipBracketControlsProps = {
   onRoundFilterChange: (value: string) => void;
   roundFilterOptions: Array<{ value: string; label: string }>;
   bracketSelectClassName: string;
-  getToolbarButtonClassName: (active: boolean, accent: "cyan" | "violet" | "amber" | "emerald") => string;
+  getToolbarButtonClassName: (active: boolean, accent: "cyan" | "violet" | "amber" | "sky") => string;
   selectedRoundIndex: number;
   roundsExibidosLength: number;
   goToPreviousRound: () => void;

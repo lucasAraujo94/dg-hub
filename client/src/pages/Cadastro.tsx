@@ -84,8 +84,8 @@ export default function Cadastro() {
               <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_rgba(99,102,241,0.8)]" />
               DG Arena
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]" />
+                <div className="flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+                  <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
               Comunidade Hago
             </div>
           </div>
@@ -106,7 +106,7 @@ export default function Cadastro() {
           {/* Left — headline + highlights */}
           <div className="space-y-6">
             <div className="space-y-4">
-              <p className="text-sm uppercase tracking-[0.24em] text-emerald-200/80">
+                  <p className="text-sm uppercase tracking-[0.24em] text-cyan-200/80">
                 cadastro rapido
               </p>
               <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
@@ -139,7 +139,7 @@ export default function Cadastro() {
               ].map(item => (
                 <div
                   key={item.title}
-                  className="stat-card border-primary/25 bg-gradient-to-br from-primary/5 via-card/40 to-emerald-500/5"
+                    className="stat-card border-primary/25 bg-gradient-to-br from-primary/5 via-card/40 to-cyan-500/5"
                 >
                   <p className="text-sm font-semibold text-primary">
                     {item.title}

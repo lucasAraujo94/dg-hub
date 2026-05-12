@@ -310,7 +310,7 @@ export default function Home() {
           ? "text-red-300"
           : sessionUrgency === "atencao"
             ? "text-amber-300"
-            : "text-emerald-300",
+            : "text-cyan-300",
       icon: TimerReset,
     },
   ];
@@ -404,7 +404,7 @@ export default function Home() {
               <Menu className="w-5 h-5 text-muted-foreground" />
             </button>
             <div className="flex items-center gap-2 min-w-0 md:pl-1">
-              <div className="w-10 h-10 rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#34d399,#fbbf24)] flex items-center justify-center shadow-[0_18px_48px_rgba(34,211,238,0.24)]">
+              <div className="w-10 h-10 rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#38bdf8,#fbbf24)] flex items-center justify-center shadow-[0_18px_48px_rgba(34,211,238,0.24)]">
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <span className="text-lg font-bold leading-none gradient-text">DG Hub</span>
@@ -456,7 +456,7 @@ export default function Home() {
                 setMenuOpen(true);
               }}
             >
-              <div className="w-8 h-8 rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#34d399,#fbbf24)] flex items-center justify-center text-slate-950 text-xs font-bold shadow-lg">
+              <div className="w-8 h-8 rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#38bdf8,#fbbf24)] flex items-center justify-center text-slate-950 text-xs font-bold shadow-lg">
                 DG
               </div>
               <span className="text-sm font-semibold text-white/80">Navegacao</span>
@@ -502,7 +502,7 @@ export default function Home() {
               const baseClasses =
                 "w-full justify-start rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all";
               const activeClasses = isActive
-                ? "bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(52,211,153,0.14),rgba(251,191,36,0.12))] border-cyan-200/20 shadow-[0_14px_40px_rgba(8,145,178,0.14)]"
+                ? "bg-[linear-gradient(135deg,rgba(34,211,238,0.18),rgba(56,189,248,0.14),rgba(251,191,36,0.12))] border-cyan-200/20 shadow-[0_14px_40px_rgba(8,145,178,0.14)]"
                 : "";
               const content = (
                 <div className="flex items-center gap-3 w-full">
@@ -606,7 +606,7 @@ export default function Home() {
                   })}
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Button asChild className="rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#34d399)] text-slate-950 shadow-[0_16px_40px_rgba(34,211,238,0.22)]">
+                  <Button asChild className="rounded-2xl bg-[linear-gradient(135deg,#22d3ee,#38bdf8)] text-slate-950 shadow-[0_16px_40px_rgba(34,211,238,0.22)]">
                     <Link href={activeChampionship?.id ? "/campeonatos" : "/campeonatos"}>
                       {activeChampionship?.id ? "Ver campeonato em destaque" : "Explorar campeonatos"}
                     </Link>
