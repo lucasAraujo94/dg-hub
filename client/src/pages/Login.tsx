@@ -239,13 +239,13 @@ export default function Login() {
 
         <div className="relative flex flex-1 items-center justify-center py-6 sm:py-8">
           <div className="pointer-events-none absolute right-[6%] top-1/2 hidden h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-black/24 blur-3xl lg:block" />
-          <section className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-white/12 bg-slate-950/4 p-4 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.38)] backdrop-blur-0 sm:rounded-[32px] sm:border-white/14 sm:bg-slate-950/18 sm:p-7 sm:backdrop-blur-[3px]">
+          <section className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/[0.02] p-4 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.26)] backdrop-blur-0 sm:rounded-[32px] sm:border-white/14 sm:bg-slate-950/18 sm:p-7 sm:backdrop-blur-[3px]">
             <div className="relative">
               <div className="mb-6 sm:mb-8">
-                <h1 className="text-2xl font-semibold tracking-[-0.04em] text-foreground sm:text-3xl">Entrar</h1>
+                <h1 className="hidden text-2xl font-semibold tracking-[-0.04em] text-foreground sm:block sm:text-3xl">Entrar</h1>
               </div>
 
-              <div className="mb-5 rounded-[22px] border border-white/10 bg-black/4 p-3 backdrop-blur-0 sm:rounded-[24px] sm:border-white/12 sm:bg-black/10 sm:backdrop-blur-[2px]">
+              <div className="mb-5 rounded-[22px] border border-white/8 bg-black/[0.02] p-3 backdrop-blur-0 sm:rounded-[24px] sm:border-white/12 sm:bg-black/10 sm:backdrop-blur-[2px]">
                 <Button
                   type="button"
                   onClick={handleOauth}
@@ -276,7 +276,7 @@ export default function Login() {
                             type="email"
                             autoComplete="email"
                             placeholder="voce@email.com"
-                            className="h-11 rounded-2xl border-white/10 bg-black/4 text-white placeholder:text-white/45 sm:h-12 sm:border-white/12 sm:bg-black/10"
+                            className="h-11 rounded-2xl border-white/8 bg-black/[0.02] text-white placeholder:text-white/45 sm:h-12 sm:border-white/12 sm:bg-black/10"
                             {...field}
                           />
                         </FormControl>
@@ -296,7 +296,7 @@ export default function Login() {
                             type="password"
                             autoComplete="current-password"
                             placeholder="Sua senha"
-                            className="h-11 rounded-2xl border-white/10 bg-black/4 text-white placeholder:text-white/45 sm:h-12 sm:border-white/12 sm:bg-black/10"
+                            className="h-11 rounded-2xl border-white/8 bg-black/[0.02] text-white placeholder:text-white/45 sm:h-12 sm:border-white/12 sm:bg-black/10"
                             {...field}
                           />
                         </FormControl>
@@ -308,7 +308,7 @@ export default function Login() {
                   <div className="flex flex-col gap-3 pt-2">
                     <Button
                       type="submit"
-                      className="h-11 w-full rounded-2xl border border-white/12 bg-white/6 text-white backdrop-blur-0 hover:bg-white/12 sm:h-12 sm:border-white/14 sm:bg-white/9 sm:backdrop-blur-[2px]"
+                      className="h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] text-white backdrop-blur-0 hover:bg-white/[0.09] sm:h-12 sm:border-white/14 sm:bg-white/9 sm:backdrop-blur-[2px]"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? "Entrando..." : "Entrar"}
